@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { GoalsProvider } from "@/contexts/GoalsContext";
 import SessionProvider from "@/components/SessionProvider";
+import Header from "@/components/Header";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -28,6 +29,7 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`}>
         <SessionProvider>
           <GoalsProvider>
+            <Header />
             {children}
           </GoalsProvider>
         </SessionProvider>
