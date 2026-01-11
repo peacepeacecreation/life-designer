@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { GoalsProvider } from "@/contexts/GoalsContext";
+import { RecurringEventsProvider } from "@/contexts/RecurringEventsContext";
 import SessionProvider from "@/components/SessionProvider";
 import Header from "@/components/Header";
 
@@ -29,8 +30,10 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`}>
         <SessionProvider>
           <GoalsProvider>
-            <Header />
-            {children}
+            <RecurringEventsProvider>
+              <Header />
+              {children}
+            </RecurringEventsProvider>
           </GoalsProvider>
         </SessionProvider>
       </body>

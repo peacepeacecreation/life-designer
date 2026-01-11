@@ -2,11 +2,18 @@
 
 import { useGoals } from '@/contexts/GoalsContext';
 import GoalCard from './GoalCard';
-import { Target } from 'lucide-react';
+import { Target, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { getSeedGoals } from '@/utils/seedGoals';
 
 export default function GoalsList() {
-  const { getFilteredGoals } = useGoals();
+  const { getFilteredGoals, addGoal } = useGoals();
   const goals = getFilteredGoals();
+
+  const handleLoadExamples = () => {
+    const seedGoals = getSeedGoals();
+    seedGoals.forEach(goal => addGoal(goal));
+  };
 
   if (goals.length === 0) {
     return (
@@ -18,8 +25,14 @@ export default function GoalsList() {
         </div>
         <h3 className="text-xl font-semibold mb-2 text-black dark:text-white">Немає цілей</h3>
         <p className="text-muted-foreground mb-6">
-          Почніть з додавання вашої першої цілі
+          Почніть з додавання вашої першої цілі або завантажте приклади
         </p>
+        <div className="flex gap-3 justify-center">
+          <Button onClick={handleLoadExamples} variant="outline">
+            <Sparkles className="mr-2 h-4 w-4" />
+            Завантажити приклади
+          </Button>
+        </div>
       </div>
     );
   }

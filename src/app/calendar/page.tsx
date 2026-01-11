@@ -19,9 +19,7 @@ export default function CalendarPage() {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-card border border-border rounded-lg shadow-sm overflow-hidden">
-          <CalendarComponent />
-        </div>
+        <CalendarComponent />
 
         <div className="mt-8">
           <h2 className="text-xl font-semibold mb-4">Майбутня інтеграція</h2>

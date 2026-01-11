@@ -6,6 +6,7 @@ import { uk } from 'date-fns/locale';
 import { useState, useCallback, useEffect } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { RefreshCw, LogOut, LogIn } from 'lucide-react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
@@ -113,77 +114,81 @@ export default function CalendarComponent() {
   }, []);
 
   return (
-    <div className="h-[calc(100vh-200px)] p-4">
-      <div className="mb-4 flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-4 flex-wrap">
-          {status === 'authenticated' ? (
-            <>
-              <span className="text-sm text-muted-foreground">
-                Підключено до Google Calendar
-              </span>
-              <Button
-                onClick={() => signOut()}
-                variant="outline"
-                size="sm"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Вийти
-              </Button>
-              <Button
-                onClick={loadGoogleCalendarEvents}
-                disabled={loading}
-                variant="outline"
-                size="sm"
-              >
-                <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                {loading ? 'Оновлення...' : 'Оновити події'}
-              </Button>
-            </>
-          ) : (
-            <>
-              <span className="text-sm text-muted-foreground">
-                Увійдіть для синхронізації з Google Calendar
-              </span>
-              <Button
-                onClick={() => signIn('google')}
-                variant="default"
-                size="sm"
-              >
-                <LogIn className="mr-2 h-4 w-4" />
-                Увійти через Google
-              </Button>
-            </>
-          )}
+    <div className="space-y-4">
+      <Card className="bg-white dark:bg-card p-4">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            {status === 'authenticated' ? (
+              <>
+                <span className="text-sm text-muted-foreground">
+                  Підключено до Google Calendar
+                </span>
+                <Button
+                  onClick={() => signOut()}
+                  variant="outline"
+                  size="sm"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Вийти
+                </Button>
+                <Button
+                  onClick={loadGoogleCalendarEvents}
+                  disabled={loading}
+                  variant="outline"
+                  size="sm"
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                  {loading ? 'Оновлення...' : 'Оновити події'}
+                </Button>
+              </>
+            ) : (
+              <>
+                <span className="text-sm text-muted-foreground">
+                  Увійдіть для синхронізації з Google Calendar
+                </span>
+                <Button
+                  onClick={() => signIn('google')}
+                  variant="default"
+                  size="sm"
+                >
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Увійти через Google
+                </Button>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      </Card>
 
-      <Calendar
-        localizer={localizer}
-        events={events}
-        startAccessor="start"
-        endAccessor="end"
-        style={{ height: '100%' }}
-        onSelectSlot={handleSelectSlot}
-        onSelectEvent={handleSelectEvent}
-        selectable
-        view={view}
-        onView={setView}
-        culture="uk"
-        messages={{
-          next: 'Далі',
-          previous: 'Назад',
-          today: 'Сьогодні',
-          month: 'Місяць',
-          week: 'Тиждень',
-          day: 'День',
-          agenda: 'Порядок денний',
-          date: 'Дата',
-          time: 'Час',
-          event: 'Подія',
-          noEventsInRange: 'Немає подій у цьому діапазоні',
-          showMore: (total) => `+ ще ${total}`,
-        }}
-      />
+      <div className="h-[calc(100vh-280px)] min-h-[600px]">
+        <Calendar
+          localizer={localizer}
+          events={events}
+          startAccessor="start"
+          endAccessor="end"
+          style={{ height: '100%' }}
+          onSelectSlot={handleSelectSlot}
+          onSelectEvent={handleSelectEvent}
+          selectable
+          view={view}
+          onView={setView}
+          culture="uk"
+          messages={{
+            next: 'Далі',
+            previous: 'Назад',
+            today: 'Сьогодні',
+            month: 'Місяць',
+            week: 'Тиждень',
+            day: 'День',
+            agenda: 'Порядок денний',
+            date: 'Дата',
+            time: 'Час',
+            event: 'Подія',
+            noEventsInRange: 'Немає подій у цьому діапазоні',
+            showMore: (total) => `+ ще ${total}`,
+          }}
+        />
+      </div>
     </div>
   );
 }
