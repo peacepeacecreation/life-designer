@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useRecurringEvents } from '@/contexts/RecurringEventsContext';
 import { getSeedRecurringEvents } from '@/utils/seedRecurringEvents';
 import { getRecurrenceDescription } from '@/utils/recurringEvents';
-import { Sparkles, ToggleLeft, ToggleRight, Trash2, Clock } from 'lucide-react';
+import { Sparkles, ToggleLeft, ToggleRight, Trash2, Clock, Plus } from 'lucide-react';
+import { AddRecurringEventDialog } from '@/components/calendar/AddRecurringEventDialog';
 
 export default function RecurringEventsPanel() {
   const {
@@ -14,6 +16,7 @@ export default function RecurringEventsPanel() {
     deleteRecurringEvent,
     toggleRecurringEvent,
   } = useRecurringEvents();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleLoadExamples = () => {
     const seedEvents = getSeedRecurringEvents();
@@ -22,89 +25,121 @@ export default function RecurringEventsPanel() {
 
   if (recurringEvents.length === 0) {
     return (
-      <Card className="p-6">
-        <div className="text-center">
-          <Clock className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-          <h3 className="font-semibold mb-2">Немає повторюваних подій</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Додайте регулярні події, які повторюються щодня/щотижня
-          </p>
-          <Button onClick={handleLoadExamples} variant="outline" size="sm">
-            <Sparkles className="mr-2 h-4 w-4" />
-            Додати мої созвони
-          </Button>
-          <p className="text-xs text-muted-foreground mt-2">
-            13:00 (Пн-Пт) • 20:00 (Пн/Ср/Пт)
-          </p>
-        </div>
-      </Card>
+      <>
+        <Card className="p-6">
+          <div className="text-center">
+            <Clock className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+            <h3 className="font-semibold mb-2">Немає повторюваних подій</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Додайте регулярні події, які повторюються щодня/щотижня
+            </p>
+            <div className="flex flex-col gap-2">
+              <Button onClick={() => setDialogOpen(true)} variant="default" size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Додати подію
+              </Button>
+              <Button onClick={handleLoadExamples} variant="outline" size="sm">
+                <Sparkles className="mr-2 h-4 w-4" />
+                Додати мої созвони
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              13:00 (Пн-Пт) • 20:00 (Пн/Ср/Пт)
+            </p>
+          </div>
+        </Card>
+
+        <AddRecurringEventDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          onAdd={addRecurringEvent}
+        />
+      </>
     );
   }
 
   return (
-    <Card className="p-6">
-      <h3 className="font-semibold mb-4">Повторювані події</h3>
-      <div className="space-y-3">
-        {recurringEvents.map((event) => (
-          <div
-            key={event.id}
-            className={`p-3 rounded-lg border ${
-              event.isActive
-                ? 'border-border bg-card'
-                : 'border-muted bg-muted/30 opacity-60'
-            }`}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-medium text-sm truncate">{event.title}</h4>
-                  <span
-                    className="inline-block px-2 py-0.5 text-xs rounded-full"
-                    style={{
-                      backgroundColor: event.color
-                        ? `${event.color}20`
-                        : 'transparent',
-                      color: event.color,
-                    }}
-                  >
-                    {event.startTime}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {getRecurrenceDescription(event.recurrence)}
-                </p>
-                {event.description && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {event.description}
+    <>
+      <Card className="p-6">
+        <h3 className="font-semibold mb-4">Повторювані події</h3>
+        <div className="space-y-3 mb-4">
+          {recurringEvents.map((event) => (
+            <div
+              key={event.id}
+              className={`p-3 rounded-lg border ${
+                event.isActive
+                  ? 'border-border bg-card'
+                  : 'border-muted bg-muted/30 opacity-60'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-medium text-sm truncate">{event.title}</h4>
+                    <span
+                      className="inline-block px-2 py-0.5 text-xs rounded-full"
+                      style={{
+                        backgroundColor: event.color
+                          ? `${event.color}20`
+                          : 'transparent',
+                        color: event.color,
+                      }}
+                    >
+                      {event.startTime}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {getRecurrenceDescription(event.recurrence)}
                   </p>
-                )}
-              </div>
-              <div className="flex gap-1">
-                <Button
-                  onClick={() => toggleRecurringEvent(event.id)}
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                >
-                  {event.isActive ? (
-                    <ToggleRight className="h-4 w-4 text-primary" />
-                  ) : (
-                    <ToggleLeft className="h-4 w-4 text-muted-foreground" />
+                  {event.description && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {event.description}
+                    </p>
                   )}
-                </Button>
-                <Button
-                  onClick={() => deleteRecurringEvent(event.id)}
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                </div>
+                <div className="flex gap-1">
+                  <Button
+                    onClick={() => toggleRecurringEvent(event.id)}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                  >
+                    {event.isActive ? (
+                      <ToggleRight className="h-4 w-4 text-primary" />
+                    ) : (
+                      <ToggleLeft className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => deleteRecurringEvent(event.id)}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-    </Card>
+          ))}
+        </div>
+
+        <Button
+          onClick={() => setDialogOpen(true)}
+          variant="outline"
+          size="sm"
+          className="w-full"
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Додати подію
+        </Button>
+      </Card>
+
+      <AddRecurringEventDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onAdd={addRecurringEvent}
+      />
+    </>
   );
 }

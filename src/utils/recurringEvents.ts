@@ -14,6 +14,7 @@ interface CalendarEvent {
   description?: string;
   isRecurring: boolean;
   recurringEventId?: string;
+  color?: string;
 }
 
 /**
@@ -73,6 +74,7 @@ export function generateEventsFromRecurring(
         description: recurringEvent.description,
         isRecurring: true,
         recurringEventId: recurringEvent.id,
+        color: recurringEvent.color,
       });
 
       occurrenceCount++;

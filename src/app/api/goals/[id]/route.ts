@@ -17,6 +17,21 @@ export const runtime = 'nodejs';
 export const maxDuration = 10;
 
 /**
+ * Safely convert a date value to ISO string or pass through if already a string
+ * Handles both Date objects and ISO string inputs
+ */
+function ensureDateString(date: Date | string | undefined): string | undefined {
+  if (!date) return undefined;
+  if (typeof date === 'string') return date;
+  if (date instanceof Date) return date.toISOString();
+  try {
+    return new Date(date as any).toISOString();
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * GET /api/goals/:id
  * Returns a single goal by ID
  */
@@ -165,9 +180,9 @@ export async function PATCH(
     if (body.status !== undefined) updateData.status = body.status;
     if (body.timeAllocated !== undefined) updateData.time_allocated = body.timeAllocated;
     if (body.progressPercentage !== undefined) updateData.progress_percentage = body.progressPercentage;
-    if (body.startDate !== undefined) updateData.start_date = body.startDate;
-    if (body.targetEndDate !== undefined) updateData.target_end_date = body.targetEndDate;
-    if (body.actualEndDate !== undefined) updateData.actual_end_date = body.actualEndDate;
+    if (body.startDate !== undefined) updateData.start_date = ensureDateString(body.startDate);
+    if (body.targetEndDate !== undefined) updateData.target_end_date = ensureDateString(body.targetEndDate);
+    if (body.actualEndDate !== undefined) updateData.actual_end_date = ensureDateString(body.actualEndDate);
     if (body.tags !== undefined) updateData.tags = body.tags;
 
     // 7. Regenerate embedding if needed

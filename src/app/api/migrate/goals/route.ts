@@ -28,6 +28,32 @@ interface MigrationResult {
 }
 
 /**
+ * Safely convert a date value to ISO string
+ * Handles both Date objects and ISO string inputs
+ */
+function toISOString(date: Date | string | undefined | null): string | null {
+  if (!date) return null;
+
+  // If already a string, return as-is (assume it's ISO format)
+  if (typeof date === 'string') {
+    return date;
+  }
+
+  // If it's a Date object, convert to ISO string
+  if (date instanceof Date) {
+    return date.toISOString();
+  }
+
+  // Fallback: try to parse and convert
+  try {
+    return new Date(date as any).toISOString();
+  } catch (error) {
+    console.error('Failed to convert date to ISO string:', date);
+    return null;
+  }
+}
+
+/**
  * POST /api/migrate/goals
  * Migrates goals from localStorage to Supabase with batch embedding generation
  */
@@ -119,12 +145,12 @@ export async function POST(request: NextRequest) {
             status: goal.status,
             time_allocated: goal.timeAllocated,
             progress_percentage: goal.progressPercentage,
-            start_date: goal.startDate.toISOString(),
-            target_end_date: goal.targetEndDate.toISOString(),
-            actual_end_date: goal.actualEndDate?.toISOString() || null,
+            start_date: toISOString(goal.startDate),
+            target_end_date: toISOString(goal.targetEndDate),
+            actual_end_date: toISOString(goal.actualEndDate),
             tags: goal.tags || [],
-            created_at: goal.createdAt.toISOString(),
-            updated_at: goal.updatedAt.toISOString(),
+            created_at: toISOString(goal.createdAt),
+            updated_at: toISOString(goal.updatedAt),
             embedding,
           })
           .select()
@@ -146,9 +172,9 @@ export async function POST(request: NextRequest) {
                 status: goal.status,
                 time_allocated: goal.timeAllocated,
                 progress_percentage: goal.progressPercentage,
-                start_date: goal.startDate.toISOString(),
-                target_end_date: goal.targetEndDate.toISOString(),
-                actual_end_date: goal.actualEndDate?.toISOString() || null,
+                start_date: toISOString(goal.startDate),
+                target_end_date: toISOString(goal.targetEndDate),
+                actual_end_date: toISOString(goal.actualEndDate),
                 tags: goal.tags || [],
                 embedding,
               })

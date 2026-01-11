@@ -37,12 +37,8 @@ CREATE TABLE goals (
   -- Vector embedding for semantic search (1536 dimensions for OpenAI text-embedding-3-small)
   embedding vector(1536),
 
-  -- Full-text search support (generated column)
-  search_vector tsvector GENERATED ALWAYS AS (
-    setweight(to_tsvector('english', COALESCE(name, '')), 'A') ||
-    setweight(to_tsvector('english', COALESCE(description, '')), 'B') ||
-    setweight(to_tsvector('english', COALESCE(array_to_string(tags, ' '), '')), 'C')
-  ) STORED
+  -- Full-text search support (updated by trigger)
+  search_vector tsvector
 );
 
 -- Goal connections (relationships between goals)
@@ -79,12 +75,8 @@ CREATE TABLE notes (
   -- Vector embedding for semantic search
   embedding vector(1536),
 
-  -- Full-text search support
-  search_vector tsvector GENERATED ALWAYS AS (
-    setweight(to_tsvector('english', COALESCE(title, '')), 'A') ||
-    setweight(to_tsvector('english', COALESCE(content, '')), 'B') ||
-    setweight(to_tsvector('english', COALESCE(array_to_string(tags, ' '), '')), 'C')
-  ) STORED
+  -- Full-text search support (updated by trigger)
+  search_vector tsvector
 );
 
 -- Reflections table (new feature)
@@ -106,12 +98,8 @@ CREATE TABLE reflections (
   -- Vector embedding for semantic search
   embedding vector(1536),
 
-  -- Full-text search support
-  search_vector tsvector GENERATED ALWAYS AS (
-    setweight(to_tsvector('english', COALESCE(title, '')), 'A') ||
-    setweight(to_tsvector('english', COALESCE(content, '')), 'B') ||
-    setweight(to_tsvector('english', COALESCE(array_to_string(tags, ' '), '')), 'C')
-  ) STORED
+  -- Full-text search support (updated by trigger)
+  search_vector tsvector
 );
 
 -- ============================================================================
@@ -160,6 +148,42 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Function to update search_vector for goals
+CREATE OR REPLACE FUNCTION update_goals_search_vector()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.search_vector :=
+    setweight(to_tsvector('english', COALESCE(NEW.name, '')), 'A') ||
+    setweight(to_tsvector('english', COALESCE(NEW.description, '')), 'B') ||
+    setweight(to_tsvector('english', COALESCE(array_to_string(NEW.tags, ' '), '')), 'C');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to update search_vector for notes
+CREATE OR REPLACE FUNCTION update_notes_search_vector()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.search_vector :=
+    setweight(to_tsvector('english', COALESCE(NEW.title, '')), 'A') ||
+    setweight(to_tsvector('english', COALESCE(NEW.content, '')), 'B') ||
+    setweight(to_tsvector('english', COALESCE(array_to_string(NEW.tags, ' '), '')), 'C');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to update search_vector for reflections
+CREATE OR REPLACE FUNCTION update_reflections_search_vector()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.search_vector :=
+    setweight(to_tsvector('english', COALESCE(NEW.title, '')), 'A') ||
+    setweight(to_tsvector('english', COALESCE(NEW.content, '')), 'B') ||
+    setweight(to_tsvector('english', COALESCE(array_to_string(NEW.tags, ' '), '')), 'C');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Triggers for updated_at
 CREATE TRIGGER update_goals_updated_at
   BEFORE UPDATE ON goals
@@ -180,6 +204,22 @@ CREATE TRIGGER update_users_updated_at
   BEFORE UPDATE ON users
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
+
+-- Triggers for search_vector
+CREATE TRIGGER update_goals_search_vector_trigger
+  BEFORE INSERT OR UPDATE ON goals
+  FOR EACH ROW
+  EXECUTE FUNCTION update_goals_search_vector();
+
+CREATE TRIGGER update_notes_search_vector_trigger
+  BEFORE INSERT OR UPDATE ON notes
+  FOR EACH ROW
+  EXECUTE FUNCTION update_notes_search_vector();
+
+CREATE TRIGGER update_reflections_search_vector_trigger
+  BEFORE INSERT OR UPDATE ON reflections
+  FOR EACH ROW
+  EXECUTE FUNCTION update_reflections_search_vector();
 
 -- ============================================================================
 -- ROW LEVEL SECURITY (RLS)

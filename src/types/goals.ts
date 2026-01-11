@@ -57,6 +57,10 @@ export interface Goal {
   // Tags for filtering/grouping
   tags: string[];
 
+  // Custom icon and URL
+  iconUrl?: string;  // URL to custom icon (uploaded or auto-fetched from url)
+  url?: string;      // Link to project or resource associated with this goal
+
   // Metadata
   createdAt: Date;
   updatedAt: Date;

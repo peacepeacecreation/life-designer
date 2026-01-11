@@ -16,6 +16,20 @@ export const runtime = 'nodejs';
 export const maxDuration = 10;
 
 /**
+ * Safely convert a date value to ISO string or pass through if already a string
+ */
+function ensureDateString(date: Date | string | undefined): string | undefined {
+  if (!date) return undefined;
+  if (typeof date === 'string') return date;
+  if (date instanceof Date) return date.toISOString();
+  try {
+    return new Date(date as any).toISOString();
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * GET /api/goals
  * Returns all goals for the authenticated user
  */
@@ -78,6 +92,8 @@ export async function GET(request: NextRequest) {
       targetEndDate: new Date(g.target_end_date),
       actualEndDate: g.actual_end_date ? new Date(g.actual_end_date) : undefined,
       tags: g.tags || [],
+      iconUrl: g.icon_url,
+      url: g.url,
       createdAt: new Date(g.created_at),
       updatedAt: new Date(g.updated_at),
       connections: (g.goal_connections_from || []).map((c: any) => ({
@@ -191,9 +207,9 @@ export async function POST(request: NextRequest) {
         status,
         time_allocated: timeAllocated || 0,
         progress_percentage: progressPercentage || 0,
-        start_date: startDate,
-        target_end_date: targetEndDate,
-        actual_end_date: actualEndDate || null,
+        start_date: ensureDateString(startDate),
+        target_end_date: ensureDateString(targetEndDate),
+        actual_end_date: ensureDateString(actualEndDate),
         tags: tags || [],
         embedding,
       })

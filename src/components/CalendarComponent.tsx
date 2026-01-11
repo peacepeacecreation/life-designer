@@ -7,8 +7,10 @@ import { useState, useCallback, useEffect } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { RefreshCw, LogOut, LogIn } from 'lucide-react';
+import { RefreshCw, LogOut, LogIn, Settings2 } from 'lucide-react';
 import { useCalendarEvents } from '@/hooks/useCalendarEvents';
+import { useCalendarSettings } from '@/hooks/useCalendarSettings';
+import { CalendarSettingsDialog } from '@/components/calendar/CalendarSettingsDialog';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 const locales = {
@@ -36,8 +38,10 @@ interface CalendarEvent {
 export default function CalendarComponent() {
   const { data: session, status } = useSession();
   const { events, setGoogleEvents, setCurrentDate } = useCalendarEvents();
+  const { settings, updateSettings, resetSettings, getTimeRange } = useCalendarSettings();
   const [view, setView] = useState<View>('month');
   const [loading, setLoading] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Завантаження подій з Google Calendar
   useEffect(() => {
@@ -158,6 +162,14 @@ export default function CalendarComponent() {
               </>
             )}
           </div>
+          <Button
+            onClick={() => setSettingsOpen(true)}
+            variant="outline"
+            size="sm"
+          >
+            <Settings2 className="mr-2 h-4 w-4" />
+            Налаштування часу
+          </Button>
         </div>
       </Card>
 
@@ -174,6 +186,8 @@ export default function CalendarComponent() {
           view={view}
           onView={setView}
           culture="uk"
+          min={getTimeRange().minTime}
+          max={getTimeRange().maxTime}
           messages={{
             next: 'Далі',
             previous: 'Назад',
@@ -190,6 +204,15 @@ export default function CalendarComponent() {
           }}
         />
       </div>
+
+      {/* Settings Dialog */}
+      <CalendarSettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        settings={settings}
+        onSave={updateSettings}
+        onReset={resetSettings}
+      />
     </div>
   );
 }
