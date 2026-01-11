@@ -27,7 +27,7 @@
   --goal-health: 142 71% 45%;    /* Зелений для здоров'я */
   --goal-hobbies: 280 65% 60%;   /* Фіолетовий для хобі */
 
-  --background: oklch(1 0 0);
+  --background: oklch(0.96 0 0);
   --foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
@@ -67,23 +67,23 @@
 }
 
 @theme inline {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
@@ -109,12 +109,12 @@
 }
 
 * {
-  border-color: hsl(var(--border));
+  border-color: var(--border);
 }
 
 body {
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
+  background: var(--background);
+  color: var(--foreground);
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 
@@ -126,17 +126,17 @@ body {
 .rbc-header {
   padding: 12px 6px;
   font-weight: 600;
-  border-bottom: 1px solid hsl(var(--border));
-  background: hsl(var(--muted));
+  border-bottom: 1px solid var(--border);
+  background: var(--muted);
 }
 
 .rbc-today {
-  background-color: hsl(var(--accent));
+  background-color: var(--accent);
 }
 
 .rbc-event {
-  background-color: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
+  background-color: var(--primary);
+  color: var(--primary-foreground);
   border-radius: var(--radius-sm);
   padding: 2px 5px;
 }
@@ -146,26 +146,26 @@ body {
 }
 
 .rbc-event.rbc-selected {
-  background-color: hsl(var(--primary));
+  background-color: var(--primary);
 }
 
 .rbc-month-view,
 .rbc-time-view {
-  border: 1px solid hsl(var(--border));
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   overflow: hidden;
 }
 
 .rbc-day-bg {
-  border-left: 1px solid hsl(var(--border));
+  border-left: 1px solid var(--border);
 }
 
 .rbc-month-row {
-  border-top: 1px solid hsl(var(--border));
+  border-top: 1px solid var(--border);
 }
 
 .rbc-off-range-bg {
-  background: hsl(var(--muted));
+  background: var(--muted);
 }
 
 .rbc-toolbar {
