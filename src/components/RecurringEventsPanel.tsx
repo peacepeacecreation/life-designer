@@ -31,8 +31,11 @@ export default function RecurringEventsPanel() {
           </p>
           <Button onClick={handleLoadExamples} variant="outline" size="sm">
             <Sparkles className="mr-2 h-4 w-4" />
-            Додати созвон о 13:00 (Пн-Пт)
+            Додати мої созвони
           </Button>
+          <p className="text-xs text-muted-foreground mt-2">
+            13:00 (Пн-Пт) • 20:00 (Пн/Ср/Пт)
+          </p>
         </div>
       </Card>
     );

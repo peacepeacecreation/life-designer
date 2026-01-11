@@ -5,6 +5,7 @@ import { Metadata } from 'next';
 import GoalsList from '@/components/goals/GoalsList';
 import GoalForm from '@/components/goals/GoalForm';
 import TimeAllocationPie from '@/components/goals/visualizations/TimeAllocationPie';
+import { MigrationBanner } from '@/components/migration';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Plus, Target } from 'lucide-react';
@@ -41,6 +42,9 @@ export default function GoalsPage() {
           Додати ціль
         </Button>
       </div>
+
+      {/* Migration Banner */}
+      <MigrationBanner />
 
       {/* Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -45,10 +45,9 @@ export function createServerClient() {
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error(
-      'Missing Supabase server environment variables. ' +
-      'Please add NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to .env.local'
-    );
+    // Return null instead of throwing error to allow graceful degradation
+    // API routes should check for null and return 503 Service Unavailable
+    return null as any;
   }
 
   return createClient<Database>(supabaseUrl, supabaseServiceKey, {

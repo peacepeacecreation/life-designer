@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Calendar, Target, Activity, BarChart3 } from 'lucide-react';
+import { Calendar, Target, Activity, BarChart3, FileText, Lightbulb } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -48,16 +48,48 @@ export default function Home() {
             </Card>
           </Link>
 
+          <Link href="/notes">
+            <Card className="hover:shadow-lg transition-all cursor-pointer h-full bg-white dark:bg-card">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-purple-100 dark:bg-purple-950 rounded-lg">
+                    <FileText className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <CardTitle className="text-2xl text-black dark:text-white">Нотатки</CardTitle>
+                </div>
+                <CardDescription className="text-base text-black/70 dark:text-white/70">
+                  Зберігайте ідеї, нотатки зі зустрічей та навчальні матеріали
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link href="/reflections">
+            <Card className="hover:shadow-lg transition-all cursor-pointer h-full bg-white dark:bg-card">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-yellow-100 dark:bg-yellow-950 rounded-lg">
+                    <Lightbulb className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+                  </div>
+                  <CardTitle className="text-2xl text-black dark:text-white">Роздуми</CardTitle>
+                </div>
+                <CardDescription className="text-base text-black/70 dark:text-white/70">
+                  Щоденні, тижневі та місячні рефлексії для самоаналізу
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
           <Card className="hover:shadow-lg transition-all h-full bg-white dark:bg-card opacity-60">
             <CardHeader>
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-purple-100 dark:bg-purple-950 rounded-lg">
-                  <Activity className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                <div className="p-2 bg-pink-100 dark:bg-pink-950 rounded-lg">
+                  <Activity className="h-6 w-6 text-pink-600 dark:text-pink-400" />
                 </div>
                 <CardTitle className="text-2xl text-black dark:text-white">Звички</CardTitle>
               </div>
               <CardDescription className="text-base text-black/70 dark:text-white/70">
-                Формуйте позитивні щоденні звички
+                Формуйте позитивні щоденні звички (скоро)
               </CardDescription>
             </CardHeader>
           </Card>

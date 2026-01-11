@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { GoalsProvider } from "@/contexts/GoalsContext";
 import { RecurringEventsProvider } from "@/contexts/RecurringEventsContext";
+import { NotesProvider } from "@/contexts/NotesContext";
+import { ReflectionsProvider } from "@/contexts/ReflectionsContext";
 import SessionProvider from "@/components/SessionProvider";
 import Header from "@/components/Header";
 
@@ -30,10 +32,14 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`}>
         <SessionProvider>
           <GoalsProvider>
-            <RecurringEventsProvider>
-              <Header />
-              {children}
-            </RecurringEventsProvider>
+            <NotesProvider>
+              <ReflectionsProvider>
+                <RecurringEventsProvider>
+                  <Header />
+                  {children}
+                </RecurringEventsProvider>
+              </ReflectionsProvider>
+            </NotesProvider>
           </GoalsProvider>
         </SessionProvider>
       </body>

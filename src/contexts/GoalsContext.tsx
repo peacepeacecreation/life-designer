@@ -8,7 +8,7 @@ const STORAGE_KEY = 'life-designer-goals';
 interface GoalsContextType {
   goals: Goal[];
   addGoal: (goal: Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'connections'>) => void;
-  updateGoal: (id: string, updates: Partial<Goal>) => void;
+  updateGoal: (id: string, updates: Partial<Goal>) => Promise<Goal | null>;
   deleteGoal: (id: string) => void;
   addConnection: (connection: Omit<GoalConnection, 'id'>) => void;
   removeConnection: (goalId: string, connectionId: string) => void;
@@ -97,12 +97,18 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Update an existing goal
-  const updateGoal = useCallback((id: string, updates: Partial<Goal>) => {
-    setGoals(prev => prev.map(goal =>
-      goal.id === id
-        ? { ...goal, ...updates, updatedAt: new Date() }
-        : goal
-    ));
+  const updateGoal = useCallback(async (id: string, updates: Partial<Goal>): Promise<Goal | null> => {
+    let updatedGoal: Goal | null = null;
+
+    setGoals(prev => prev.map(goal => {
+      if (goal.id === id) {
+        updatedGoal = { ...goal, ...updates, updatedAt: new Date() };
+        return updatedGoal;
+      }
+      return goal;
+    }));
+
+    return updatedGoal;
   }, []);
 
   // Delete a goal

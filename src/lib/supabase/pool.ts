@@ -19,9 +19,9 @@ let cachedServerClient: SupabaseClient<Database> | null = null;
  * Get or create a cached server Supabase client
  * Reuses the same client within a single execution context
  *
- * @returns Cached Supabase server client
+ * @returns Cached Supabase server client or null if not configured
  */
-export function getServerClient(): SupabaseClient<Database> {
+export function getServerClient(): SupabaseClient<Database> | null {
   if (!cachedServerClient) {
     cachedServerClient = createServerClient();
   }

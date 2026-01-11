@@ -61,7 +61,7 @@ export function generateEventsFromRecurring(
         break;
     }
 
-    if (shouldInclude && isAfter(currentDate, startDate)) {
+    if (shouldInclude && !isBefore(currentDate, startDate)) {
       const eventStart = setMinutes(setHours(new Date(currentDate), hours), minutes);
       const eventEnd = new Date(eventStart.getTime() + duration * 60 * 1000);
 
@@ -84,7 +84,12 @@ export function generateEventsFromRecurring(
         currentDate = addDays(currentDate, recurrence.interval);
         break;
       case RecurrenceFrequency.WEEKLY:
-        currentDate = addWeeks(currentDate, recurrence.interval);
+        // Для weekly з конкретними днями - перевіряємо кожен день
+        if (recurrence.daysOfWeek && recurrence.daysOfWeek.length > 0) {
+          currentDate = addDays(currentDate, 1);
+        } else {
+          currentDate = addWeeks(currentDate, recurrence.interval);
+        }
         break;
       case RecurrenceFrequency.MONTHLY:
         currentDate = addMonths(currentDate, recurrence.interval);

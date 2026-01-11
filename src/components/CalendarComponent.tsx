@@ -8,6 +8,7 @@ import { useSession, signIn, signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { RefreshCw, LogOut, LogIn } from 'lucide-react';
+import { useCalendarEvents } from '@/hooks/useCalendarEvents';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 const locales = {
@@ -34,7 +35,7 @@ interface CalendarEvent {
 
 export default function CalendarComponent() {
   const { data: session, status } = useSession();
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const { events, setGoogleEvents, setCurrentDate } = useCalendarEvents();
   const [view, setView] = useState<View>('month');
   const [loading, setLoading] = useState(false);
 
@@ -56,7 +57,7 @@ export default function CalendarComponent() {
           start: new Date(event.start),
           end: new Date(event.end),
         }));
-        setEvents(formattedEvents);
+        setGoogleEvents(formattedEvents);
       }
     } catch (error) {
       console.error('Error loading calendar events:', error);

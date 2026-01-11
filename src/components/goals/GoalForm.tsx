@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { useGoals } from '@/contexts/GoalsContext';
-import { GoalCategory, GoalPriority, GoalStatus } from '@/types';
+import { Goal, GoalCategory, GoalPriority, GoalStatus } from '@/types';
 import { categoryMeta, priorityLabels, statusLabels } from '@/lib/categoryConfig';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -14,10 +14,13 @@ import { AlertCircle } from 'lucide-react';
 interface GoalFormProps {
   isOpen: boolean;
   onClose: () => void;
+  goalToEdit?: Goal;
+  onGoalUpdated?: (goal: Goal) => void;
 }
 
-export default function GoalForm({ isOpen, onClose }: GoalFormProps) {
-  const { addGoal, getTotalTimeAllocated } = useGoals();
+export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }: GoalFormProps) {
+  const { addGoal, updateGoal, getTotalTimeAllocated } = useGoals();
+  const isEditMode = !!goalToEdit;
 
   const [formData, setFormData] = useState({
     name: '',
@@ -31,21 +34,71 @@ export default function GoalForm({ isOpen, onClose }: GoalFormProps) {
     progressPercentage: 0,
   });
 
-  const handleSubmit = (e: FormEvent) => {
+  // Initialize form with goal data when editing
+  useEffect(() => {
+    if (goalToEdit) {
+      setFormData({
+        name: goalToEdit.name,
+        description: goalToEdit.description,
+        category: goalToEdit.category,
+        priority: goalToEdit.priority,
+        status: goalToEdit.status,
+        timeAllocated: goalToEdit.timeAllocated,
+        startDate: new Date(goalToEdit.startDate).toISOString().split('T')[0],
+        targetEndDate: new Date(goalToEdit.targetEndDate).toISOString().split('T')[0],
+        progressPercentage: goalToEdit.progressPercentage,
+      });
+    } else {
+      // Reset form when creating new goal
+      setFormData({
+        name: '',
+        description: '',
+        category: GoalCategory.WORK_STARTUPS,
+        priority: GoalPriority.MEDIUM,
+        status: GoalStatus.NOT_STARTED,
+        timeAllocated: 1,
+        startDate: new Date().toISOString().split('T')[0],
+        targetEndDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        progressPercentage: 0,
+      });
+    }
+  }, [goalToEdit, isOpen]);
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    addGoal({
-      name: formData.name,
-      description: formData.description,
-      category: formData.category,
-      priority: formData.priority,
-      status: formData.status,
-      timeAllocated: formData.timeAllocated,
-      startDate: new Date(formData.startDate),
-      targetEndDate: new Date(formData.targetEndDate),
-      progressPercentage: formData.progressPercentage,
-      tags: [],
-    });
+    if (isEditMode && goalToEdit) {
+      // Update existing goal
+      const updatedGoal = await updateGoal(goalToEdit.id, {
+        name: formData.name,
+        description: formData.description,
+        category: formData.category,
+        priority: formData.priority,
+        status: formData.status,
+        timeAllocated: formData.timeAllocated,
+        startDate: new Date(formData.startDate),
+        targetEndDate: new Date(formData.targetEndDate),
+        progressPercentage: formData.progressPercentage,
+      });
+
+      if (updatedGoal && onGoalUpdated) {
+        onGoalUpdated(updatedGoal);
+      }
+    } else {
+      // Create new goal
+      addGoal({
+        name: formData.name,
+        description: formData.description,
+        category: formData.category,
+        priority: formData.priority,
+        status: formData.status,
+        timeAllocated: formData.timeAllocated,
+        startDate: new Date(formData.startDate),
+        targetEndDate: new Date(formData.targetEndDate),
+        progressPercentage: formData.progressPercentage,
+        tags: [],
+      });
+    }
 
     onClose();
   };
@@ -59,7 +112,9 @@ export default function GoalForm({ isOpen, onClose }: GoalFormProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-card">
         <DialogHeader>
-          <DialogTitle className="text-black dark:text-white">Створити нову ціль</DialogTitle>
+          <DialogTitle className="text-black dark:text-white">
+            {isEditMode ? 'Редагувати ціль' : 'Створити нову ціль'}
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -225,7 +280,7 @@ export default function GoalForm({ isOpen, onClose }: GoalFormProps) {
               Скасувати
             </Button>
             <Button type="submit">
-              Створити ціль
+              {isEditMode ? 'Зберегти зміни' : 'Створити ціль'}
             </Button>
           </div>
         </form>
