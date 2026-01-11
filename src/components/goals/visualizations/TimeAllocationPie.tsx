@@ -12,6 +12,8 @@ import {
 import { useGoals } from '@/contexts/GoalsContext';
 import { GoalCategory } from '@/types';
 import { categoryMeta } from '@/lib/categoryConfig';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Clock, TrendingUp } from 'lucide-react';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -34,7 +36,7 @@ export default function TimeAllocationPie() {
     // Filter out categories with 0 time and prepare data
     const categories = categoryMeta.filter(cat => timeByCategory[cat.id] > 0);
     const data = categories.map(cat => timeByCategory[cat.id]);
-    const labels = categories.map(cat => `${cat.icon} ${cat.name}`);
+    const labels = categories.map(cat => cat.name);
 
     // Extract colors (remove hsl() wrapper for Chart.js)
     const backgroundColor = categories.map(cat => {
@@ -106,40 +108,57 @@ export default function TimeAllocationPie() {
 
   if (goals.length === 0) {
     return (
-      <div className="p-6 border border-border rounded-lg bg-card">
-        <h3 className="text-lg font-semibold mb-4">Розподіл часу</h3>
-        <div className="text-center py-8 text-muted-foreground">
-          Додайте цілі щоб побачити розподіл часу
-        </div>
-      </div>
+      <Card className="bg-white dark:bg-card">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-primary" />
+            <CardTitle className="text-black dark:text-white">Розподіл часу</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            Додайте цілі щоб побачити розподіл часу
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="p-6 border border-border rounded-lg bg-card">
-      <h3 className="text-lg font-semibold mb-4">Розподіл часу</h3>
+    <Card className="bg-white dark:bg-card">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Clock className="h-5 w-5 text-primary" />
+          <CardTitle className="text-black dark:text-white">Розподіл часу</CardTitle>
+        </div>
+      </CardHeader>
 
-      {/* Stats */}
-      <div className="mb-6 space-y-2">
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">Всього годин:</span>
-          <span className="text-2xl font-bold">{totalHours}</span>
+      <CardContent className="space-y-6">
+        {/* Stats */}
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Всього годин:</span>
+            <span className="text-2xl font-bold text-black dark:text-white">{totalHours}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Статус:</span>
+            </div>
+            <span className={`text-sm font-semibold ${getRiskColor()}`}>
+              {getRiskMessage()}
+            </span>
+          </div>
+          <div className="text-xs text-muted-foreground text-center pt-2 border-t border-border">
+            З 168 доступних годин на тиждень
+          </div>
         </div>
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">Статус:</span>
-          <span className={`text-sm font-semibold ${getRiskColor()}`}>
-            {getRiskMessage()}
-          </span>
-        </div>
-        <div className="text-xs text-muted-foreground text-center pt-2">
-          З 168 доступних годин на тиждень
-        </div>
-      </div>
 
-      {/* Chart */}
-      <div className="w-full aspect-square max-w-sm mx-auto">
-        <Doughnut data={chartData} options={options} />
-      </div>
-    </div>
+        {/* Chart */}
+        <div className="w-full aspect-square max-w-sm mx-auto">
+          <Doughnut data={chartData} options={options} />
+        </div>
+      </CardContent>
+    </Card>
   );
 }
