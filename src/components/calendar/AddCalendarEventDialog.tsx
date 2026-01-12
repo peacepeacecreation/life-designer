@@ -5,9 +5,9 @@
  * Supports goal association, date/time selection, and custom colors
  */
 
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,23 +15,28 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useGoals } from '@/contexts/GoalsContext';
-import type { CalendarEventWithGoal, CreateCalendarEventInput } from '@/types/calendar-events';
-import { getCategoryMeta } from '@/lib/categoryConfig';
-import { isPredefinedIcon, getIconById } from '@/lib/goalIcons';
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar, FileText } from "lucide-react";
+import { useGoals } from "@/contexts/GoalsContext";
+import type {
+  CalendarEventWithGoal,
+  CreateCalendarEventInput,
+} from "@/types/calendar-events";
+import { getCategoryMeta } from "@/lib/categoryConfig";
+import { isPredefinedIcon, getIconById } from "@/lib/goalIcons";
 
 interface AddCalendarEventDialogProps {
   open: boolean;
@@ -40,16 +45,17 @@ interface AddCalendarEventDialogProps {
   onDelete?: (eventId: string) => Promise<void>;
   event?: CalendarEventWithGoal | null; // For editing existing event
   initialStart?: Date; // For creating new event with pre-filled start time
-  initialEnd?: Date;   // For creating new event with pre-filled end time
+  initialEnd?: Date; // For creating new event with pre-filled end time
+  initialGoalId?: string; // For pre-selecting a goal
 }
 
 const DEFAULT_COLORS = [
-  { value: '#93c5fd', label: 'Синій' },
-  { value: '#c4b5fd', label: 'Фіолетовий' },
-  { value: '#f9a8d4', label: 'Рожевий' },
-  { value: '#fcd34d', label: 'Помаранчевий' },
-  { value: '#6ee7b7', label: 'Зелений' },
-  { value: '#fca5a5', label: 'Червоний' },
+  { value: "#93c5fd", label: "Синій" },
+  { value: "#c4b5fd", label: "Фіолетовий" },
+  { value: "#f9a8d4", label: "Рожевий" },
+  { value: "#fcd34d", label: "Помаранчевий" },
+  { value: "#6ee7b7", label: "Зелений" },
+  { value: "#fca5a5", label: "Червоний" },
 ];
 
 export function AddCalendarEventDialog({
@@ -60,20 +66,21 @@ export function AddCalendarEventDialog({
   event,
   initialStart,
   initialEnd,
+  initialGoalId,
 }: AddCalendarEventDialogProps) {
   const { goals } = useGoals();
   const isEditing = !!event;
 
   // Form state
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [location, setLocation] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [endTime, setEndTime] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [allDay, setAllDay] = useState(false);
-  const [goalId, setGoalId] = useState<string>('');
+  const [goalId, setGoalId] = useState<string>("");
   const [color, setColor] = useState(DEFAULT_COLORS[0].value);
   const [createsTimeEntry, setCreatesTimeEntry] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -81,13 +88,15 @@ export function AddCalendarEventDialog({
 
   // Format date for input (YYYY-MM-DD)
   const formatDateForInput = (date: Date | string): string => {
-    const d = date instanceof Date ? date : new Date(Date.parse(date as string));
-    return d.toISOString().split('T')[0];
+    const d =
+      date instanceof Date ? date : new Date(Date.parse(date as string));
+    return d.toISOString().split("T")[0];
   };
 
   // Format time for input (HH:MM)
   const formatTimeForInput = (date: Date | string): string => {
-    const d = date instanceof Date ? date : new Date(Date.parse(date as string));
+    const d =
+      date instanceof Date ? date : new Date(Date.parse(date as string));
     return d.toTimeString().slice(0, 5);
   };
 
@@ -97,19 +106,22 @@ export function AddCalendarEventDialog({
       if (isEditing && event) {
         // Editing existing event
         setTitle(event.title);
-        setDescription(event.description || '');
-        setLocation(event.location || '');
+        setDescription(event.description || "");
+        setLocation(event.location || "");
         setStartDate(formatDateForInput(event.startTime));
         setStartTime(formatTimeForInput(event.startTime));
         setEndDate(formatDateForInput(event.endTime));
         setEndTime(formatTimeForInput(event.endTime));
         setAllDay(event.allDay);
-        setGoalId(event.goalId || '');
+        setGoalId(event.goalId || "");
 
         // Використовуємо колір події, або якщо є ціль - колір цілі, або дефолтний
-        const eventColor = event.color ||
-          (event.goal?.color) ||
-          (event.goalId ? goals.find(g => g.id === event.goalId)?.color : undefined) ||
+        const eventColor =
+          event.color ||
+          event.goal?.color ||
+          (event.goalId
+            ? goals.find((g) => g.id === event.goalId)?.color
+            : undefined) ||
           DEFAULT_COLORS[0].value;
         setColor(eventColor);
         setCreatesTimeEntry(event.createsTimeEntry ?? true);
@@ -118,24 +130,31 @@ export function AddCalendarEventDialog({
         const start = initialStart || new Date();
         const end = initialEnd || new Date(start.getTime() + 60 * 60 * 1000); // +1 hour
 
-        setTitle('');
-        setDescription('');
-        setLocation('');
+        setTitle("");
+        setDescription("");
+        setLocation("");
         setStartDate(formatDateForInput(start));
         setStartTime(formatTimeForInput(start));
         setEndDate(formatDateForInput(end));
         setEndTime(formatTimeForInput(end));
         setAllDay(false);
-        setGoalId('');
-        setColor(DEFAULT_COLORS[0].value);
+        setGoalId(initialGoalId || "");
+
+        // Якщо є initialGoalId, встановлюємо колір цілі
+        if (initialGoalId) {
+          const selectedGoal = goals.find((g) => g.id === initialGoalId);
+          setColor(selectedGoal?.color || DEFAULT_COLORS[0].value);
+        } else {
+          setColor(DEFAULT_COLORS[0].value);
+        }
       }
     }
-  }, [open, isEditing, event, initialStart, initialEnd, goals]);
+  }, [open, isEditing, event, initialStart, initialEnd, initialGoalId, goals]);
 
   // Автоматично оновлювати колір коли змінюється ціль
   useEffect(() => {
     if (goalId) {
-      const selectedGoal = goals.find(g => g.id === goalId);
+      const selectedGoal = goals.find((g) => g.id === goalId);
       if (selectedGoal?.color) {
         setColor(selectedGoal.color);
       }
@@ -143,32 +162,32 @@ export function AddCalendarEventDialog({
   }, [goalId, goals]);
 
   const resetForm = () => {
-    setTitle('');
-    setDescription('');
-    setLocation('');
-    setStartDate('');
-    setStartTime('');
-    setEndDate('');
-    setEndTime('');
+    setTitle("");
+    setDescription("");
+    setLocation("");
+    setStartDate("");
+    setStartTime("");
+    setEndDate("");
+    setEndTime("");
     setAllDay(false);
-    setGoalId('');
+    setGoalId("");
     setColor(DEFAULT_COLORS[0].value);
   };
 
   const handleSave = async () => {
     // Validation
     if (!title.trim()) {
-      alert('Будь ласка, введіть назву події');
+      alert("Будь ласка, введіть назву події");
       return;
     }
 
     if (!startDate || !endDate) {
-      alert('Будь ласка, оберіть дату початку та кінця');
+      alert("Будь ласка, оберіть дату початку та кінця");
       return;
     }
 
     if (!allDay && (!startTime || !endTime)) {
-      alert('Будь ласка, оберіть час початку та кінця');
+      alert("Будь ласка, оберіть час початку та кінця");
       return;
     }
 
@@ -187,7 +206,7 @@ export function AddCalendarEventDialog({
 
     // Validate time range
     if (end <= start) {
-      alert('Час кінця має бути після часу початку');
+      alert("Час кінця має бути після часу початку");
       return;
     }
 
@@ -208,8 +227,8 @@ export function AddCalendarEventDialog({
       resetForm();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error saving event:', error);
-      alert('Помилка при збереженні події');
+      console.error("Error saving event:", error);
+      alert("Помилка при збереженні події");
     } finally {
       setSaving(false);
     }
@@ -218,7 +237,7 @@ export function AddCalendarEventDialog({
   const handleDelete = async () => {
     if (!isEditing || !event || !onDelete) return;
 
-    const confirmed = confirm('Ви впевнені, що хочете видалити цю подію?');
+    const confirmed = confirm("Ви впевнені, що хочете видалити цю подію?");
     if (!confirmed) return;
 
     try {
@@ -227,8 +246,8 @@ export function AddCalendarEventDialog({
       resetForm();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error deleting event:', error);
-      alert('Помилка при видаленні події');
+      console.error("Error deleting event:", error);
+      alert("Помилка при видаленні події");
     } finally {
       setDeleting(false);
     }
@@ -236,232 +255,259 @@ export function AddCalendarEventDialog({
 
   // Get selected goal for color preview
   const selectedGoal = goals.find((g) => g.id === goalId);
-  const selectedGoalMeta = selectedGoal ? getCategoryMeta(selectedGoal.category) : null;
-  const displayColor = goalId && selectedGoalMeta ? selectedGoalMeta.color : color;
+  const selectedGoalMeta = selectedGoal
+    ? getCategoryMeta(selectedGoal.category)
+    : null;
+  const displayColor =
+    goalId && selectedGoalMeta ? selectedGoalMeta.color : color;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? 'Редагувати подію' : 'Нова подія'}
+            {isEditing ? "Редагувати подію" : "Нова подія"}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? 'Змініть деталі події'
-              : 'Додайте нову подію до календаря'}
+              ? "Змініть деталі події"
+              : "Додайте нову подію до календаря"}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title">
-              Назва <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Назва події"
-            />
-          </div>
+        <Tabs defaultValue="details" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="details" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Деталі
+            </TabsTrigger>
+            <TabsTrigger value="datetime" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Дата і час
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Опис</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Опис події (опціонально)"
-              rows={3}
-            />
-          </div>
-
-          {/* Location */}
-          <div className="space-y-2">
-            <Label htmlFor="location">Місце</Label>
-            <Input
-              id="location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Місце події (опціонально)"
-            />
-          </div>
-
-          {/* All Day Checkbox */}
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="allDay"
-              checked={allDay}
-              onCheckedChange={(checked) => setAllDay(checked === true)}
-            />
-            <Label htmlFor="allDay" className="cursor-pointer">
-              Цілий день
-            </Label>
-          </div>
-
-          {/* Start Date/Time */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Details Tab */}
+          <TabsContent value="details" className="space-y-4">
+            {/* Title */}
             <div className="space-y-2">
-              <Label htmlFor="startDate">
-                Дата початку <span className="text-destructive">*</span>
+              <Label htmlFor="title">
+                Назва <span className="text-destructive">*</span>
               </Label>
               <Input
-                id="startDate"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Назва події"
               />
             </div>
-            {!allDay && (
-              <div className="space-y-2">
-                <Label htmlFor="startTime">
-                  Час початку <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="startTime"
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                />
-              </div>
-            )}
-          </div>
 
-          {/* End Date/Time */}
-          <div className="grid grid-cols-2 gap-4">
+            {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="endDate">
-                Дата кінця <span className="text-destructive">*</span>
-              </Label>
+              <Label htmlFor="description">Опис</Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Опис події (опціонально)"
+                rows={3}
+              />
+            </div>
+
+            {/* Location */}
+            <div className="space-y-2">
+              <Label htmlFor="location">Місце</Label>
               <Input
-                id="endDate"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                id="location"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="Місце події (опціонально)"
               />
             </div>
-            {!allDay && (
-              <div className="space-y-2">
-                <Label htmlFor="endTime">
-                  Час кінця <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="endTime"
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                />
-              </div>
-            )}
-          </div>
 
-          {/* Goal Selection */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="goal">Прив'язати до цілі</Label>
-              {goalId && (
-                <button
-                  type="button"
-                  onClick={() => setGoalId('')}
-                  className="text-xs text-muted-foreground hover:text-foreground underline"
-                >
-                  Очистити
-                </button>
-              )}
-            </div>
-            <Select value={goalId || undefined} onValueChange={setGoalId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Оберіть ціль (опціонально)" />
-              </SelectTrigger>
-              <SelectContent>
-                {goals.map((goal) => {
-                  const meta = getCategoryMeta(goal.category);
-                  return (
-                    <SelectItem key={goal.id} value={goal.id}>
-                      <div className="flex items-center gap-2">
-                        {goal.iconUrl && isPredefinedIcon(goal.iconUrl) ? (
-                          (() => {
-                            const iconOption = getIconById(goal.iconUrl!);
-                            if (iconOption) {
-                              const IconComponent = iconOption.Icon;
-                              return <IconComponent className="w-4 h-4" style={{ color: goal.color || meta.color }} />;
-                            }
-                            return null;
-                          })()
-                        ) : goal.iconUrl ? (
-                          <img
-                            src={goal.iconUrl}
-                            alt=""
-                            className="w-4 h-4 object-contain"
-                          />
-                        ) : (
-                          <span
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: meta.color }}
-                          />
-                        )}
-                        <span>{goal.name}</span>
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Time Entry Tracking Toggle (only if goal selected) */}
-          {goalId && (
-            <div className="flex items-center space-x-2 p-3 rounded-lg border bg-muted/50">
-              <Checkbox
-                id="createsTimeEntry"
-                checked={createsTimeEntry}
-                onCheckedChange={(checked) => setCreatesTimeEntry(checked === true)}
-              />
-              <Label htmlFor="createsTimeEntry" className="cursor-pointer">
-                Відстежувати час для цієї події
-              </Label>
-            </div>
-          )}
-
-          {/* Color Selection (only if no goal selected) */}
-          {!goalId && (
+            {/* Goal Selection */}
             <div className="space-y-2">
-              <Label htmlFor="color">Колір</Label>
-              <Select value={color} onValueChange={setColor}>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="goal">Прив'язати до цілі</Label>
+                {goalId && (
+                  <button
+                    type="button"
+                    onClick={() => setGoalId("")}
+                    className="text-xs text-muted-foreground hover:text-foreground underline"
+                  >
+                    Очистити
+                  </button>
+                )}
+              </div>
+              <Select value={goalId || undefined} onValueChange={setGoalId}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Оберіть ціль (опціонально)" />
                 </SelectTrigger>
                 <SelectContent>
-                  {DEFAULT_COLORS.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="w-4 h-4 rounded"
-                          style={{ backgroundColor: c.value }}
-                        />
-                        <span>{c.label}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {goals.map((goal) => {
+                    const meta = getCategoryMeta(goal.category);
+                    return (
+                      <SelectItem key={goal.id} value={goal.id}>
+                        <div className="flex items-center gap-2">
+                          {goal.iconUrl && isPredefinedIcon(goal.iconUrl) ? (
+                            (() => {
+                              const iconOption = getIconById(goal.iconUrl!);
+                              if (iconOption) {
+                                const IconComponent = iconOption.Icon;
+                                return (
+                                  <IconComponent
+                                    className="w-4 h-4"
+                                    style={{ color: goal.color || meta.color }}
+                                  />
+                                );
+                              }
+                              return null;
+                            })()
+                          ) : goal.iconUrl ? (
+                            <img
+                              src={goal.iconUrl}
+                              alt=""
+                              className="w-4 h-4 object-contain"
+                            />
+                          ) : (
+                            <span
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: meta.color }}
+                            />
+                          )}
+                          <span>{goal.name}</span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
-          )}
 
-          {/* Color Preview */}
-          <div className="flex items-center gap-2 p-3 rounded-lg border">
-            <div
-              className="w-6 h-6 rounded"
-              style={{ backgroundColor: displayColor }}
-            />
-            <span className="text-sm text-muted-foreground">
-              Попередній перегляд кольору події
-            </span>
-          </div>
-        </div>
+            {/* Time Entry Tracking Toggle (only if goal selected) */}
+            {goalId && (
+              <div className="flex items-center space-x-2 p-3 rounded-lg border bg-muted/50">
+                <Checkbox
+                  id="createsTimeEntry"
+                  checked={createsTimeEntry}
+                  onCheckedChange={(checked) =>
+                    setCreatesTimeEntry(checked === true)
+                  }
+                />
+                <Label htmlFor="createsTimeEntry" className="cursor-pointer">
+                  Відстежувати час для цієї події
+                </Label>
+              </div>
+            )}
+
+            {/* Color Selection (only if no goal selected) */}
+            {!goalId && (
+              <div className="space-y-2">
+                <Label htmlFor="color">Колір</Label>
+                <Select value={color} onValueChange={setColor}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DEFAULT_COLORS.map((c) => (
+                      <SelectItem key={c.value} value={c.value}>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="w-4 h-4 rounded-full border"
+                            style={{ backgroundColor: c.value }}
+                          />
+                          <span>{c.label}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Color Preview (if goal is selected) */}
+            {goalId && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span
+                  className="w-6 h-6 rounded-md border"
+                  style={{ backgroundColor: color }}
+                />
+                Попередній перегляд кольору події
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Date & Time Tab */}
+          <TabsContent value="datetime" className="space-y-4">
+            {/* All Day Checkbox */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="allDay"
+                checked={allDay}
+                onCheckedChange={(checked) => setAllDay(checked === true)}
+              />
+              <Label htmlFor="allDay" className="cursor-pointer">
+                Цілий день
+              </Label>
+            </div>
+
+            {/* Start Date/Time */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="startDate">
+                  Дата початку <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              {!allDay && (
+                <div className="space-y-2">
+                  <Label htmlFor="startTime">
+                    Час початку <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="startTime"
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* End Date/Time */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="endDate">
+                  Дата кінця <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+              {!allDay && (
+                <div className="space-y-2">
+                  <Label htmlFor="endTime">
+                    Час кінця <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="endTime"
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
 
         <DialogFooter className="flex-row justify-between gap-2">
           {isEditing && onDelete && (
@@ -471,7 +517,7 @@ export function AddCalendarEventDialog({
               disabled={deleting || saving}
               className="text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
             >
-              {deleting ? 'Видалення...' : 'Видалити'}
+              {deleting ? "Видалення..." : "Видалити"}
             </Button>
           )}
           <div className="flex gap-2 ml-auto">
@@ -483,7 +529,7 @@ export function AddCalendarEventDialog({
               Скасувати
             </Button>
             <Button onClick={handleSave} disabled={saving || deleting}>
-              {saving ? 'Збереження...' : isEditing ? 'Зберегти' : 'Створити'}
+              {saving ? "Збереження..." : isEditing ? "Зберегти" : "Створити"}
             </Button>
           </div>
         </DialogFooter>
