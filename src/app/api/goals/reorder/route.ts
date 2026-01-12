@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
 
     // Update each goal's display_order
     const updates = goalOrders.map(({ id, displayOrder }) =>
-      supabase
+      (supabase as any)
         .from('goals')
         .update({ display_order: displayOrder })
         .eq('id', id)
