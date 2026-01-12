@@ -5,7 +5,7 @@ export const categoryMeta: CategoryMeta[] = [
     id: GoalCategory.WORK_STARTUPS,
     name: 'Робота та стартапи',
     description: 'Основна робота та підприємницькі проекти',
-    color: 'hsl(var(--goal-work))',
+    color: '#EF4444', // Червоний - від hsl(0, 84%, 60%)
     icon: '💼',
     examples: ['Основна робота', 'Voice Agent Poland', 'Trading Plan'],
   },
@@ -13,7 +13,7 @@ export const categoryMeta: CategoryMeta[] = [
     id: GoalCategory.LEARNING,
     name: 'Навчання',
     description: 'Професійний розвиток та освіта',
-    color: 'hsl(var(--goal-learning))',
+    color: '#3B82F6', // Синій - від hsl(221, 83%, 53%)
     icon: '📚',
     examples: ['Англійська мова', 'Курси', 'Читання'],
   },
@@ -21,7 +21,7 @@ export const categoryMeta: CategoryMeta[] = [
     id: GoalCategory.HEALTH_SPORTS,
     name: 'Здоров\'я та спорт',
     description: 'Фізична активність та здоров\'я',
-    color: 'hsl(var(--goal-health))',
+    color: '#10B981', // Зелений - від hsl(142, 71%, 45%)
     icon: '💪',
     examples: ['Тренування', 'Харчування', 'Прогулянки'],
   },
@@ -29,7 +29,7 @@ export const categoryMeta: CategoryMeta[] = [
     id: GoalCategory.HOBBIES,
     name: 'Хобі та розвиток',
     description: 'Особисті інтереси та творчість',
-    color: 'hsl(var(--goal-hobbies))',
+    color: '#A855F7', // Фіолетовий - від hsl(280, 65%, 60%)
     icon: '🎨',
     examples: ['Музика', 'Трейдинг (навчання)', 'Фотографія'],
   },
@@ -48,6 +48,7 @@ export const statusLabels: Record<GoalStatus, string> = {
   on_hold: 'Призупинено',
   completed: 'Завершено',
   abandoned: 'Скасовано',
+  ongoing: 'Постійна',
 };
 
 // Helper function to get category meta by id

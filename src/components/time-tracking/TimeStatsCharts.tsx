@@ -307,13 +307,13 @@ export default function TimeStatsCharts() {
                 <ResponsiveContainer width="100%" height={400}>
                   <PieChart>
                     <Pie
-                      data={stats.byGoal}
+                      data={stats.byGoal as any}
                       dataKey="totalHours"
                       nameKey="goalName"
                       cx="50%"
                       cy="50%"
                       outerRadius={120}
-                      label={(entry) => `${entry.goalName}: ${entry.totalHours.toFixed(1)}год`}
+                      label={(entry: any) => `${entry.goalName}: ${entry.totalHours.toFixed(1)}год`}
                     >
                       {stats.byGoal.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

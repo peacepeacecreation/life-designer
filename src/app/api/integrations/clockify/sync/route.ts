@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     const connResult: any = await supabase
       .from('clockify_connections')
       .select('*')
-      .eq('id', connectionId)
+      .eq('id', connectionId!)
       .eq('user_id', userId)
       .single();
 
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     const clockifyClient = getClockifyClient(apiKey);
 
     // 8. Create sync log entry
-    const syncLogResult: any = await supabase
+    const syncLogResult: any = await (supabase as any)
       .from('clockify_sync_logs')
       .insert({
         connection_id: connectionId,
@@ -138,10 +138,10 @@ export async function POST(request: NextRequest) {
     syncLogId = syncLogResult.data?.id;
 
     // 9. Update connection status to 'syncing'
-    await supabase
+    await (supabase as any)
       .from('clockify_connections')
       .update({ sync_status: 'syncing' })
-      .eq('id', connectionId);
+      .eq('id', connectionId!);
 
     // 10. Initialize stats
     const stats: SyncStats = {
@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
     if (syncLogId) {
       const duration = Math.floor((Date.now() - startTime) / 1000);
       const supabase = getServerClient();
-      await supabase
+      await (supabase as any)
         ?.from('clockify_sync_logs')
         .update({
           status: 'failed',
@@ -216,7 +216,7 @@ export async function POST(request: NextRequest) {
     // Update connection with error
     if (connectionId) {
       const supabase = getServerClient();
-      await supabase
+      await (supabase as any)
         ?.from('clockify_connections')
         .update({
           sync_status: 'error',

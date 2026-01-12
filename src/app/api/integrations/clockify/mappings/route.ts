@@ -235,7 +235,7 @@ export async function POST(request: NextRequest) {
       auto_categorize: autoCategorize,
     };
 
-    const mappingResult: any = await supabase
+    const mappingResult: any = await (supabase as any)
       .from('clockify_project_goal_mappings')
       .insert(mappingData)
       .select()

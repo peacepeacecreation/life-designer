@@ -302,7 +302,7 @@ export async function PUT(
     }
 
     // 11. Update time entry
-    const updateResult: any = await supabase
+    const updateResult: any = await (supabase as any)
       .from('time_entries')
       .update(updateData)
       .eq('id', id)
@@ -319,7 +319,7 @@ export async function PUT(
     }
 
     // 12. Fetch full entry with details
-    const { data: fullEntry } = await supabase.rpc(
+    const { data: fullEntry } = await (supabase as any).rpc(
       'get_time_entries_with_details',
       {
         p_user_id: userId,
@@ -329,7 +329,7 @@ export async function PUT(
       }
     );
 
-    const updatedEntry = fullEntry?.find((e: any) => e.id === id);
+    const updatedEntry = (fullEntry as any[])?.find((e: any) => e.id === id);
 
     // 13. Return success response
     return NextResponse.json({

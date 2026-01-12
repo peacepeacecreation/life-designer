@@ -79,26 +79,46 @@ export function useCalendarEvents(options: UseCalendarEventsOptions = {}) {
         start,
         end
       );
-      allRecurringEvents.push(...generated);
+
+      // Додаємо goalId та використовуємо колір цілі якщо є
+      const eventsWithGoalColor = generated.map(event => {
+        if (recurringEvent.goalId) {
+          const goal = goals.find(g => g.id === recurringEvent.goalId);
+          return {
+            ...event,
+            goalId: recurringEvent.goalId,
+            color: goal?.color || event.color || (goal ? getCategoryColor(goal.category) : undefined),
+          };
+        }
+        return event;
+      });
+
+      allRecurringEvents.push(...eventsWithGoalColor);
     });
 
     return allRecurringEvents;
-  }, [recurringEvents, currentDate]);
+  }, [recurringEvents, currentDate, goals]);
 
   // Transform DB events to calendar format
   const dbCalendarEvents = useMemo(() => {
-    return dbEvents.map((event) => ({
-      id: event.id,
-      title: event.title,
-      start: event.startTime,
-      end: event.endTime,
-      description: event.description,
-      location: event.location,
-      isFromDb: true,
-      color: event.color || (event.goal ? getCategoryColor(event.goal.category) : undefined),
-      goalId: event.goalId,
-    }));
-  }, [dbEvents]);
+    return dbEvents.map((event) => {
+      // Get the current goal from context to ensure color is up-to-date
+      const currentGoal = event.goalId ? goals.find(g => g.id === event.goalId) : null;
+
+      return {
+        id: event.id,
+        title: event.title,
+        start: event.startTime instanceof Date ? event.startTime : new Date(Date.parse(event.startTime as any)),
+        end: event.endTime instanceof Date ? event.endTime : new Date(Date.parse(event.endTime as any)),
+        description: event.description,
+        location: event.location,
+        isFromDb: true,
+        // Пріоритет: колір цілі з контексту > колір події > колір категорії
+        color: currentGoal?.color || event.goal?.color || event.color || (currentGoal ? getCategoryColor(currentGoal.category) : event.goal ? getCategoryColor(event.goal.category) : undefined),
+        goalId: event.goalId,
+      };
+    });
+  }, [dbEvents, goals]);
 
   // Helper function to get category color
   const getCategoryColor = (category: string) => {

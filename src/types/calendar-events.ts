@@ -69,6 +69,7 @@ export interface CalendarEventWithGoal extends CalendarEvent {
     name: string;
     category: string;
     iconUrl?: string;
+    color?: string;
   };
 }
 

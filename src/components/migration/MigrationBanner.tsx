@@ -39,7 +39,7 @@ interface ProcessResult {
 export function MigrationBanner() {
   const { goals: apiGoals, loading, refetch } = useGoals();
   const [mode, setMode] = useState<BannerMode | null>(null);
-  const [status, setStatus] = useState<ProcessStatus>('idle');
+  const [status, setStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [result, setResult] = useState<ProcessResult | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [localStorageGoals, setLocalStorageGoals] = useState<Goal[]>([]);
@@ -183,7 +183,7 @@ export function MigrationBanner() {
           {/* Icon */}
           <div className="flex-shrink-0">
             <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-              {status === 'success' ? (
+              {(status as ProcessStatus) === 'success' ? (
                 <CheckCircle2 className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
               ) : status === 'error' ? (
                 <AlertCircle className="h-7 w-7 text-rose-600 dark:text-rose-400" />
@@ -273,7 +273,7 @@ export function MigrationBanner() {
             )}
 
             {/* Success State */}
-            {status === 'success' && result && (
+            {(status as ProcessStatus) === 'success' && result && (
               <>
                 <h3 className="text-lg font-semibold text-emerald-900 dark:text-emerald-100 mb-1">
                   {mode === 'migration' ? 'Міграція завершена' : 'Індекси оновлено'}

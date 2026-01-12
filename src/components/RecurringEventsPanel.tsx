@@ -9,6 +9,7 @@ import { getSeedRecurringEvents } from '@/utils/seedRecurringEvents';
 import { getRecurrenceDescription } from '@/utils/recurringEvents';
 import { getCategoryMeta } from '@/lib/categoryConfig';
 import { Sparkles, ToggleLeft, ToggleRight, Trash2, Clock, Plus, Pencil, Target } from 'lucide-react';
+import { isPredefinedIcon, getIconById } from '@/lib/goalIcons';
 import { AddRecurringEventDialog } from '@/components/calendar/AddRecurringEventDialog';
 import { EditRecurringEventDialog } from '@/components/calendar/EditRecurringEventDialog';
 import { RecurringEvent } from '@/types/recurring-events';
@@ -121,7 +122,16 @@ export default function RecurringEventsPanel() {
                           backgroundColor: categoryMeta?.color ? `${categoryMeta.color}15` : 'transparent',
                         }}
                       >
-                        {goal.iconUrl ? (
+                        {goal.iconUrl && isPredefinedIcon(goal.iconUrl) ? (
+                          (() => {
+                            const iconOption = getIconById(goal.iconUrl!);
+                            if (iconOption) {
+                              const IconComponent = iconOption.Icon;
+                              return <IconComponent className="h-3.5 w-3.5" style={{ color: goal.color || categoryMeta?.color }} />;
+                            }
+                            return null;
+                          })()
+                        ) : goal.iconUrl ? (
                           <img
                             src={goal.iconUrl}
                             alt={goal.name}

@@ -9,6 +9,7 @@ import { useGoals } from '@/contexts/GoalsContext';
 import { getCategoryMeta } from '@/lib/categoryConfig';
 import { GoalCategory } from '@/types/goals';
 import { Eye, EyeOff, RotateCcw, Repeat, Layers, Target as TargetIcon } from 'lucide-react';
+import { isPredefinedIcon, getIconById } from '@/lib/goalIcons';
 
 interface CalendarVisibilityDialogProps {
   open: boolean;
@@ -195,7 +196,16 @@ export function CalendarVisibilityDialog({
                           htmlFor={`goal-${goal.id}`}
                           className="flex items-center gap-2 cursor-pointer flex-1 min-w-0"
                         >
-                          {goal.iconUrl ? (
+                          {goal.iconUrl && isPredefinedIcon(goal.iconUrl) ? (
+                            (() => {
+                              const iconOption = getIconById(goal.iconUrl!);
+                              if (iconOption) {
+                                const IconComponent = iconOption.Icon;
+                                return <IconComponent className="h-5 w-5 flex-shrink-0" style={{ color: goal.color || meta.color }} />;
+                              }
+                              return null;
+                            })()
+                          ) : goal.iconUrl ? (
                             <img
                               src={goal.iconUrl}
                               alt={goal.name}

@@ -36,6 +36,7 @@ import { useGoals } from '@/contexts/GoalsContext';
 import { formatDuration, formatDurationHuman } from '@/types/clockify';
 import { format } from 'date-fns';
 import { uk } from 'date-fns/locale';
+import { isPredefinedIcon, getIconById } from '@/lib/goalIcons';
 
 export default function TimeEntriesList() {
   const { entries, loading, error, filters, setFilters } = useTimeTracking();
@@ -165,9 +166,18 @@ export default function TimeEntriesList() {
                   {goals.map((goal) => (
                     <SelectItem key={goal.id} value={goal.id}>
                       <div className="flex items-center gap-2">
-                        {goal.iconUrl && (
-                          <img src={goal.iconUrl} alt="" className="w-4 h-4" />
-                        )}
+                        {goal.iconUrl && isPredefinedIcon(goal.iconUrl) ? (
+                          (() => {
+                            const iconOption = getIconById(goal.iconUrl!);
+                            if (iconOption) {
+                              const IconComponent = iconOption.Icon;
+                              return <IconComponent className="w-4 h-4" style={{ color: goal.color }} />;
+                            }
+                            return null;
+                          })()
+                        ) : goal.iconUrl ? (
+                          <img src={goal.iconUrl} alt="" className="w-4 h-4 object-contain" />
+                        ) : null}
                         <span>{goal.name}</span>
                       </div>
                     </SelectItem>
@@ -292,13 +302,22 @@ export default function TimeEntriesList() {
                       <TableCell>
                         {entry.goal ? (
                           <div className="flex items-center gap-2">
-                            {entry.goal.iconUrl && (
+                            {entry.goal.iconUrl && isPredefinedIcon(entry.goal.iconUrl) ? (
+                              (() => {
+                                const iconOption = getIconById(entry.goal.iconUrl!);
+                                if (iconOption) {
+                                  const IconComponent = iconOption.Icon;
+                                  return <IconComponent className="w-5 h-5" style={{ color: entry.goal.color }} />;
+                                }
+                                return null;
+                              })()
+                            ) : entry.goal.iconUrl ? (
                               <img
                                 src={entry.goal.iconUrl}
                                 alt=""
-                                className="w-5 h-5"
+                                className="w-5 h-5 object-contain"
                               />
-                            )}
+                            ) : null}
                             <div>
                               <div className="font-medium text-sm">
                                 {entry.goal.name}

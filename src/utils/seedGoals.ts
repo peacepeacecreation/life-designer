@@ -19,6 +19,7 @@ export function getSeedGoals(): Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'c
       targetEndDate: threeMonthsFromNow,
       progressPercentage: 35,
       tags: ['стартап', 'розробка', 'MVP'],
+      displayOrder: 0,
     },
     {
       name: 'Основна робота - проекти клієнтів',
@@ -31,6 +32,7 @@ export function getSeedGoals(): Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'c
       targetEndDate: sixMonthsFromNow,
       progressPercentage: 60,
       tags: ['робота', 'клієнти'],
+      displayOrder: 0,
     },
 
     // Навчання
@@ -45,6 +47,7 @@ export function getSeedGoals(): Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'c
       targetEndDate: sixMonthsFromNow,
       progressPercentage: 40,
       tags: ['англійська', 'мови', 'освіта'],
+      displayOrder: 0,
     },
     {
       name: 'Курс по TypeScript Advanced',
@@ -57,6 +60,7 @@ export function getSeedGoals(): Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'c
       targetEndDate: oneMonthFromNow,
       progressPercentage: 25,
       tags: ['програмування', 'TypeScript', 'курси'],
+      displayOrder: 0,
     },
 
     // Здоров'я та Спорт
@@ -71,6 +75,7 @@ export function getSeedGoals(): Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'c
       targetEndDate: sixMonthsFromNow,
       progressPercentage: 70,
       tags: ['спорт', 'здоров\'я', 'фітнес'],
+      displayOrder: 0,
     },
     {
       name: 'Ранкова зарядка щодня',
@@ -83,6 +88,7 @@ export function getSeedGoals(): Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'c
       targetEndDate: sixMonthsFromNow,
       progressPercentage: 50,
       tags: ['здоров\'я', 'ранок', 'рутина'],
+      displayOrder: 0,
     },
 
     // Хобі
@@ -97,6 +103,7 @@ export function getSeedGoals(): Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'c
       targetEndDate: sixMonthsFromNow,
       progressPercentage: 30,
       tags: ['читання', 'саморозвиток', 'книги'],
+      displayOrder: 0,
     },
     {
       name: 'Гра на гітарі',
@@ -109,6 +116,7 @@ export function getSeedGoals(): Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'c
       targetEndDate: threeMonthsFromNow,
       progressPercentage: 10,
       tags: ['музика', 'хобі', 'релакс'],
+      displayOrder: 0,
     },
   ];
 }

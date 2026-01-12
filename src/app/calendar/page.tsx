@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import CalendarComponent from '@/components/CalendarComponent';
 import RecurringEventsPanel from '@/components/RecurringEventsPanel';
+import { CalendarSyncBanner } from '@/components/calendar/CalendarSyncBanner';
 import { Button } from '@/components/ui/button';
 import { Settings2, Eye } from 'lucide-react';
 import { CalendarSettingsDialog } from '@/components/calendar/CalendarSettingsDialog';
@@ -13,6 +14,7 @@ import { useCalendarVisibility } from '@/hooks/useCalendarVisibility';
 export default function CalendarPage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [visibilityOpen, setVisibilityOpen] = useState(false);
+  const [googleEvents, setGoogleEvents] = useState<any[]>([]);
   const { settings, updateSettings, resetSettings } = useCalendarSettings();
   const {
     showRecurringEvents,
@@ -58,10 +60,11 @@ export default function CalendarPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <CalendarComponent />
+            <CalendarComponent googleEvents={googleEvents} />
           </div>
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-6">
             <RecurringEventsPanel />
+            <CalendarSyncBanner onGoogleEventsLoaded={setGoogleEvents} />
           </div>
         </div>
 

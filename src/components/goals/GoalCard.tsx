@@ -7,9 +7,12 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Briefcase, BookOpen, Dumbbell, Palette, Trash2, Calendar, ExternalLink, DollarSign } from 'lucide-react';
+import { Briefcase, BookOpen, Dumbbell, Palette, Trash2, Calendar, ExternalLink, DollarSign, GripVertical } from 'lucide-react';
 import Link from 'next/link';
 import GoalTimeProgress from './GoalTimeProgress';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { getIconById, isPredefinedIcon } from '@/lib/goalIcons';
 
 interface GoalCardProps {
   goal: Goal;
@@ -25,7 +28,44 @@ const categoryIcons: Record<GoalCategory, React.ElementType> = {
 export default function GoalCard({ goal }: GoalCardProps) {
   const { deleteGoal } = useGoals();
   const categoryMeta = getCategoryMeta(goal.category);
-  const CategoryIcon = categoryIcons[goal.category];
+  const goalColor = goal.color || categoryMeta.color;
+
+  // Determine which icon to display
+  let IconToDisplay: React.ElementType | null = null;
+  let isCustomImage = false;
+
+  if (goal.iconUrl) {
+    if (isPredefinedIcon(goal.iconUrl)) {
+      // It's a predefined icon ID
+      const iconOption = getIconById(goal.iconUrl);
+      if (iconOption) {
+        IconToDisplay = iconOption.Icon;
+      }
+    } else {
+      // It's a custom uploaded image URL
+      isCustomImage = true;
+    }
+  }
+
+  // Fallback to category icon if no icon selected
+  if (!IconToDisplay && !isCustomImage) {
+    IconToDisplay = categoryIcons[goal.category];
+  }
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: goal.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   const handleDelete = () => {
     if (confirm(`Ви впевнені, що хочете видалити ціль "${goal.name}"?`)) {
@@ -49,21 +89,25 @@ export default function GoalCard({ goal }: GoalCardProps) {
   };
 
   return (
-    <Card className="bg-white dark:bg-card hover:shadow-lg transition-shadow relative group">
+    <Card
+      ref={setNodeRef}
+      style={style}
+      className="bg-white dark:bg-card hover:shadow-lg transition-shadow relative group"
+    >
       <Link href={`/goal/${goal.id}`} className="block">
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="rounded-lg flex items-center justify-center" style={{ backgroundColor: `${categoryMeta.color}/0.1` }}>
-                {goal.iconUrl ? (
+              <div className="rounded-lg flex items-center justify-center">
+                {isCustomImage ? (
                   <img
                     src={goal.iconUrl}
                     alt={goal.name}
                     className="h-10 w-10 object-contain rounded-lg"
                   />
-                ) : (
-                  <CategoryIcon className="h-10 w-10 p-2" style={{ color: categoryMeta.color }} />
-                )}
+                ) : IconToDisplay ? (
+                  <IconToDisplay className="h-10 w-10 p-2" style={{ color: goalColor }} />
+                ) : null}
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -86,17 +130,16 @@ export default function GoalCard({ goal }: GoalCardProps) {
               </div>
             </div>
 
-            <Button
-              onClick={(e) => {
-                e.preventDefault();
-                handleDelete();
-              }}
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-destructive z-10"
+            {/* Drag Handle */}
+            <button
+              {...attributes}
+              {...listeners}
+              onClick={(e) => e.preventDefault()}
+              className="touch-none cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors p-2"
+              aria-label="Перетягнути ціль"
             >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+              <GripVertical className="h-5 w-5" />
+            </button>
           </div>
         </CardHeader>
 

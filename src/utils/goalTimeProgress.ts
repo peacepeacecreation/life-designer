@@ -1,6 +1,7 @@
 import { RecurringEvent } from '@/types/recurring-events';
+import { CalendarEventWithGoal } from '@/types/calendar-events';
 import { generateEventsFromRecurring } from './recurringEvents';
-import { startOfWeek, endOfWeek, isBefore } from 'date-fns';
+import { startOfWeek, endOfWeek, isBefore, isWithinInterval } from 'date-fns';
 
 export interface GoalTimeProgress {
   totalAllocated: number;    // Загальна кількість годин виділених на ціль
@@ -18,12 +19,14 @@ export interface GoalTimeProgress {
  * @param goalId - ID цілі
  * @param goalTimeAllocated - Виділено годин на тиждень для цілі
  * @param recurringEvents - Всі повторювані події
+ * @param calendarEvents - Всі одноразові події з календаря
  * @returns Детальна інформація про прогрес
  */
 export function calculateGoalTimeProgress(
   goalId: string,
   goalTimeAllocated: number,
-  recurringEvents: RecurringEvent[]
+  recurringEvents: RecurringEvent[],
+  calendarEvents: CalendarEventWithGoal[] = []
 ): GoalTimeProgress {
   const now = new Date();
   const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Понеділок
@@ -52,6 +55,32 @@ export function calculateGoalTimeProgress(
         scheduledMinutes += durationMinutes;
       }
     });
+  });
+
+  // Додаємо одноразові події з календаря, які пов'язані з цією ціллю
+  const goalCalendarEvents = calendarEvents.filter(
+    event => event.goalId === goalId
+  );
+
+  goalCalendarEvents.forEach(event => {
+    const eventStart = new Date(event.startTime);
+    const eventEnd = new Date(event.endTime);
+
+    // Перевіряємо чи подія в межах поточного тижня
+    const isInWeek = isWithinInterval(eventStart, { start: weekStart, end: weekEnd }) ||
+                     isWithinInterval(eventEnd, { start: weekStart, end: weekEnd });
+
+    if (isInWeek) {
+      const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
+
+      // Якщо подія вже пройшла (end < now), вважаємо виконаною
+      if (isBefore(eventEnd, now)) {
+        completedMinutes += durationMinutes;
+      } else {
+        // Інакше - заплановано на майбутнє
+        scheduledMinutes += durationMinutes;
+      }
+    }
   });
 
   const completed = completedMinutes / 60;

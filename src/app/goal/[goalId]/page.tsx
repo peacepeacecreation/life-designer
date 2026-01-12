@@ -8,10 +8,13 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Briefcase, BookOpen, Dumbbell, Palette, Clock, Calendar, ArrowLeft, Edit2, ExternalLink } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Briefcase, BookOpen, Dumbbell, Palette, Clock, Calendar, ArrowLeft, Edit2, ExternalLink, TrendingUp, Info, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import GoalForm from '@/components/goals/GoalForm';
+import WeeklyProgress from '@/components/goals/WeeklyProgress';
 import { useGoals } from '@/contexts/GoalsContext';
+import { isPredefinedIcon, getIconById } from '@/lib/goalIcons';
 
 const categoryIcons: Record<GoalCategory, React.ElementType> = {
   [GoalCategory.WORK_STARTUPS]: Briefcase,
@@ -24,7 +27,7 @@ export default function GoalDetailPage() {
   const params = useParams();
   const router = useRouter();
   const goalId = params.goalId as string;
-  const { goals, updateGoal: updateGoalInContext, loading } = useGoals();
+  const { goals, updateGoal: updateGoalInContext, deleteGoal, loading } = useGoals();
 
   const [goal, setGoal] = useState<Goal | null>(null);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
@@ -55,6 +58,13 @@ export default function GoalDetailPage() {
       if (updatedGoal) {
         setGoal(updatedGoal);
       }
+    }
+  };
+
+  const handleDelete = async () => {
+    if (goal && confirm(`Ви впевнені, що хочете видалити ціль "${goal.name}"?`)) {
+      await deleteGoal(goal.id);
+      router.push('/goals');
     }
   };
 
@@ -118,7 +128,16 @@ export default function GoalDetailPage() {
           </div>
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-lg" style={{ backgroundColor: `${categoryMeta.color}/0.1` }}>
-              {goal.iconUrl ? (
+              {goal.iconUrl && isPredefinedIcon(goal.iconUrl) ? (
+                (() => {
+                  const iconOption = getIconById(goal.iconUrl!);
+                  if (iconOption) {
+                    const IconComponent = iconOption.Icon;
+                    return <IconComponent className="h-8 w-8" style={{ color: goal.color || categoryMeta.color }} />;
+                  }
+                  return <CategoryIcon className="h-8 w-8" style={{ color: categoryMeta.color }} />;
+                })()
+              ) : goal.iconUrl ? (
                 <img
                   src={goal.iconUrl}
                   alt={goal.name}
@@ -147,226 +166,253 @@ export default function GoalDetailPage() {
             </div>
           </div>
         </div>
-        <Button onClick={() => setIsEditFormOpen(true)} size="lg">
-          <Edit2 className="mr-2 h-5 w-5" />
-          Редагувати
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setIsEditFormOpen(true)} size="lg">
+            <Edit2 className="mr-2 h-5 w-5" />
+            Редагувати
+          </Button>
+          <Button onClick={handleDelete} size="lg" variant="outline" className="text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20">
+            <Trash2 className="mr-2 h-5 w-5" />
+            Видалити
+          </Button>
+        </div>
       </div>
 
-      {/* Main Content */}
-      <div className="space-y-6">
-        {/* Description Card */}
-        {goal.description && (
-          <Card className="bg-white dark:bg-card">
-            <CardHeader>
-              <h2 className="text-xl font-semibold text-black dark:text-white">Опис</h2>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground whitespace-pre-wrap">{goal.description}</p>
-            </CardContent>
-          </Card>
-        )}
+      {/* Tabs */}
+      <Tabs defaultValue="progress" className="w-full">
+        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
+          <TabsTrigger value="progress" className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Прогрес тижня
+          </TabsTrigger>
+          <TabsTrigger value="details" className="flex items-center gap-2">
+            <Info className="h-4 w-4" />
+            Загальна інформація
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Status and Priority */}
-        <Card className="bg-white dark:bg-card">
-          <CardHeader>
-            <h2 className="text-xl font-semibold text-black dark:text-white">Статус та пріоритет</h2>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-3">
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">Пріоритет</p>
-                <Badge variant={priorityVariants[goal.priority]} className="text-base">
-                  {priorityLabels[goal.priority]}
-                </Badge>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">Статус</p>
-                <Badge variant="outline" className={`text-base ${statusColors[goal.status]}`}>
-                  {statusLabels[goal.status]}
-                </Badge>
-              </div>
-            </div>
+        {/* Weekly Progress Tab */}
+        <TabsContent value="progress">
+          <WeeklyProgress goal={goal} />
+        </TabsContent>
 
-            {/* Quick Status Change */}
-            <div className="space-y-2 pt-2 border-t">
-              <p className="text-sm font-medium text-black dark:text-white">Швидка зміна статусу</p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  variant={goal.status === GoalStatus.IN_PROGRESS ? 'default' : 'outline'}
-                  onClick={() => handleStatusChange(GoalStatus.IN_PROGRESS)}
-                >
-                  В процесі
-                </Button>
-                <Button
-                  size="sm"
-                  variant={goal.status === GoalStatus.ON_HOLD ? 'default' : 'outline'}
-                  onClick={() => handleStatusChange(GoalStatus.ON_HOLD)}
-                >
-                  Призупинено
-                </Button>
-                <Button
-                  size="sm"
-                  variant={goal.status === GoalStatus.COMPLETED ? 'default' : 'outline'}
-                  onClick={() => handleStatusChange(GoalStatus.COMPLETED)}
-                >
-                  Завершено
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Details Tab */}
+        <TabsContent value="details">
+          <div className="space-y-6">
+            {/* Description Card */}
+            {goal.description && (
+              <Card className="bg-white dark:bg-card">
+                <CardHeader>
+                  <h2 className="text-xl font-semibold text-black dark:text-white">Опис</h2>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground whitespace-pre-wrap">{goal.description}</p>
+                </CardContent>
+              </Card>
+            )}
 
-        {/* Progress */}
-        <Card className="bg-white dark:bg-card">
-          <CardHeader>
-            <h2 className="text-xl font-semibold text-black dark:text-white">Прогрес</h2>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-muted-foreground">Виконано</span>
-                  <span className="text-2xl font-bold text-black dark:text-white">{goal.progressPercentage}%</span>
-                </div>
-                <Progress value={goal.progressPercentage} className="h-3" />
-              </div>
-
-              {/* Progress Slider */}
-              <div className="space-y-2 pt-2">
-                <label htmlFor="progress-slider" className="text-sm font-medium text-black dark:text-white">
-                  Швидке оновлення прогресу
-                </label>
-                <div className="relative pt-1">
-                  <input
-                    id="progress-slider"
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="5"
-                    value={goal.progressPercentage}
-                    onChange={(e) => handleProgressChange(parseInt(e.target.value))}
-                    className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-0"
-                    style={{
-                      background: `linear-gradient(to right, hsl(var(--primary)) ${goal.progressPercentage}%, hsl(var(--muted)) ${goal.progressPercentage}%)`
-                    }}
-                  />
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>0%</span>
-                  <span>25%</span>
-                  <span>50%</span>
-                  <span>75%</span>
-                  <span>100%</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Time and Dates */}
-        <Card className="bg-white dark:bg-card">
-          <CardHeader>
-            <h2 className="text-xl font-semibold text-black dark:text-white">Часові рамки</h2>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="h-5 w-5" />
-                  <span>Час на тиждень</span>
-                </div>
-                <span className="text-xl font-semibold text-black dark:text-white">{goal.timeAllocated} год</span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <Calendar className="h-5 w-5" />
-                    <span>Дата початку</span>
+            {/* Status and Priority */}
+            <Card className="bg-white dark:bg-card">
+              <CardHeader>
+                <h2 className="text-xl font-semibold text-black dark:text-white">Статус та пріоритет</h2>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap gap-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Пріоритет</p>
+                    <Badge variant={priorityVariants[goal.priority]} className="text-base">
+                      {priorityLabels[goal.priority]}
+                    </Badge>
                   </div>
-                  <p className="text-lg font-semibold text-black dark:text-white">
-                    {new Date(goal.startDate).toLocaleDateString('uk-UA', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    })}
-                  </p>
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <Calendar className="h-5 w-5" />
-                    <span>Цільова дата завершення</span>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Статус</p>
+                    <Badge variant="outline" className={`text-base ${statusColors[goal.status]}`}>
+                      {statusLabels[goal.status]}
+                    </Badge>
                   </div>
-                  <p className="text-lg font-semibold text-black dark:text-white">
-                    {new Date(goal.targetEndDate).toLocaleDateString('uk-UA', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    })}
-                  </p>
                 </div>
-              </div>
 
-              {goal.actualEndDate && (
-                <div>
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <Calendar className="h-5 w-5" />
-                    <span>Фактична дата завершення</span>
+                {/* Quick Status Change */}
+                <div className="space-y-2 pt-2 border-t">
+                  <p className="text-sm font-medium text-black dark:text-white">Швидка зміна статусу</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant={goal.status === GoalStatus.IN_PROGRESS ? 'default' : 'outline'}
+                      onClick={() => handleStatusChange(GoalStatus.IN_PROGRESS)}
+                    >
+                      В процесі
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={goal.status === GoalStatus.ON_HOLD ? 'default' : 'outline'}
+                      onClick={() => handleStatusChange(GoalStatus.ON_HOLD)}
+                    >
+                      Призупинено
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={goal.status === GoalStatus.COMPLETED ? 'default' : 'outline'}
+                      onClick={() => handleStatusChange(GoalStatus.COMPLETED)}
+                    >
+                      Завершено
+                    </Button>
                   </div>
-                  <p className="text-lg font-semibold text-green-600 dark:text-green-400">
-                    {new Date(goal.actualEndDate).toLocaleDateString('uk-UA', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    })}
-                  </p>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        {/* Project Link */}
-        {goal.url && (
-          <Card className="bg-white dark:bg-card">
-            <CardHeader>
-              <h2 className="text-xl font-semibold text-black dark:text-white">Посилання на проект</h2>
-            </CardHeader>
-            <CardContent>
-              <a
-                href={goal.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-primary hover:underline break-all"
-              >
-                <ExternalLink className="h-5 w-5 flex-shrink-0" />
-                {goal.url}
-              </a>
-            </CardContent>
-          </Card>
-        )}
+            {/* Progress */}
+            <Card className="bg-white dark:bg-card">
+              <CardHeader>
+                <h2 className="text-xl font-semibold text-black dark:text-white">Прогрес</h2>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-muted-foreground">Виконано</span>
+                      <span className="text-2xl font-bold text-black dark:text-white">{goal.progressPercentage}%</span>
+                    </div>
+                    <Progress value={goal.progressPercentage} className="h-3" />
+                  </div>
 
-        {/* Tags */}
-        {goal.tags && goal.tags.length > 0 && (
-          <Card className="bg-white dark:bg-card">
-            <CardHeader>
-              <h2 className="text-xl font-semibold text-black dark:text-white">Теги</h2>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {goal.tags.map((tag, index) => (
-                  <Badge key={index} variant="outline">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+                  {/* Progress Slider */}
+                  <div className="space-y-2 pt-2">
+                    <label htmlFor="progress-slider" className="text-sm font-medium text-black dark:text-white">
+                      Швидке оновлення прогресу
+                    </label>
+                    <div className="relative pt-1">
+                      <input
+                        id="progress-slider"
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="5"
+                        value={goal.progressPercentage}
+                        onChange={(e) => handleProgressChange(parseInt(e.target.value))}
+                        className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-0"
+                        style={{
+                          background: `linear-gradient(to right, hsl(var(--primary)) ${goal.progressPercentage}%, hsl(var(--muted)) ${goal.progressPercentage}%)`
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>0%</span>
+                      <span>25%</span>
+                      <span>50%</span>
+                      <span>75%</span>
+                      <span>100%</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Time and Dates */}
+            <Card className="bg-white dark:bg-card">
+              <CardHeader>
+                <h2 className="text-xl font-semibold text-black dark:text-white">Часові рамки</h2>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Clock className="h-5 w-5" />
+                      <span>Час на тиждень</span>
+                    </div>
+                    <span className="text-xl font-semibold text-black dark:text-white">{goal.timeAllocated} год</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                        <Calendar className="h-5 w-5" />
+                        <span>Дата початку</span>
+                      </div>
+                      <p className="text-lg font-semibold text-black dark:text-white">
+                        {new Date(goal.startDate).toLocaleDateString('uk-UA', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        })}
+                      </p>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                        <Calendar className="h-5 w-5" />
+                        <span>Цільова дата завершення</span>
+                      </div>
+                      <p className="text-lg font-semibold text-black dark:text-white">
+                        {new Date(goal.targetEndDate).toLocaleDateString('uk-UA', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        })}
+                      </p>
+                    </div>
+                  </div>
+
+                  {goal.actualEndDate && (
+                    <div>
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                        <Calendar className="h-5 w-5" />
+                        <span>Фактична дата завершення</span>
+                      </div>
+                      <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+                        {new Date(goal.actualEndDate).toLocaleDateString('uk-UA', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        })}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Project Link */}
+            {goal.url && (
+              <Card className="bg-white dark:bg-card">
+                <CardHeader>
+                  <h2 className="text-xl font-semibold text-black dark:text-white">Посилання на проект</h2>
+                </CardHeader>
+                <CardContent>
+                  <a
+                    href={goal.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-primary hover:underline break-all"
+                  >
+                    <ExternalLink className="h-5 w-5 flex-shrink-0" />
+                    {goal.url}
+                  </a>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Tags */}
+            {goal.tags && goal.tags.length > 0 && (
+              <Card className="bg-white dark:bg-card">
+                <CardHeader>
+                  <h2 className="text-xl font-semibold text-black dark:text-white">Теги</h2>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {goal.tags.map((tag, index) => (
+                      <Badge key={index} variant="outline">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Edit Form Modal */}
       <GoalForm

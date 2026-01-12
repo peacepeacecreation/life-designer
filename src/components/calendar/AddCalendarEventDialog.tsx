@@ -31,6 +31,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useGoals } from '@/contexts/GoalsContext';
 import type { CalendarEventWithGoal, CreateCalendarEventInput } from '@/types/calendar-events';
 import { getCategoryMeta } from '@/lib/categoryConfig';
+import { isPredefinedIcon, getIconById } from '@/lib/goalIcons';
 
 interface AddCalendarEventDialogProps {
   open: boolean;
@@ -74,17 +75,20 @@ export function AddCalendarEventDialog({
   const [allDay, setAllDay] = useState(false);
   const [goalId, setGoalId] = useState<string>('');
   const [color, setColor] = useState(DEFAULT_COLORS[0].value);
+  const [createsTimeEntry, setCreatesTimeEntry] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   // Format date for input (YYYY-MM-DD)
-  const formatDateForInput = (date: Date): string => {
-    return date.toISOString().split('T')[0];
+  const formatDateForInput = (date: Date | string): string => {
+    const d = date instanceof Date ? date : new Date(Date.parse(date as string));
+    return d.toISOString().split('T')[0];
   };
 
   // Format time for input (HH:MM)
-  const formatTimeForInput = (date: Date): string => {
-    return date.toTimeString().slice(0, 5);
+  const formatTimeForInput = (date: Date | string): string => {
+    const d = date instanceof Date ? date : new Date(Date.parse(date as string));
+    return d.toTimeString().slice(0, 5);
   };
 
   // Initialize form when dialog opens
@@ -101,7 +105,14 @@ export function AddCalendarEventDialog({
         setEndTime(formatTimeForInput(event.endTime));
         setAllDay(event.allDay);
         setGoalId(event.goalId || '');
-        setColor(event.color || DEFAULT_COLORS[0].value);
+
+        // Використовуємо колір події, або якщо є ціль - колір цілі, або дефолтний
+        const eventColor = event.color ||
+          (event.goal?.color) ||
+          (event.goalId ? goals.find(g => g.id === event.goalId)?.color : undefined) ||
+          DEFAULT_COLORS[0].value;
+        setColor(eventColor);
+        setCreatesTimeEntry(event.createsTimeEntry ?? true);
       } else {
         // Creating new event
         const start = initialStart || new Date();
@@ -119,7 +130,17 @@ export function AddCalendarEventDialog({
         setColor(DEFAULT_COLORS[0].value);
       }
     }
-  }, [open, isEditing, event, initialStart, initialEnd]);
+  }, [open, isEditing, event, initialStart, initialEnd, goals]);
+
+  // Автоматично оновлювати колір коли змінюється ціль
+  useEffect(() => {
+    if (goalId) {
+      const selectedGoal = goals.find(g => g.id === goalId);
+      if (selectedGoal?.color) {
+        setColor(selectedGoal.color);
+      }
+    }
+  }, [goalId, goals]);
 
   const resetForm = () => {
     setTitle('');
@@ -339,19 +360,38 @@ export function AddCalendarEventDialog({
 
           {/* Goal Selection */}
           <div className="space-y-2">
-            <Label htmlFor="goal">Прив'язати до цілі</Label>
-            <Select value={goalId} onValueChange={setGoalId}>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="goal">Прив'язати до цілі</Label>
+              {goalId && (
+                <button
+                  type="button"
+                  onClick={() => setGoalId('')}
+                  className="text-xs text-muted-foreground hover:text-foreground underline"
+                >
+                  Очистити
+                </button>
+              )}
+            </div>
+            <Select value={goalId || undefined} onValueChange={setGoalId}>
               <SelectTrigger>
                 <SelectValue placeholder="Оберіть ціль (опціонально)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Без цілі</SelectItem>
                 {goals.map((goal) => {
                   const meta = getCategoryMeta(goal.category);
                   return (
                     <SelectItem key={goal.id} value={goal.id}>
                       <div className="flex items-center gap-2">
-                        {goal.iconUrl ? (
+                        {goal.iconUrl && isPredefinedIcon(goal.iconUrl) ? (
+                          (() => {
+                            const iconOption = getIconById(goal.iconUrl!);
+                            if (iconOption) {
+                              const IconComponent = iconOption.Icon;
+                              return <IconComponent className="w-4 h-4" style={{ color: goal.color || meta.color }} />;
+                            }
+                            return null;
+                          })()
+                        ) : goal.iconUrl ? (
                           <img
                             src={goal.iconUrl}
                             alt=""
@@ -371,6 +411,20 @@ export function AddCalendarEventDialog({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Time Entry Tracking Toggle (only if goal selected) */}
+          {goalId && (
+            <div className="flex items-center space-x-2 p-3 rounded-lg border bg-muted/50">
+              <Checkbox
+                id="createsTimeEntry"
+                checked={createsTimeEntry}
+                onCheckedChange={(checked) => setCreatesTimeEntry(checked === true)}
+              />
+              <Label htmlFor="createsTimeEntry" className="cursor-pointer">
+                Відстежувати час для цієї події
+              </Label>
+            </div>
+          )}
 
           {/* Color Selection (only if no goal selected) */}
           {!goalId && (
@@ -412,9 +466,10 @@ export function AddCalendarEventDialog({
         <DialogFooter className="flex-row justify-between gap-2">
           {isEditing && onDelete && (
             <Button
-              variant="destructive"
+              variant="outline"
               onClick={handleDelete}
               disabled={deleting || saving}
+              className="text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
             >
               {deleting ? 'Видалення...' : 'Видалити'}
             </Button>

@@ -102,6 +102,8 @@ export async function GET(
       tags: goal.tags || [],
       iconUrl: goal.icon_url,
       url: goal.url,
+      color: goal.color,
+      displayOrder: goal.display_order || 0,
       createdAt: new Date(goal.created_at),
       updatedAt: new Date(goal.updated_at),
       connections: (goal.goal_connections_from || []).map((c: any) => ({
@@ -198,6 +200,7 @@ export async function PATCH(
     if (body.tags !== undefined) updateData.tags = body.tags;
     if (body.iconUrl !== undefined) updateData.icon_url = body.iconUrl;
     if (body.url !== undefined) updateData.url = body.url;
+    if (body.color !== undefined) updateData.color = body.color;
 
     // 7. Regenerate embedding if needed
     if (needsNewEmbedding) {
@@ -253,6 +256,8 @@ export async function PATCH(
       tags: goal.tags || [],
       iconUrl: goal.icon_url,
       url: goal.url,
+      color: goal.color,
+      displayOrder: goal.display_order || 0,
       createdAt: new Date(goal.created_at),
       updatedAt: new Date(goal.updated_at),
       connections: (goal.goal_connections_from || []).map((c: any) => ({

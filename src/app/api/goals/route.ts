@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
         goal_connections_from:goal_connections!from_goal_id(*)
       `)
       .eq('user_id', userData.id)
-      .order('created_at', { ascending: false });
+      .order('display_order', { ascending: true });
 
     const { data: goals, error } = goalsResult;
 
@@ -117,6 +117,8 @@ export async function GET(request: NextRequest) {
           tags: g.tags || [],
           iconUrl: g.icon_url,
           url: g.url,
+          color: g.color,
+          displayOrder: g.display_order || 0,
           createdAt: new Date(g.created_at),
           updatedAt: new Date(g.updated_at),
           connections: (g.goal_connections_from || []).map((c: any) => ({
@@ -184,6 +186,7 @@ export async function POST(request: NextRequest) {
       tags,
       iconUrl,
       url,
+      color,
     } = body;
 
     // 3. Validate required fields (allow empty strings for description)
@@ -236,7 +239,18 @@ export async function POST(request: NextRequest) {
       userId = newUserResult.data.id;
     }
 
-    // 6. Generate embedding
+    // 6. Get max display_order for this user
+    const maxOrderResult: any = await supabase
+      .from('goals')
+      .select('display_order')
+      .eq('user_id', userId)
+      .order('display_order', { ascending: false })
+      .limit(1)
+      .single();
+
+    const nextDisplayOrder = (maxOrderResult.data?.display_order || 0) + 1;
+
+    // 7. Generate embedding
     const goalForEmbedding = {
       name,
       description,
@@ -248,7 +262,7 @@ export async function POST(request: NextRequest) {
 
     const embedding = await embeddingService.generateGoalEmbedding(goalForEmbedding);
 
-    // 7. Insert goal into database
+    // 8. Insert goal into database
     const insertResult: any = await (supabase as any)
       .from('goals')
       .insert({
@@ -271,6 +285,8 @@ export async function POST(request: NextRequest) {
         tags: tags || [],
         icon_url: iconUrl,
         url: url,
+        color: color,
+        display_order: nextDisplayOrder,
         embedding,
       })
       .select()
@@ -304,6 +320,8 @@ export async function POST(request: NextRequest) {
       tags: goal.tags || [],
       iconUrl: goal.icon_url,
       url: goal.url,
+      color: goal.color,
+      displayOrder: goal.display_order || 0,
       createdAt: new Date(goal.created_at),
       updatedAt: new Date(goal.updated_at),
       connections: [],

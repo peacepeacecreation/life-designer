@@ -21,6 +21,7 @@ export enum GoalStatus {
   ON_HOLD = 'on_hold',
   COMPLETED = 'completed',
   ABANDONED = 'abandoned',
+  ONGOING = 'ongoing', // Постійна/безкінечна ціль без дедлайнів
 }
 
 // Connection types between goals
@@ -50,10 +51,11 @@ export interface Goal {
   fixedRate?: number;                 // Фіксована ставка (для fixed)
   fixedRatePeriod?: 'week' | 'month'; // Період для фіксованої ставки
 
-  // Timeline
-  startDate: Date;
-  targetEndDate: Date;
+  // Timeline (optional for ongoing goals)
+  startDate?: Date;
+  targetEndDate?: Date;
   actualEndDate?: Date;
+  isOngoing?: boolean; // True якщо це постійна ціль без дедлайнів
 
   // Progress tracking
   progressPercentage: number; // 0-100
@@ -64,9 +66,13 @@ export interface Goal {
   // Tags for filtering/grouping
   tags: string[];
 
-  // Custom icon and URL
+  // Custom icon, URL, and color
   iconUrl?: string;  // URL to custom icon (uploaded or auto-fetched from url)
   url?: string;      // Link to project or resource associated with this goal
+  color?: string;    // Custom hex color (e.g., #FF5733), fallback to category color if not set
+
+  // Display order for manual sorting
+  displayOrder: number;
 
   // Metadata
   createdAt: Date;

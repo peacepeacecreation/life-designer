@@ -62,6 +62,7 @@ function transformEventFromDb(row: CalendarEventRow, goal?: any): CalendarEventW
       name: goal.name,
       category: goal.category,
       iconUrl: goal.icon_url,
+      color: goal.color,
     };
   }
 
@@ -116,7 +117,8 @@ export async function GET(request: NextRequest) {
           id,
           name,
           category,
-          icon_url
+          icon_url,
+          color
         )
       `)
       .eq('user_id', userData.id)
@@ -284,7 +286,8 @@ export async function POST(request: NextRequest) {
           id,
           name,
           category,
-          icon_url
+          icon_url,
+          color
         )
       `)
       .single();

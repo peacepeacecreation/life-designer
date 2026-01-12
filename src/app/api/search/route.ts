@@ -115,6 +115,7 @@ export async function POST(request: NextRequest) {
                 targetEndDate: new Date(result.target_end_date),
                 actualEndDate: result.actual_end_date ? new Date(result.actual_end_date) : undefined,
                 tags: result.tags || [],
+                displayOrder: result.display_order || 0,
                 createdAt: new Date(result.created_at),
                 updatedAt: new Date(result.updated_at),
                 connections: [],

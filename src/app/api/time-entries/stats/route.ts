@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
     const userId = userResult.data.id;
 
     // 5. Get time by goal using SQL function
-    const { data: timeByGoal, error: goalError } = await supabase.rpc(
+    const { data: timeByGoal, error: goalError } = await (supabase as any).rpc(
       'get_time_by_goal',
       {
         p_user_id: userId,
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 6. Transform time by goal data
-    const byGoal = (timeByGoal || []).map((stat: any) => ({
+    const byGoal = ((timeByGoal as any[]) || []).map((stat: any) => ({
       goalId: stat.goal_id,
       goalName: stat.goal_name,
       goalCategory: stat.goal_category,
@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
         // Group by day
         const dayMap = new Map<string, number>();
 
-        for (const entry of entriesData) {
+        for (const entry of (entriesData as any[])) {
           const date = new Date(entry.start_time);
           const dayKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
 
@@ -197,7 +197,7 @@ export async function GET(request: NextRequest) {
     };
 
     if (!sourceError && sourceData) {
-      for (const entry of sourceData) {
+      for (const entry of (sourceData as any[])) {
         const source = entry.source as 'manual' | 'clockify' | 'calendar_event';
         bySource[source] = (bySource[source] || 0) + (entry.duration_seconds || 0);
       }

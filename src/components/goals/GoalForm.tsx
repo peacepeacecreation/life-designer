@@ -3,14 +3,16 @@
 import { useState, FormEvent, useEffect, useRef } from 'react';
 import { useGoals } from '@/contexts/GoalsContext';
 import { Goal, GoalCategory, GoalPriority, GoalStatus } from '@/types';
-import { categoryMeta, priorityLabels, statusLabels } from '@/lib/categoryConfig';
+import { categoryMeta, priorityLabels, statusLabels, getCategoryMeta } from '@/lib/categoryConfig';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { AlertCircle, Upload, Link as LinkIcon, Loader2 } from 'lucide-react';
+import { IconPicker } from '@/components/goals/IconPicker';
 
 interface GoalFormProps {
   isOpen: boolean;
@@ -40,6 +42,8 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
     progressPercentage: 0,
     url: '',
     iconUrl: '',
+    color: '',
+    isOngoing: false,
   });
 
   const [uploadingIcon, setUploadingIcon] = useState(false);
@@ -61,11 +65,13 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
         hourlyRate: goalToEdit.hourlyRate || 0,
         fixedRate: goalToEdit.fixedRate || 0,
         fixedRatePeriod: goalToEdit.fixedRatePeriod || 'month',
-        startDate: new Date(goalToEdit.startDate).toISOString().split('T')[0],
-        targetEndDate: new Date(goalToEdit.targetEndDate).toISOString().split('T')[0],
+        startDate: goalToEdit.startDate ? new Date(goalToEdit.startDate).toISOString().split('T')[0] : '',
+        targetEndDate: goalToEdit.targetEndDate ? new Date(goalToEdit.targetEndDate).toISOString().split('T')[0] : '',
         progressPercentage: goalToEdit.progressPercentage,
         url: goalToEdit.url || '',
         iconUrl: goalToEdit.iconUrl || '',
+        color: goalToEdit.color || '',
+        isOngoing: goalToEdit.isOngoing || false,
       });
     } else {
       // Reset form when creating new goal
@@ -86,6 +92,8 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
         progressPercentage: 0,
         url: '',
         iconUrl: '',
+        color: '',
+        isOngoing: false,
       });
     }
   }, [goalToEdit, isOpen]);
@@ -153,6 +161,9 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
+    // Якщо це постійна ціль, статус автоматично ongoing
+    const goalStatus = formData.isOngoing ? GoalStatus.ONGOING : formData.status;
+
     if (isEditMode && goalToEdit) {
       // Update existing goal
       const updatedGoal = await updateGoal(goalToEdit.id, {
@@ -160,18 +171,20 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
         description: formData.description,
         category: formData.category,
         priority: formData.priority,
-        status: formData.status,
+        status: goalStatus,
         timeAllocated: formData.timeAllocated,
         paymentType: formData.paymentType || undefined,
         currency: formData.currency || undefined,
         hourlyRate: formData.hourlyRate > 0 ? formData.hourlyRate : undefined,
         fixedRate: formData.fixedRate > 0 ? formData.fixedRate : undefined,
         fixedRatePeriod: formData.fixedRatePeriod || undefined,
-        startDate: new Date(formData.startDate),
-        targetEndDate: new Date(formData.targetEndDate),
+        startDate: formData.isOngoing || !formData.startDate ? undefined : new Date(formData.startDate),
+        targetEndDate: formData.isOngoing || !formData.targetEndDate ? undefined : new Date(formData.targetEndDate),
         progressPercentage: formData.progressPercentage,
         url: formData.url,
         iconUrl: formData.iconUrl,
+        color: formData.color || undefined,
+        isOngoing: formData.isOngoing,
       });
 
       if (updatedGoal && onGoalUpdated) {
@@ -184,19 +197,22 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
         description: formData.description,
         category: formData.category,
         priority: formData.priority,
-        status: formData.status,
+        status: goalStatus,
         timeAllocated: formData.timeAllocated,
         paymentType: formData.paymentType || undefined,
         currency: formData.currency || undefined,
         hourlyRate: formData.hourlyRate > 0 ? formData.hourlyRate : undefined,
         fixedRate: formData.fixedRate > 0 ? formData.fixedRate : undefined,
         fixedRatePeriod: formData.fixedRatePeriod || undefined,
-        startDate: new Date(formData.startDate),
-        targetEndDate: new Date(formData.targetEndDate),
+        startDate: formData.isOngoing || !formData.startDate ? undefined : new Date(formData.startDate),
+        targetEndDate: formData.isOngoing || !formData.targetEndDate ? undefined : new Date(formData.targetEndDate),
         progressPercentage: formData.progressPercentage,
         tags: [],
         url: formData.url,
         iconUrl: formData.iconUrl,
+        color: formData.color || undefined,
+        isOngoing: formData.isOngoing,
+        displayOrder: 0, // Will be set automatically on server
       });
     }
 
@@ -226,8 +242,9 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
         </DialogHeader>
 
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="general">Загальні</TabsTrigger>
+            <TabsTrigger value="style">Стилізація</TabsTrigger>
             <TabsTrigger value="income">Доходи</TabsTrigger>
           </TabsList>
 
@@ -384,92 +401,114 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
                 </div>
               </div>
 
-              {/* Icon Upload */}
-              <div className="space-y-2">
-                <Label>Іконка цілі</Label>
-                <div className="flex items-center gap-3">
-                  {formData.iconUrl && (
-                    <div className="w-12 h-12 rounded-lg border border-border overflow-hidden bg-muted flex items-center justify-center">
-                      <img
-                        src={formData.iconUrl}
-                        alt="Goal icon"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="flex-1 flex gap-2">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileUpload}
-                      className="hidden"
+              {/* Ongoing Goal Toggle */}
+              <div className="flex items-center space-x-2 p-3 rounded-lg border bg-muted/50">
+                <Checkbox
+                  id="isOngoing"
+                  checked={formData.isOngoing}
+                  onCheckedChange={(checked) => setFormData({ ...formData, isOngoing: checked === true })}
+                />
+                <Label htmlFor="isOngoing" className="cursor-pointer flex-1">
+                  <div>
+                    <p className="font-medium">Постійна ціль</p>
+                    <p className="text-xs text-muted-foreground">
+                      Ціль без дедлайнів (наприклад: здоровий спосіб життя, щоденні тренування)
+                    </p>
+                  </div>
+                </Label>
+              </div>
+
+              {/* Dates - показуємо тільки якщо не постійна ціль */}
+              {!formData.isOngoing && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="startDate">
+                      Дата початку <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="startDate"
+                      type="date"
+                      required
+                      value={formData.startDate}
+                      onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                     />
-                    <Button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploadingIcon}
-                      variant="outline"
-                      className="flex-1"
-                    >
-                      {uploadingIcon ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Завантаження...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="h-4 w-4 mr-2" />
-                          Завантажити іконку
-                        </>
-                      )}
-                    </Button>
-                    {formData.iconUrl && (
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="targetEndDate">
+                      Цільова дата завершення <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="targetEndDate"
+                      type="date"
+                      required
+                      value={formData.targetEndDate}
+                      onChange={(e) => setFormData({ ...formData, targetEndDate: e.target.value })}
+                    />
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="style" className="space-y-6 mt-0">
+              {/* Color Picker */}
+              <div className="space-y-2">
+                <Label htmlFor="color">Колір цілі</Label>
+                <div className="flex items-center gap-3">
+                  <input
+                    id="color"
+                    type="color"
+                    value={formData.color || getCategoryMeta(formData.category).color}
+                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    className="w-16 h-10 rounded border border-border cursor-pointer"
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm">
+                      {formData.color ? 'Власний колір' : 'Колір категорії (дефолтний)'}
+                    </p>
+                    {formData.color && (
                       <Button
                         type="button"
-                        onClick={() => setFormData({ ...formData, iconUrl: '' })}
-                        variant="outline"
-                        size="icon"
-                        title="Видалити іконку"
+                        variant="link"
+                        size="sm"
+                        onClick={() => setFormData({ ...formData, color: '' })}
+                        className="h-auto p-0 text-xs"
                       >
-                        ✕
+                        Скинути на дефолтний
                       </Button>
                     )}
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Завантажте власну іконку або натисніть <LinkIcon className="h-3 w-3 inline" /> щоб витягнути логотип з посилання
-                </p>
               </div>
 
-              {/* Dates */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="startDate">
-                    Дата початку <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    required
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                  />
-                </div>
+              {/* Icon Picker */}
+              <IconPicker
+                category={formData.category}
+                selectedIconUrl={formData.iconUrl}
+                color={formData.color || getCategoryMeta(formData.category).color}
+                onIconSelect={(iconUrl) => setFormData({ ...formData, iconUrl })}
+                onFileUpload={(file) => {
+                  setUploadingIcon(true);
+                  const formDataUpload = new FormData();
+                  formDataUpload.append('file', file);
+                  if (goalToEdit?.id) {
+                    formDataUpload.append('goalId', goalToEdit.id);
+                  }
 
-                <div className="space-y-2">
-                  <Label htmlFor="targetEndDate">
-                    Цільова дата завершення <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="targetEndDate"
-                    type="date"
-                    required
-                    value={formData.targetEndDate}
-                    onChange={(e) => setFormData({ ...formData, targetEndDate: e.target.value })}
-                  />
-                </div>
-              </div>
+                  fetch('/api/goals/upload-icon', {
+                    method: 'POST',
+                    body: formDataUpload,
+                  })
+                    .then((res) => res.json())
+                    .then((data) => setFormData({ ...formData, iconUrl: data.iconUrl }))
+                    .catch((error) => {
+                      console.error('Error uploading icon:', error);
+                      alert('Не вдалося завантажити іконку');
+                    })
+                    .finally(() => setUploadingIcon(false));
+                }}
+                uploadingIcon={uploadingIcon}
+              />
             </TabsContent>
 
             <TabsContent value="income" className="space-y-6 mt-0">

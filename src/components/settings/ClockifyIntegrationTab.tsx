@@ -24,6 +24,8 @@ import {
   Loader2,
   ExternalLink,
   AlertCircle,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import ClockifyProjectMappingTable from './ClockifyProjectMappingTable';
 
@@ -50,6 +52,7 @@ export default function ClockifyIntegrationTab() {
 
   // Connect form state
   const [apiKey, setApiKey] = useState('');
+  const [showApiKey, setShowApiKey] = useState(false);
   const [workspaces, setWorkspaces] = useState<ClockifyWorkspace[]>([]);
   const [selectedWorkspace, setSelectedWorkspace] = useState('');
   const [loadingWorkspaces, setLoadingWorkspaces] = useState(false);
@@ -375,14 +378,29 @@ export default function ClockifyIntegrationTab() {
             <div className="space-y-2">
               <Label htmlFor="apiKey">Clockify API Key</Label>
               <div className="flex gap-2">
-                <Input
-                  id="apiKey"
-                  type="password"
-                  placeholder="Введіть ваш Clockify API ключ"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  disabled={loadingWorkspaces}
-                />
+                <div className="relative flex-1">
+                  <Input
+                    id="apiKey"
+                    type={showApiKey ? 'text' : 'password'}
+                    placeholder="Введіть ваш Clockify API ключ"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    disabled={loadingWorkspaces}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    disabled={loadingWorkspaces}
+                  >
+                    {showApiKey ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
                 <Button
                   onClick={handleFetchWorkspaces}
                   disabled={!apiKey || loadingWorkspaces}

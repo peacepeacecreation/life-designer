@@ -62,6 +62,7 @@ function transformEventFromDb(row: CalendarEventRow, goal?: any): CalendarEventW
       name: goal.name,
       category: goal.category,
       iconUrl: goal.icon_url,
+      color: goal.color,
     };
   }
 
@@ -99,7 +100,8 @@ export async function GET(
           id,
           name,
           category,
-          icon_url
+          icon_url,
+          color
         )
       `)
       .eq('id', id)
@@ -244,7 +246,8 @@ export async function PATCH(
           id,
           name,
           category,
-          icon_url
+          icon_url,
+          color
         )
       `)
       .single();

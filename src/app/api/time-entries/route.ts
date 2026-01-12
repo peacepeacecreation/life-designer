@@ -301,7 +301,7 @@ export async function POST(request: NextRequest) {
     };
 
     // 10. Insert time entry
-    const insertResult: any = await supabase
+    const insertResult: any = await (supabase as any)
       .from('time_entries')
       .insert(timeEntryData)
       .select()
@@ -316,7 +316,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 11. Fetch full entry with details using SQL function
-    const { data: fullEntry, error: fetchError } = await supabase.rpc(
+    const { data: fullEntry, error: fetchError } = await (supabase as any).rpc(
       'get_time_entries_with_details',
       {
         p_user_id: userId,
@@ -326,7 +326,7 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    if (fetchError || !fullEntry || fullEntry.length === 0) {
+    if (fetchError || !fullEntry || (fullEntry as any[]).length === 0) {
       // Fallback to basic data if fetch fails
       return NextResponse.json({
         success: true,
@@ -342,7 +342,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find the newly created entry in the results
-    const newEntry = fullEntry.find((e: any) => e.id === insertResult.data.id);
+    const newEntry = (fullEntry as any[]).find((e: any) => e.id === insertResult.data.id);
 
     // 12. Return success response
     return NextResponse.json({

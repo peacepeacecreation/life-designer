@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Loader2, Plus, Trash2, CheckCircle, AlertCircle, FolderKanban, Target } from 'lucide-react';
 import { useGoals } from '@/contexts/GoalsContext';
+import { isPredefinedIcon, getIconById } from '@/lib/goalIcons';
 
 interface ClockifyProject {
   id: string;
@@ -275,9 +276,18 @@ export default function ClockifyProjectMappingTable({ connectionId }: ClockifyPr
                       {goals.map((goal) => (
                         <SelectItem key={goal.id} value={goal.id}>
                           <div className="flex items-center gap-2">
-                            {goal.iconUrl && (
-                              <img src={goal.iconUrl} alt="" className="w-4 h-4" />
-                            )}
+                            {goal.iconUrl && isPredefinedIcon(goal.iconUrl) ? (
+                              (() => {
+                                const iconOption = getIconById(goal.iconUrl!);
+                                if (iconOption) {
+                                  const IconComponent = iconOption.Icon;
+                                  return <IconComponent className="w-4 h-4" style={{ color: goal.color }} />;
+                                }
+                                return null;
+                              })()
+                            ) : goal.iconUrl ? (
+                              <img src={goal.iconUrl} alt="" className="w-4 h-4 object-contain" />
+                            ) : null}
                             <span>{goal.name}</span>
                             <Badge variant="outline" className="ml-2 text-xs">
                               {goal.category}
@@ -365,9 +375,18 @@ export default function ClockifyProjectMappingTable({ connectionId }: ClockifyPr
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {mapping.goal?.iconUrl && (
-                        <img src={mapping.goal.iconUrl} alt="" className="w-5 h-5" />
-                      )}
+                      {mapping.goal?.iconUrl && isPredefinedIcon(mapping.goal.iconUrl) ? (
+                        (() => {
+                          const iconOption = getIconById(mapping.goal.iconUrl!);
+                          if (iconOption) {
+                            const IconComponent = iconOption.Icon;
+                            return <IconComponent className="w-5 h-5" style={{ color: mapping.goal.color }} />;
+                          }
+                          return null;
+                        })()
+                      ) : mapping.goal?.iconUrl ? (
+                        <img src={mapping.goal.iconUrl} alt="" className="w-5 h-5 object-contain" />
+                      ) : null}
                       <div>
                         <p className="font-medium">{mapping.goal?.name || 'N/A'}</p>
                         <Badge variant="outline" className="text-xs mt-1">
