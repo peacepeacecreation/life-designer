@@ -30,7 +30,8 @@ export interface RecurringEvent {
   duration: number; // в хвилинах
   recurrence: RecurrenceRule;
   color?: string;
-  category?: string; // зв'язок з категорією цілей
+  goalId?: string; // зв'язок з ціллю
+  category?: string; // зв'язок з категорією цілей (deprecated, використовуйте goalId)
   createdAt: Date;
   updatedAt: Date;
   isActive: boolean;

@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { GlobalSettingsProvider } from "@/contexts/GlobalSettingsContext";
 import { GoalsProvider } from "@/contexts/GoalsContext";
+import { CalendarEventsProvider } from "@/contexts/CalendarEventsContext";
 import { RecurringEventsProvider } from "@/contexts/RecurringEventsContext";
+import { TimeCalculatorProvider } from "@/contexts/TimeCalculatorContext";
 import { NotesProvider } from "@/contexts/NotesContext";
 import { ReflectionsProvider } from "@/contexts/ReflectionsContext";
 import SessionProvider from "@/components/SessionProvider";
@@ -31,16 +34,22 @@ export default function RootLayout({
     <html lang="uk" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
         <SessionProvider>
-          <GoalsProvider>
-            <NotesProvider>
-              <ReflectionsProvider>
-                <RecurringEventsProvider>
-                  <Header />
-                  {children}
-                </RecurringEventsProvider>
-              </ReflectionsProvider>
-            </NotesProvider>
-          </GoalsProvider>
+          <GlobalSettingsProvider>
+            <GoalsProvider>
+              <CalendarEventsProvider>
+                <NotesProvider>
+                  <ReflectionsProvider>
+                    <RecurringEventsProvider>
+                      <TimeCalculatorProvider>
+                        <Header />
+                        {children}
+                      </TimeCalculatorProvider>
+                    </RecurringEventsProvider>
+                  </ReflectionsProvider>
+                </NotesProvider>
+              </CalendarEventsProvider>
+            </GoalsProvider>
+          </GlobalSettingsProvider>
         </SessionProvider>
       </body>
     </html>

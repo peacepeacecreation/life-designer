@@ -2,15 +2,20 @@
  * Goal Icon Upload API
  *
  * POST /api/goals/upload-icon - Upload a custom icon for a goal
+ * Uses Vercel Blob in production, local filesystem in development
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/route';
-import { getServerClient } from '@/lib/supabase/pool';
+import { put } from '@vercel/blob';
+import { writeFile, mkdir } from 'fs/promises';
+import path from 'path';
 
 export const runtime = 'nodejs';
 export const maxDuration = 10;
+
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * POST /api/goals/upload-icon
@@ -24,26 +29,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 2. Get Supabase client
-    const supabase = getServerClient();
-    if (!supabase) {
-      return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
-    }
-
-    // 3. Get user ID
-    const userResult: any = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', session.user.email)
-      .single();
-
-    if (userResult.error || !userResult.data) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    const userId = userResult.data.id;
-
-    // 4. Parse form data
+    // 2. Parse form data
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const goalId = formData.get('goalId') as string;
@@ -52,7 +38,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // 5. Validate file type
+    // 3. Validate file type
     const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/svg+xml', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
@@ -61,7 +47,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 6. Validate file size (max 2MB)
+    // 4. Validate file size (max 2MB)
     const maxSize = 2 * 1024 * 1024; // 2MB
     if (file.size > maxSize) {
       return NextResponse.json(
@@ -70,42 +56,52 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 7. Generate unique filename
+    // 5. Generate unique filename
     const fileExt = file.name.split('.').pop();
     const timestamp = Date.now();
-    const fileName = goalId
-      ? `${userId}/${goalId}_${timestamp}.${fileExt}`
-      : `${userId}/${timestamp}.${fileExt}`;
+    const userEmail = session.user.email.replace(/[^a-zA-Z0-9]/g, '_');
 
-    // 8. Convert File to ArrayBuffer then to Buffer
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    if (isDevelopment) {
+      // Development: Save to public/uploads folder
+      const fileName = goalId
+        ? `${goalId}_${timestamp}.${fileExt}`
+        : `${timestamp}.${fileExt}`;
 
-    // 9. Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('goal-icons')
-      .upload(fileName, buffer, {
-        contentType: file.type,
-        upsert: true,
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'goal-icons', userEmail);
+      const filePath = path.join(uploadDir, fileName);
+
+      // Create directory if it doesn't exist
+      await mkdir(uploadDir, { recursive: true });
+
+      // Convert File to Buffer
+      const buffer = Buffer.from(await file.arrayBuffer());
+
+      // Write file to disk
+      await writeFile(filePath, buffer);
+
+      // Return public URL
+      const publicUrl = `/uploads/goal-icons/${userEmail}/${fileName}`;
+
+      return NextResponse.json({
+        iconUrl: publicUrl,
+        fileName: fileName,
+      });
+    } else {
+      // Production: Use Vercel Blob
+      const fileName = goalId
+        ? `goal-icons/${userEmail}/${goalId}_${timestamp}.${fileExt}`
+        : `goal-icons/${userEmail}/${timestamp}.${fileExt}`;
+
+      const blob = await put(fileName, file, {
+        access: 'public',
+        addRandomSuffix: false,
       });
 
-    if (uploadError) {
-      console.error('Error uploading file:', uploadError);
-      return NextResponse.json(
-        { error: 'Failed to upload file', details: uploadError.message },
-        { status: 500 }
-      );
+      return NextResponse.json({
+        iconUrl: blob.url,
+        fileName: blob.pathname,
+      });
     }
-
-    // 10. Get public URL
-    const { data: urlData } = supabase.storage
-      .from('goal-icons')
-      .getPublicUrl(fileName);
-
-    return NextResponse.json({
-      iconUrl: urlData.publicUrl,
-      fileName: uploadData.path,
-    });
   } catch (error: any) {
     console.error('Error in POST /api/goals/upload-icon:', error);
     return NextResponse.json(

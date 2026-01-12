@@ -7,8 +7,15 @@ import { Button } from '@/components/ui/button';
 import { getSeedGoals } from '@/utils/seedGoals';
 
 export default function GoalsList() {
-  const { getFilteredGoals, addGoal } = useGoals();
-  const goals = getFilteredGoals();
+  const { goals, addGoal, loading } = useGoals();
+
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Завантаження цілей...</p>
+      </div>
+    );
+  }
 
   const handleLoadExamples = () => {
     const seedGoals = getSeedGoals();

@@ -21,7 +21,7 @@ export function getSeedRecurringEvents(): Omit<
         interval: 1,
         daysOfWeek: WEEKDAYS, // Пн-Пт
       },
-      color: '#3b82f6',
+      color: '#93c5fd', // пастельний синій
       category: 'work_startups',
       isActive: true,
     },
@@ -36,7 +36,7 @@ export function getSeedRecurringEvents(): Omit<
         interval: 1,
         daysOfWeek: [DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY],
       },
-      color: '#8b5cf6', // фіолетовий
+      color: '#c4b5fd', // пастельний фіолетовий
       category: 'work_startups',
       isActive: true,
     },

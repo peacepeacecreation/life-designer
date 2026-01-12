@@ -33,6 +33,7 @@ import {
   RecurrenceFrequency,
   DayOfWeek,
 } from '@/types/recurring-events';
+import { useGoals } from '@/contexts/GoalsContext';
 
 interface AddRecurringEventDialogProps {
   open: boolean;
@@ -57,12 +58,12 @@ const FREQUENCY_LABELS: Record<RecurrenceFrequency, string> = {
 };
 
 const DEFAULT_COLORS = [
-  { value: '#3b82f6', label: 'Синій' },
-  { value: '#8b5cf6', label: 'Фіолетовий' },
-  { value: '#ec4899', label: 'Рожевий' },
-  { value: '#f59e0b', label: 'Помаранчевий' },
-  { value: '#10b981', label: 'Зелений' },
-  { value: '#ef4444', label: 'Червоний' },
+  { value: '#93c5fd', label: 'Синій' },
+  { value: '#c4b5fd', label: 'Фіолетовий' },
+  { value: '#f9a8d4', label: 'Рожевий' },
+  { value: '#fcd34d', label: 'Помаранчевий' },
+  { value: '#6ee7b7', label: 'Зелений' },
+  { value: '#fca5a5', label: 'Червоний' },
 ];
 
 export function AddRecurringEventDialog({
@@ -70,6 +71,12 @@ export function AddRecurringEventDialog({
   onOpenChange,
   onAdd,
 }: AddRecurringEventDialogProps) {
+  const { goals, loading: goalsLoading } = useGoals();
+
+  // Debug: log goals when dialog opens
+  if (open && goals.length > 0) {
+    console.log('Available goals in dialog:', goals.map(g => ({ id: g.id, name: g.name, priority: g.priority })));
+  }
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [startTime, setStartTime] = useState('09:00');
@@ -80,6 +87,7 @@ export function AddRecurringEventDialog({
   const [interval, setInterval] = useState('1');
   const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([]);
   const [color, setColor] = useState(DEFAULT_COLORS[0].value);
+  const [goalId, setGoalId] = useState<string | undefined>(undefined);
 
   const resetForm = () => {
     setTitle('');
@@ -90,6 +98,7 @@ export function AddRecurringEventDialog({
     setInterval('1');
     setSelectedDays([]);
     setColor(DEFAULT_COLORS[0].value);
+    setGoalId(undefined);
   };
 
   const handleAdd = () => {
@@ -132,6 +141,7 @@ export function AddRecurringEventDialog({
         daysOfWeek: frequency === RecurrenceFrequency.WEEKLY ? selectedDays : undefined,
       },
       color,
+      goalId,
       isActive: true,
     };
 
@@ -311,6 +321,27 @@ export function AddRecurringEventDialog({
                 />
               ))}
             </div>
+          </div>
+
+          {/* Ціль */}
+          <div className="grid gap-2">
+            <Label htmlFor="goal">Ціль (опціонально)</Label>
+            <Select value={goalId} onValueChange={(value) => setGoalId(value === 'none' ? undefined : value)}>
+              <SelectTrigger id="goal" disabled={goalsLoading}>
+                <SelectValue placeholder={goalsLoading ? 'Завантаження...' : 'Оберіть ціль'} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Без цілі</SelectItem>
+                {goals.map((goal) => (
+                  <SelectItem key={goal.id} value={goal.id}>
+                    {goal.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Пов'яжіть подію з ціллю для кращого відстеження прогресу
+            </p>
           </div>
         </div>
 

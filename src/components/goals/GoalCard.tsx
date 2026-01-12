@@ -7,8 +7,9 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Briefcase, BookOpen, Dumbbell, Palette, Trash2, Clock, Calendar } from 'lucide-react';
+import { Briefcase, BookOpen, Dumbbell, Palette, Trash2, Calendar, ExternalLink, DollarSign } from 'lucide-react';
 import Link from 'next/link';
+import GoalTimeProgress from './GoalTimeProgress';
 
 interface GoalCardProps {
   goal: Goal;
@@ -53,11 +54,34 @@ export default function GoalCard({ goal }: GoalCardProps) {
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg" style={{ backgroundColor: `${categoryMeta.color}/0.1` }}>
-                <CategoryIcon className="h-5 w-5" style={{ color: categoryMeta.color }} />
+              <div className="rounded-lg flex items-center justify-center" style={{ backgroundColor: `${categoryMeta.color}/0.1` }}>
+                {goal.iconUrl ? (
+                  <img
+                    src={goal.iconUrl}
+                    alt={goal.name}
+                    className="h-10 w-10 object-contain rounded-lg"
+                  />
+                ) : (
+                  <CategoryIcon className="h-10 w-10 p-2" style={{ color: categoryMeta.color }} />
+                )}
               </div>
               <div>
-                <h3 className="font-semibold text-lg text-black dark:text-white">{goal.name}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-lg text-black dark:text-white">{goal.name}</h3>
+                  {goal.url && (
+                    <span
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.open(goal.url, '_blank', 'noopener,noreferrer');
+                      }}
+                      className="text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                      title={goal.url}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground">{categoryMeta.name}</p>
               </div>
             </div>
@@ -74,12 +98,6 @@ export default function GoalCard({ goal }: GoalCardProps) {
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
-
-          {goal.description && (
-            <p className="text-sm text-muted-foreground mt-3 line-clamp-2">
-              {goal.description}
-            </p>
-          )}
         </CardHeader>
 
         <CardContent className="space-y-4">
@@ -94,14 +112,35 @@ export default function GoalCard({ goal }: GoalCardProps) {
           </div>
 
           {/* Stats */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Clock className="h-4 w-4" />
-                <span>Час на тиждень:</span>
+          <div className="space-y-2">
+            {/* Goal Time Progress */}
+            <GoalTimeProgress goal={goal} />
+
+            {goal.currency && goal.paymentType && (
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <DollarSign className="h-4 w-4" />
+                  <span>Заробіток:</span>
+                </div>
+                {goal.paymentType === 'hourly' && goal.hourlyRate ? (
+                  <span className="font-semibold text-black dark:text-white">
+                    {goal.hourlyRate} {goal.currency}/год
+                    <span className="text-xs text-muted-foreground ml-1">
+                      (~{(goal.hourlyRate * goal.timeAllocated * 4).toFixed(0)} {goal.currency}/міс)
+                    </span>
+                  </span>
+                ) : goal.paymentType === 'fixed' && goal.fixedRate ? (
+                  <span className="font-semibold text-black dark:text-white">
+                    {goal.fixedRate} {goal.currency}/{goal.fixedRatePeriod === 'week' ? 'тиж' : 'міс'}
+                    {goal.fixedRatePeriod === 'week' && (
+                      <span className="text-xs text-muted-foreground ml-1">
+                        (~{(goal.fixedRate * 4).toFixed(0)} {goal.currency}/міс)
+                      </span>
+                    )}
+                  </span>
+                ) : null}
               </div>
-              <span className="font-semibold text-black dark:text-white">{goal.timeAllocated} год</span>
-            </div>
+            )}
 
             {goal.progressPercentage > 0 && (
               <div className="space-y-2">

@@ -8,7 +8,7 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Briefcase, BookOpen, Dumbbell, Palette, Clock, Calendar, ArrowLeft, Edit2 } from 'lucide-react';
+import { Briefcase, BookOpen, Dumbbell, Palette, Clock, Calendar, ArrowLeft, Edit2, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import GoalForm from '@/components/goals/GoalForm';
 import { useGoals } from '@/contexts/GoalsContext';
@@ -24,7 +24,7 @@ export default function GoalDetailPage() {
   const params = useParams();
   const router = useRouter();
   const goalId = params.goalId as string;
-  const { goals, updateGoal: updateGoalInContext } = useGoals();
+  const { goals, updateGoal: updateGoalInContext, loading } = useGoals();
 
   const [goal, setGoal] = useState<Goal | null>(null);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
@@ -57,6 +57,16 @@ export default function GoalDetailPage() {
       }
     }
   };
+
+  if (loading) {
+    return (
+      <main className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="flex flex-col items-center justify-center min-h-[400px]">
+          <p className="text-muted-foreground">Завантаження...</p>
+        </div>
+      </main>
+    );
+  }
 
   if (!goal) {
     return (
@@ -108,10 +118,31 @@ export default function GoalDetailPage() {
           </div>
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-lg" style={{ backgroundColor: `${categoryMeta.color}/0.1` }}>
-              <CategoryIcon className="h-8 w-8" style={{ color: categoryMeta.color }} />
+              {goal.iconUrl ? (
+                <img
+                  src={goal.iconUrl}
+                  alt={goal.name}
+                  className="h-8 w-8 object-contain"
+                />
+              ) : (
+                <CategoryIcon className="h-8 w-8" style={{ color: categoryMeta.color }} />
+              )}
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-black dark:text-white">{goal.name}</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold text-black dark:text-white">{goal.name}</h1>
+                {goal.url && (
+                  <a
+                    href={goal.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-primary transition-colors"
+                    title={goal.url}
+                  >
+                    <ExternalLink className="h-6 w-6" />
+                  </a>
+                )}
+              </div>
               <p className="text-muted-foreground">{categoryMeta.name}</p>
             </div>
           </div>
@@ -297,6 +328,26 @@ export default function GoalDetailPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Project Link */}
+        {goal.url && (
+          <Card className="bg-white dark:bg-card">
+            <CardHeader>
+              <h2 className="text-xl font-semibold text-black dark:text-white">Посилання на проект</h2>
+            </CardHeader>
+            <CardContent>
+              <a
+                href={goal.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-primary hover:underline break-all"
+              >
+                <ExternalLink className="h-5 w-5 flex-shrink-0" />
+                {goal.url}
+              </a>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Tags */}
         {goal.tags && goal.tags.length > 0 && (

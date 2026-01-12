@@ -24,6 +24,13 @@ pnpm lint:fix      # Run ESLint with auto-fix
 pnpm type-check    # Run TypeScript type checking without emitting files
 ```
 
+**Database Commands:**
+```bash
+pnpm db:migrate        # Run database migration script
+pnpm db:test           # Test database connection and CRUD operations
+pnpm db:copy-migration # Copy latest migration SQL to clipboard
+```
+
 **Important**: NEVER run `pnpm dev` or `npm run dev` unless explicitly requested by the user.
 
 ## Architecture
@@ -85,3 +92,58 @@ Copy `.env.local.example` to `.env.local` for local development. Default app URL
 - Custom component styles go in `globals.css` with appropriate scoping
 - Calendar styles use design system tokens (e.g., `hsl(var(--border))`)
 - Prefer design system tokens over hardcoded colors
+
+## Database Migrations
+
+This project uses Supabase PostgreSQL with migration files in `supabase/migrations/`.
+
+### Running Migrations
+
+**Recommended Method: Bash Script**
+```bash
+./scripts/run-migration.sh
+```
+
+This script uses the Supabase Management API to execute migrations. It will:
+1. Read the migration SQL file (automatically configured in the script)
+2. Display the SQL to be executed
+3. Load `SUPABASE_PAT` from `.env.local`
+4. Execute via Management API endpoint: `https://api.supabase.com/v1/projects/{PROJECT_REF}/database/query`
+5. Show success/failure status
+
+**Setup Requirements:**
+Add your Supabase Personal Access Token to `.env.local`:
+```bash
+SUPABASE_PAT=sbp_your_token_here
+```
+
+**When to Update the Script:**
+After creating a new migration file, update line 4 in `scripts/run-migration.sh`:
+```bash
+SQL_FILE="supabase/migrations/XXX_your_migration.sql"
+```
+
+### Getting Personal Access Token (PAT)
+
+The migration script requires a PAT (not the service role key):
+1. Go to https://supabase.com/dashboard/account/tokens
+2. Click "Generate new token"
+3. Name: "CLI Migrations"
+4. Scope: **All access** (or minimum `database:write`)
+5. Copy the token (starts with `sbp_`)
+6. Add to `.env.local`: `SUPABASE_PAT=sbp_...`
+
+### Alternative: Manual Execution via Dashboard
+
+If the script fails, manually execute via Supabase Dashboard:
+1. Copy SQL: `pnpm db:copy-migration` (copies to clipboard)
+2. Open SQL Editor: https://supabase.com/dashboard/project/gxzzkcthcdtmkdwfdrhv/sql/new
+3. Paste and click "Run"
+
+### Important Notes
+
+- **Service Role Key** - Used for API routes with RLS bypass, NOT for Management API
+- **Personal Access Token (PAT)** - Required for Management API `database/query` endpoint
+- **Anon Key** - Client-side API key with RLS enforcement
+- Supabase REST API (`/rest/v1/`) does NOT support raw SQL execution for security
+- Direct `psql` connections may be restricted; use Management API instead

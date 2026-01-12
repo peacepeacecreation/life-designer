@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Calendar, Target, Activity, BarChart3, FileText, Lightbulb } from 'lucide-react';
+import { Calendar, Target, Activity, BarChart3, FileText, Lightbulb, Settings } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -93,6 +93,22 @@ export default function Home() {
               </CardDescription>
             </CardHeader>
           </Card>
+
+          <Link href="/settings">
+            <Card className="hover:shadow-lg transition-all cursor-pointer h-full bg-white dark:bg-card">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                    <Settings className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+                  </div>
+                  <CardTitle className="text-2xl text-black dark:text-white">Налаштування</CardTitle>
+                </div>
+                <CardDescription className="text-base text-black/70 dark:text-white/70">
+                  Керуйте налаштуваннями платформи та режимом дня
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
 
           <Link href="/stats">
             <Card className="hover:shadow-lg transition-all cursor-pointer h-full bg-white dark:bg-card">

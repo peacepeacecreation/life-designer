@@ -4,23 +4,42 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useRecurringEvents } from '@/contexts/RecurringEventsContext';
+import { useGoals } from '@/contexts/GoalsContext';
 import { getSeedRecurringEvents } from '@/utils/seedRecurringEvents';
 import { getRecurrenceDescription } from '@/utils/recurringEvents';
-import { Sparkles, ToggleLeft, ToggleRight, Trash2, Clock, Plus } from 'lucide-react';
+import { getCategoryMeta } from '@/lib/categoryConfig';
+import { Sparkles, ToggleLeft, ToggleRight, Trash2, Clock, Plus, Pencil, Target } from 'lucide-react';
 import { AddRecurringEventDialog } from '@/components/calendar/AddRecurringEventDialog';
+import { EditRecurringEventDialog } from '@/components/calendar/EditRecurringEventDialog';
+import { RecurringEvent } from '@/types/recurring-events';
 
 export default function RecurringEventsPanel() {
   const {
     recurringEvents,
     addRecurringEvent,
+    updateRecurringEvent,
     deleteRecurringEvent,
     toggleRecurringEvent,
   } = useRecurringEvents();
+  const { goals } = useGoals();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [eventToEdit, setEventToEdit] = useState<RecurringEvent | null>(null);
+
+  // Функція для знаходження цілі за ID
+  const getGoalById = (goalId?: string) => {
+    if (!goalId) return null;
+    return goals.find((goal) => goal.id === goalId);
+  };
 
   const handleLoadExamples = () => {
     const seedEvents = getSeedRecurringEvents();
     seedEvents.forEach((event) => addRecurringEvent(event));
+  };
+
+  const handleEditClick = (event: RecurringEvent) => {
+    setEventToEdit(event);
+    setEditDialogOpen(true);
   };
 
   if (recurringEvents.length === 0) {
@@ -63,41 +82,61 @@ export default function RecurringEventsPanel() {
       <Card className="p-6">
         <h3 className="font-semibold mb-4">Повторювані події</h3>
         <div className="space-y-3 mb-4">
-          {recurringEvents.map((event) => (
-            <div
-              key={event.id}
-              className={`p-3 rounded-lg border ${
-                event.isActive
-                  ? 'border-border bg-card'
-                  : 'border-muted bg-muted/30 opacity-60'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium text-sm truncate">{event.title}</h4>
-                    <span
-                      className="inline-block px-2 py-0.5 text-xs rounded-full"
-                      style={{
-                        backgroundColor: event.color
-                          ? `${event.color}20`
-                          : 'transparent',
-                        color: event.color,
-                      }}
-                    >
-                      {event.startTime}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {getRecurrenceDescription(event.recurrence)}
-                  </p>
-                  {event.description && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {event.description}
+          {recurringEvents.map((event) => {
+            const goal = getGoalById(event.goalId);
+            const categoryMeta = goal ? getCategoryMeta(goal.category) : null;
+
+            return (
+              <div
+                key={event.id}
+                className={`p-3 rounded-lg border ${
+                  event.isActive
+                    ? 'border-border bg-card'
+                    : 'border-muted bg-muted/30 opacity-60'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-medium text-sm truncate">{event.title}</h4>
+                      <span
+                        className="inline-block px-2 py-0.5 text-xs rounded-full"
+                        style={{
+                          backgroundColor: event.color
+                            ? `${event.color}20`
+                            : 'transparent',
+                          color: event.color,
+                        }}
+                      >
+                        {event.startTime}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {getRecurrenceDescription(event.recurrence)}
                     </p>
-                  )}
-                </div>
-                <div className="flex gap-1">
+                    {goal && (
+                      <div
+                        className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-md"
+                        style={{
+                          backgroundColor: categoryMeta?.color ? `${categoryMeta.color}15` : 'transparent',
+                        }}
+                      >
+                        {goal.iconUrl ? (
+                          <img
+                            src={goal.iconUrl}
+                            alt={goal.name}
+                            className="h-3.5 w-3.5 object-contain"
+                          />
+                        ) : (
+                          <Target className="h-3.5 w-3.5" style={{ color: categoryMeta?.color }} />
+                        )}
+                        <span className="text-xs font-medium text-black dark:text-white">
+                          {goal.name}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                <div className="flex gap-0.5">
                   <Button
                     onClick={() => toggleRecurringEvent(event.id)}
                     variant="ghost"
@@ -111,6 +150,14 @@ export default function RecurringEventsPanel() {
                     )}
                   </Button>
                   <Button
+                    onClick={() => handleEditClick(event)}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
                     onClick={() => deleteRecurringEvent(event.id)}
                     variant="ghost"
                     size="sm"
@@ -121,7 +168,8 @@ export default function RecurringEventsPanel() {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         <Button
@@ -139,6 +187,13 @@ export default function RecurringEventsPanel() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onAdd={addRecurringEvent}
+      />
+
+      <EditRecurringEventDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        event={eventToEdit}
+        onUpdate={updateRecurringEvent}
       />
     </>
   );

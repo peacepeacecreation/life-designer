@@ -90,11 +90,18 @@ export async function GET(
       priority: goal.priority as GoalPriority,
       status: goal.status as GoalStatus,
       timeAllocated: goal.time_allocated,
+      paymentType: goal.payment_type || undefined,
+      currency: goal.currency || undefined,
+      hourlyRate: goal.hourly_rate || undefined,
+      fixedRate: goal.fixed_rate || undefined,
+      fixedRatePeriod: goal.fixed_rate_period || undefined,
       progressPercentage: goal.progress_percentage,
       startDate: new Date(goal.start_date),
       targetEndDate: new Date(goal.target_end_date),
       actualEndDate: goal.actual_end_date ? new Date(goal.actual_end_date) : undefined,
       tags: goal.tags || [],
+      iconUrl: goal.icon_url,
+      url: goal.url,
       createdAt: new Date(goal.created_at),
       updatedAt: new Date(goal.updated_at),
       connections: (goal.goal_connections_from || []).map((c: any) => ({
@@ -179,11 +186,18 @@ export async function PATCH(
     if (body.priority !== undefined) updateData.priority = body.priority;
     if (body.status !== undefined) updateData.status = body.status;
     if (body.timeAllocated !== undefined) updateData.time_allocated = body.timeAllocated;
+    if (body.paymentType !== undefined) updateData.payment_type = body.paymentType || null;
+    if (body.currency !== undefined) updateData.currency = body.currency || null;
+    if (body.hourlyRate !== undefined) updateData.hourly_rate = body.hourlyRate || null;
+    if (body.fixedRate !== undefined) updateData.fixed_rate = body.fixedRate || null;
+    if (body.fixedRatePeriod !== undefined) updateData.fixed_rate_period = body.fixedRatePeriod || null;
     if (body.progressPercentage !== undefined) updateData.progress_percentage = body.progressPercentage;
     if (body.startDate !== undefined) updateData.start_date = ensureDateString(body.startDate);
     if (body.targetEndDate !== undefined) updateData.target_end_date = ensureDateString(body.targetEndDate);
     if (body.actualEndDate !== undefined) updateData.actual_end_date = ensureDateString(body.actualEndDate);
     if (body.tags !== undefined) updateData.tags = body.tags;
+    if (body.iconUrl !== undefined) updateData.icon_url = body.iconUrl;
+    if (body.url !== undefined) updateData.url = body.url;
 
     // 7. Regenerate embedding if needed
     if (needsNewEmbedding) {
@@ -227,11 +241,18 @@ export async function PATCH(
       priority: goal.priority as GoalPriority,
       status: goal.status as GoalStatus,
       timeAllocated: goal.time_allocated,
+      paymentType: goal.payment_type || undefined,
+      currency: goal.currency || undefined,
+      hourlyRate: goal.hourly_rate || undefined,
+      fixedRate: goal.fixed_rate || undefined,
+      fixedRatePeriod: goal.fixed_rate_period || undefined,
       progressPercentage: goal.progress_percentage,
       startDate: new Date(goal.start_date),
       targetEndDate: new Date(goal.target_end_date),
       actualEndDate: goal.actual_end_date ? new Date(goal.actual_end_date) : undefined,
       tags: goal.tags || [],
+      iconUrl: goal.icon_url,
+      url: goal.url,
       createdAt: new Date(goal.created_at),
       updatedAt: new Date(goal.updated_at),
       connections: (goal.goal_connections_from || []).map((c: any) => ({

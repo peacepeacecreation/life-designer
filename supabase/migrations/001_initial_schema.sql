@@ -26,11 +26,21 @@ CREATE TABLE goals (
   priority TEXT NOT NULL CHECK (priority IN ('critical', 'high', 'medium', 'low')),
   status TEXT NOT NULL CHECK (status IN ('not_started', 'in_progress', 'on_hold', 'completed', 'abandoned')),
   time_allocated INTEGER NOT NULL DEFAULT 0 CHECK (time_allocated >= 0),
+
+  -- Financial tracking
+  currency TEXT,
+  hourly_rate NUMERIC(10, 2),
+
   progress_percentage INTEGER NOT NULL DEFAULT 0 CHECK (progress_percentage >= 0 AND progress_percentage <= 100),
   start_date TIMESTAMPTZ NOT NULL,
   target_end_date TIMESTAMPTZ NOT NULL,
   actual_end_date TIMESTAMPTZ,
   tags TEXT[] DEFAULT '{}',
+
+  -- Custom icon and URL
+  icon_url TEXT,
+  url TEXT,
+
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
 

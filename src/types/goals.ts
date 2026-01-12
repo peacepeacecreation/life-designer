@@ -43,6 +43,13 @@ export interface Goal {
   // Time allocation (hours per week)
   timeAllocated: number;
 
+  // Financial tracking
+  paymentType?: 'hourly' | 'fixed';  // Тип оплати: погодинна або фіксована
+  currency?: string;                  // USD, EUR, UAH, etc.
+  hourlyRate?: number;                // Заробіток за годину (для hourly)
+  fixedRate?: number;                 // Фіксована ставка (для fixed)
+  fixedRatePeriod?: 'week' | 'month'; // Період для фіксованої ставки
+
   // Timeline
   startDate: Date;
   targetEndDate: Date;

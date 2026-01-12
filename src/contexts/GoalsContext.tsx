@@ -1,15 +1,17 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { useSession } from 'next-auth/react';
 import { Goal, GoalConnection, GoalCategory, GoalPriority, GoalStatus } from '@/types';
-
-const STORAGE_KEY = 'life-designer-goals';
 
 interface GoalsContextType {
   goals: Goal[];
-  addGoal: (goal: Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'connections'>) => void;
+  loading: boolean;
+  error: string | null;
+  refetch: () => void;
+  addGoal: (goal: Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'connections'>) => Promise<Goal>;
   updateGoal: (id: string, updates: Partial<Goal>) => Promise<Goal | null>;
-  deleteGoal: (id: string) => void;
+  deleteGoal: (id: string) => Promise<void>;
   addConnection: (connection: Omit<GoalConnection, 'id'>) => void;
   removeConnection: (goalId: string, connectionId: string) => void;
   getGoalsByCategory: (category: GoalCategory) => Goal[];
@@ -26,104 +28,119 @@ interface GoalsContextType {
 
 const GoalsContext = createContext<GoalsContextType | undefined>(undefined);
 
-interface StorageData {
-  goals: Goal[];
-  lastSync: string;
-}
-
-function parseGoalDates(goal: Goal): Goal {
-  return {
-    ...goal,
-    startDate: new Date(goal.startDate),
-    targetEndDate: new Date(goal.targetEndDate),
-    actualEndDate: goal.actualEndDate ? new Date(goal.actualEndDate) : undefined,
-    createdAt: new Date(goal.createdAt),
-    updatedAt: new Date(goal.updatedAt),
-  };
-}
-
 export function GoalsProvider({ children }: { children: ReactNode }) {
+  const { data: session, status } = useSession();
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filters, setFiltersState] = useState<GoalsContextType['filters']>({
     category: null,
     priority: null,
     status: null,
   });
-  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load goals from localStorage on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          const data: StorageData = JSON.parse(stored);
-          // Parse dates from strings
-          const parsedGoals = data.goals.map(parseGoalDates);
-          setGoals(parsedGoals);
+  // Fetch goals from API
+  const fetchGoals = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch('/api/goals');
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setGoals([]);
+          return;
         }
-      } catch (error) {
-        console.error('Error loading goals from localStorage:', error);
+        throw new Error('Failed to fetch goals');
       }
-      setIsLoaded(true);
+
+      const data = await response.json();
+      setGoals(data.goals || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      console.error('Error fetching goals:', err);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  // Save goals to localStorage whenever they change
+  // Load goals when authenticated
   useEffect(() => {
-    if (isLoaded && typeof window !== 'undefined') {
-      try {
-        const data: StorageData = {
-          goals,
-          lastSync: new Date().toISOString(),
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      } catch (error) {
-        console.error('Error saving goals to localStorage:', error);
-      }
+    if (status === 'authenticated') {
+      fetchGoals();
+    } else if (status === 'unauthenticated') {
+      setGoals([]);
+      setLoading(false);
     }
-  }, [goals, isLoaded]);
+  }, [status, fetchGoals]);
 
-  // Add a new goal
-  const addGoal = useCallback((goalData: Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'connections'>) => {
-    const newGoal: Goal = {
-      ...goalData,
-      id: crypto.randomUUID(),
-      connections: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    setGoals(prev => [...prev, newGoal]);
-  }, []);
+  const refetch = useCallback(() => {
+    if (status === 'authenticated') {
+      fetchGoals();
+    }
+  }, [status, fetchGoals]);
 
-  // Update an existing goal
-  const updateGoal = useCallback(async (id: string, updates: Partial<Goal>): Promise<Goal | null> => {
-    let updatedGoal: Goal | null = null;
+  // Add a new goal via API
+  const addGoal = useCallback(async (goalData: Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'connections'>) => {
+    try {
+      const response = await fetch('/api/goals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(goalData),
+      });
 
-    setGoals(prev => prev.map(goal => {
-      if (goal.id === id) {
-        updatedGoal = { ...goal, ...updates, updatedAt: new Date() };
-        return updatedGoal;
+      if (!response.ok) {
+        throw new Error('Failed to create goal');
       }
-      return goal;
-    }));
 
-    return updatedGoal;
+      const { goal } = await response.json();
+      setGoals(prev => [goal, ...prev]);
+      return goal;
+    } catch (err) {
+      console.error('Error creating goal:', err);
+      throw err;
+    }
   }, []);
 
-  // Delete a goal
-  const deleteGoal = useCallback((id: string) => {
-    setGoals(prev => {
-      // Remove the goal and all connections to/from it
-      return prev
-        .filter(goal => goal.id !== id)
-        .map(goal => ({
-          ...goal,
-          connections: goal.connections.filter(
-            conn => conn.fromGoalId !== id && conn.toGoalId !== id
-          ),
-        }));
-    });
+  // Update an existing goal via API
+  const updateGoal = useCallback(async (id: string, updates: Partial<Goal>): Promise<Goal | null> => {
+    try {
+      const response = await fetch(`/api/goals/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update goal');
+      }
+
+      const { goal } = await response.json();
+      setGoals(prev => prev.map(g => g.id === id ? goal : g));
+      return goal;
+    } catch (err) {
+      console.error('Error updating goal:', err);
+      throw err;
+    }
+  }, []);
+
+  // Delete a goal via API
+  const deleteGoal = useCallback(async (id: string) => {
+    try {
+      const response = await fetch(`/api/goals/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete goal');
+      }
+
+      setGoals(prev => prev.filter(g => g.id !== id));
+    } catch (err) {
+      console.error('Error deleting goal:', err);
+      throw err;
+    }
   }, []);
 
   // Add a connection between goals
@@ -196,6 +213,9 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
 
   const value: GoalsContextType = {
     goals,
+    loading,
+    error,
+    refetch,
     addGoal,
     updateGoal,
     deleteGoal,
@@ -216,10 +236,26 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useGoals() {
+export function useGoals(customFilters?: Partial<GoalsContextType['filters']>) {
   const context = useContext(GoalsContext);
   if (!context) {
     throw new Error('useGoals must be used within GoalsProvider');
   }
+
+  // If custom filters are provided, return filtered goals
+  if (customFilters) {
+    const filteredGoals = context.goals.filter(goal => {
+      if (customFilters.category && goal.category !== customFilters.category) return false;
+      if (customFilters.priority && goal.priority !== customFilters.priority) return false;
+      if (customFilters.status && goal.status !== customFilters.status) return false;
+      return true;
+    });
+
+    return {
+      ...context,
+      goals: filteredGoals,
+    };
+  }
+
   return context;
 }

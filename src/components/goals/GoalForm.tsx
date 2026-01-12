@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useEffect, useRef } from 'react';
 import { useGoals } from '@/contexts/GoalsContext';
 import { Goal, GoalCategory, GoalPriority, GoalStatus } from '@/types';
 import { categoryMeta, priorityLabels, statusLabels } from '@/lib/categoryConfig';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Upload, Link as LinkIcon, Loader2 } from 'lucide-react';
 
 interface GoalFormProps {
   isOpen: boolean;
@@ -19,7 +20,7 @@ interface GoalFormProps {
 }
 
 export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }: GoalFormProps) {
-  const { addGoal, updateGoal, getTotalTimeAllocated } = useGoals();
+  const { goals, addGoal, updateGoal } = useGoals();
   const isEditMode = !!goalToEdit;
 
   const [formData, setFormData] = useState({
@@ -29,10 +30,21 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
     priority: GoalPriority.MEDIUM,
     status: GoalStatus.NOT_STARTED,
     timeAllocated: 1,
+    paymentType: '' as 'hourly' | 'fixed' | '',
+    currency: '',
+    hourlyRate: 0,
+    fixedRate: 0,
+    fixedRatePeriod: 'month' as 'week' | 'month',
     startDate: new Date().toISOString().split('T')[0],
     targetEndDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 3 months from now
     progressPercentage: 0,
+    url: '',
+    iconUrl: '',
   });
+
+  const [uploadingIcon, setUploadingIcon] = useState(false);
+  const [fetchingLogo, setFetchingLogo] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Initialize form with goal data when editing
   useEffect(() => {
@@ -44,9 +56,16 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
         priority: goalToEdit.priority,
         status: goalToEdit.status,
         timeAllocated: goalToEdit.timeAllocated,
+        paymentType: goalToEdit.paymentType || '',
+        currency: goalToEdit.currency || '',
+        hourlyRate: goalToEdit.hourlyRate || 0,
+        fixedRate: goalToEdit.fixedRate || 0,
+        fixedRatePeriod: goalToEdit.fixedRatePeriod || 'month',
         startDate: new Date(goalToEdit.startDate).toISOString().split('T')[0],
         targetEndDate: new Date(goalToEdit.targetEndDate).toISOString().split('T')[0],
         progressPercentage: goalToEdit.progressPercentage,
+        url: goalToEdit.url || '',
+        iconUrl: goalToEdit.iconUrl || '',
       });
     } else {
       // Reset form when creating new goal
@@ -57,12 +76,79 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
         priority: GoalPriority.MEDIUM,
         status: GoalStatus.NOT_STARTED,
         timeAllocated: 1,
+        paymentType: '',
+        currency: '',
+        hourlyRate: 0,
+        fixedRate: 0,
+        fixedRatePeriod: 'month',
         startDate: new Date().toISOString().split('T')[0],
         targetEndDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         progressPercentage: 0,
+        url: '',
+        iconUrl: '',
       });
     }
   }, [goalToEdit, isOpen]);
+
+  // Handle file upload
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingIcon(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (goalToEdit?.id) {
+        formData.append('goalId', goalToEdit.id);
+      }
+
+      const response = await fetch('/api/goals/upload-icon', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload icon');
+      }
+
+      const data = await response.json();
+      setFormData((prev) => ({ ...prev, iconUrl: data.iconUrl }));
+    } catch (error) {
+      console.error('Error uploading icon:', error);
+      alert('Не вдалося завантажити іконку. Спробуйте ще раз.');
+    } finally {
+      setUploadingIcon(false);
+    }
+  };
+
+  // Fetch logo from URL
+  const handleFetchLogo = async () => {
+    if (!formData.url) return;
+
+    setFetchingLogo(true);
+    try {
+      const response = await fetch('/api/goals/fetch-logo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: formData.url }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch logo');
+      }
+
+      const data = await response.json();
+      setFormData((prev) => ({ ...prev, iconUrl: data.iconUrl }));
+    } catch (error) {
+      console.error('Error fetching logo:', error);
+      alert('Не вдалося витягнути логотип. Спробуйте завантажити іконку вручну.');
+    } finally {
+      setFetchingLogo(false);
+    }
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -76,9 +162,16 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
         priority: formData.priority,
         status: formData.status,
         timeAllocated: formData.timeAllocated,
+        paymentType: formData.paymentType || undefined,
+        currency: formData.currency || undefined,
+        hourlyRate: formData.hourlyRate > 0 ? formData.hourlyRate : undefined,
+        fixedRate: formData.fixedRate > 0 ? formData.fixedRate : undefined,
+        fixedRatePeriod: formData.fixedRatePeriod || undefined,
         startDate: new Date(formData.startDate),
         targetEndDate: new Date(formData.targetEndDate),
         progressPercentage: formData.progressPercentage,
+        url: formData.url,
+        iconUrl: formData.iconUrl,
       });
 
       if (updatedGoal && onGoalUpdated) {
@@ -93,17 +186,32 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
         priority: formData.priority,
         status: formData.status,
         timeAllocated: formData.timeAllocated,
+        paymentType: formData.paymentType || undefined,
+        currency: formData.currency || undefined,
+        hourlyRate: formData.hourlyRate > 0 ? formData.hourlyRate : undefined,
+        fixedRate: formData.fixedRate > 0 ? formData.fixedRate : undefined,
+        fixedRatePeriod: formData.fixedRatePeriod || undefined,
         startDate: new Date(formData.startDate),
         targetEndDate: new Date(formData.targetEndDate),
         progressPercentage: formData.progressPercentage,
         tags: [],
+        url: formData.url,
+        iconUrl: formData.iconUrl,
       });
     }
 
     onClose();
   };
 
-  const currentTotal = getTotalTimeAllocated();
+  // Calculate total time allocated from all goals
+  const currentTotal = goals.reduce((sum, goal) => {
+    // Don't count the goal being edited
+    if (isEditMode && goalToEdit && goal.id === goalToEdit.id) {
+      return sum;
+    }
+    return sum + goal.timeAllocated;
+  }, 0);
+
   const newTotal = currentTotal + formData.timeAllocated;
   const isOvercommitted = newTotal > 80;
   const isWarning = newTotal > 60 && newTotal <= 80;
@@ -117,33 +225,40 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Name */}
-          <div className="space-y-2">
-            <Label htmlFor="name">
-              Назва <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="name"
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Наприклад: Voice Agent Poland"
-            />
-          </div>
+        <Tabs defaultValue="general" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="general">Загальні</TabsTrigger>
+            <TabsTrigger value="income">Доходи</TabsTrigger>
+          </TabsList>
 
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Опис</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={3}
-              placeholder="Опишіть вашу ціль..."
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-6 mt-6">
+            <TabsContent value="general" className="space-y-6 mt-0">
+              {/* Name */}
+              <div className="space-y-2">
+                <Label htmlFor="name">
+                  Назва <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="name"
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Наприклад: Voice Agent Poland"
+                />
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="description">Опис</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={3}
+                  placeholder="Опишіть вашу ціль..."
+                />
+              </div>
 
           {/* Category and Priority */}
           <div className="grid grid-cols-2 gap-4">
@@ -223,7 +338,7 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
             </div>
           </div>
 
-          {/* Time Allocation Warning */}
+              {/* Time Allocation Warning */}
           {(isWarning || isOvercommitted) && (
             <div className={`p-4 rounded-lg border ${isOvercommitted ? 'bg-destructive/10 text-destructive border-destructive/20' : 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20'}`}>
               <div className="flex items-start gap-2">
@@ -241,49 +356,249 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
             </div>
           )}
 
-          {/* Dates */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="startDate">
-                Дата початку <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="startDate"
-                type="date"
-                required
-                value={formData.startDate}
-                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-              />
-            </div>
+              {/* URL */}
+              <div className="space-y-2">
+                <Label htmlFor="url">Посилання на проект</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="url"
+                    type="url"
+                    value={formData.url}
+                    onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                    placeholder="https://example.com"
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleFetchLogo}
+                    disabled={!formData.url || fetchingLogo}
+                    variant="outline"
+                    size="icon"
+                    title="Витягнути логотип з посилання"
+                  >
+                    {fetchingLogo ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <LinkIcon className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="targetEndDate">
-                Цільова дата завершення <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="targetEndDate"
-                type="date"
-                required
-                value={formData.targetEndDate}
-                onChange={(e) => setFormData({ ...formData, targetEndDate: e.target.value })}
-              />
-            </div>
-          </div>
+              {/* Icon Upload */}
+              <div className="space-y-2">
+                <Label>Іконка цілі</Label>
+                <div className="flex items-center gap-3">
+                  {formData.iconUrl && (
+                    <div className="w-12 h-12 rounded-lg border border-border overflow-hidden bg-muted flex items-center justify-center">
+                      <img
+                        src={formData.iconUrl}
+                        alt="Goal icon"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 flex gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingIcon}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      {uploadingIcon ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Завантаження...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4 mr-2" />
+                          Завантажити іконку
+                        </>
+                      )}
+                    </Button>
+                    {formData.iconUrl && (
+                      <Button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, iconUrl: '' })}
+                        variant="outline"
+                        size="icon"
+                        title="Видалити іконку"
+                      >
+                        ✕
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Завантажте власну іконку або натисніть <LinkIcon className="h-3 w-3 inline" /> щоб витягнути логотип з посилання
+                </p>
+              </div>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4">
-            <Button
-              type="button"
-              onClick={onClose}
-              variant="outline"
-            >
-              Скасувати
-            </Button>
-            <Button type="submit">
-              {isEditMode ? 'Зберегти зміни' : 'Створити ціль'}
-            </Button>
-          </div>
-        </form>
+              {/* Dates */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="startDate">
+                    Дата початку <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    required
+                    value={formData.startDate}
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="targetEndDate">
+                    Цільова дата завершення <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="targetEndDate"
+                    type="date"
+                    required
+                    value={formData.targetEndDate}
+                    onChange={(e) => setFormData({ ...formData, targetEndDate: e.target.value })}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="income" className="space-y-6 mt-0">
+              {/* Payment Type */}
+              <div className="space-y-2">
+                <Label htmlFor="paymentType">Тип оплати</Label>
+                <select
+                  id="paymentType"
+                  value={formData.paymentType}
+                  onChange={(e) => setFormData({ ...formData, paymentType: e.target.value as 'hourly' | 'fixed' | '' })}
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="">Не вказано</option>
+                  <option value="hourly">По годину</option>
+                  <option value="fixed">Фіксована ставка</option>
+                </select>
+              </div>
+
+              {formData.paymentType && (
+                <>
+                  {/* Currency */}
+                  <div className="space-y-2">
+                    <Label htmlFor="currency">
+                      Валюта <span className="text-destructive">*</span>
+                    </Label>
+                    <select
+                      id="currency"
+                      required
+                      value={formData.currency}
+                      onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    >
+                      <option value="">Оберіть валюту</option>
+                      <option value="UAH">UAH (₴)</option>
+                      <option value="USD">USD ($)</option>
+                      <option value="EUR">EUR (€)</option>
+                      <option value="GBP">GBP (£)</option>
+                      <option value="PLN">PLN (zł)</option>
+                    </select>
+                  </div>
+
+                  {formData.paymentType === 'hourly' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="hourlyRate">
+                        Заробіток за годину <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="hourlyRate"
+                        type="number"
+                        required
+                        min="0"
+                        step="0.01"
+                        value={formData.hourlyRate}
+                        onChange={(e) => setFormData({ ...formData, hourlyRate: parseFloat(e.target.value) || 0 })}
+                        placeholder="0.00"
+                      />
+                      {formData.currency && formData.hourlyRate > 0 && formData.timeAllocated > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          ~{(formData.hourlyRate * formData.timeAllocated * 4).toFixed(2)} {formData.currency} на місяць
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {formData.paymentType === 'fixed' && (
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="fixedRate">
+                            Ставка <span className="text-destructive">*</span>
+                          </Label>
+                          <Input
+                            id="fixedRate"
+                            type="number"
+                            required
+                            min="0"
+                            step="0.01"
+                            value={formData.fixedRate}
+                            onChange={(e) => setFormData({ ...formData, fixedRate: parseFloat(e.target.value) || 0 })}
+                            placeholder="0.00"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="fixedRatePeriod">
+                            Період <span className="text-destructive">*</span>
+                          </Label>
+                          <select
+                            id="fixedRatePeriod"
+                            required
+                            value={formData.fixedRatePeriod}
+                            onChange={(e) => setFormData({ ...formData, fixedRatePeriod: e.target.value as 'week' | 'month' })}
+                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                          >
+                            <option value="week">На тиждень</option>
+                            <option value="month">На місяць</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {formData.currency && formData.fixedRate > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          {formData.fixedRatePeriod === 'week'
+                            ? `~${(formData.fixedRate * 4).toFixed(2)} ${formData.currency} на місяць`
+                            : `~${(formData.fixedRate / 4).toFixed(2)} ${formData.currency} на тиждень`
+                          }
+                        </p>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+            </TabsContent>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                type="button"
+                onClick={onClose}
+                variant="outline"
+              >
+                Скасувати
+              </Button>
+              <Button type="submit">
+                {isEditMode ? 'Зберегти зміни' : 'Створити ціль'}
+              </Button>
+            </div>
+          </form>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

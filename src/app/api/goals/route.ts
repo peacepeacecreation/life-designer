@@ -61,6 +61,11 @@ export async function GET(request: NextRequest) {
 
     const userData = userResult.data;
 
+    console.log('🔑 Current user:', {
+      email: session.user.email,
+      user_id: userData.id
+    });
+
     // 4. Fetch goals with connections
     const goalsResult: any = await supabase
       .from('goals')
@@ -78,33 +83,61 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
+    console.log('📊 Raw goals from DB:', {
+      count: goals?.length || 0,
+      goals: goals?.map((g: any) => ({
+        id: g.id,
+        name: g.name,
+        user_id: g.user_id,
+        priority: g.priority,
+        has_embedding: !!g.embedding
+      }))
+    });
+
     // 5. Transform to frontend format
-    const formattedGoals: Goal[] = (goals || []).map((g: any) => ({
-      id: g.id,
-      name: g.name,
-      description: g.description,
-      category: g.category as GoalCategory,
-      priority: g.priority as GoalPriority,
-      status: g.status as GoalStatus,
-      timeAllocated: g.time_allocated,
-      progressPercentage: g.progress_percentage,
-      startDate: new Date(g.start_date),
-      targetEndDate: new Date(g.target_end_date),
-      actualEndDate: g.actual_end_date ? new Date(g.actual_end_date) : undefined,
-      tags: g.tags || [],
-      iconUrl: g.icon_url,
-      url: g.url,
-      createdAt: new Date(g.created_at),
-      updatedAt: new Date(g.updated_at),
-      connections: (g.goal_connections_from || []).map((c: any) => ({
-        id: c.id,
-        fromGoalId: c.from_goal_id,
-        toGoalId: c.to_goal_id,
-        type: c.type,
-        strength: c.strength,
-        description: c.description,
-      })),
-    }));
+    const formattedGoals: Goal[] = (goals || []).map((g: any) => {
+      try {
+        return {
+          id: g.id,
+          name: g.name,
+          description: g.description,
+          category: g.category as GoalCategory,
+          priority: g.priority as GoalPriority,
+          status: g.status as GoalStatus,
+          timeAllocated: g.time_allocated,
+          paymentType: g.payment_type || undefined,
+          currency: g.currency || undefined,
+          hourlyRate: g.hourly_rate || undefined,
+          fixedRate: g.fixed_rate || undefined,
+          fixedRatePeriod: g.fixed_rate_period || undefined,
+          progressPercentage: g.progress_percentage,
+          startDate: new Date(g.start_date),
+          targetEndDate: new Date(g.target_end_date),
+          actualEndDate: g.actual_end_date ? new Date(g.actual_end_date) : undefined,
+          tags: g.tags || [],
+          iconUrl: g.icon_url,
+          url: g.url,
+          createdAt: new Date(g.created_at),
+          updatedAt: new Date(g.updated_at),
+          connections: (g.goal_connections_from || []).map((c: any) => ({
+            id: c.id,
+            fromGoalId: c.from_goal_id,
+            toGoalId: c.to_goal_id,
+            type: c.type,
+            strength: c.strength,
+            description: c.description,
+          })),
+        };
+      } catch (err) {
+        console.error('❌ Error formatting goal:', g.id, g.name, err);
+        return null;
+      }
+    }).filter((g: Goal | null): g is Goal => g !== null);
+
+    console.log('✅ Formatted goals:', {
+      count: formattedGoals.length,
+      names: formattedGoals.map(g => g.name)
+    });
 
     return NextResponse.json({ goals: formattedGoals });
   } catch (error: any) {
@@ -130,6 +163,8 @@ export async function POST(request: NextRequest) {
 
     // 2. Parse request body
     const body = await request.json();
+    console.log('📥 Received request body:', JSON.stringify(body, null, 2));
+
     const {
       name,
       description,
@@ -137,17 +172,35 @@ export async function POST(request: NextRequest) {
       priority,
       status,
       timeAllocated,
+      paymentType,
+      currency,
+      hourlyRate,
+      fixedRate,
+      fixedRatePeriod,
       progressPercentage,
       startDate,
       targetEndDate,
       actualEndDate,
       tags,
+      iconUrl,
+      url,
     } = body;
 
-    // 3. Validate required fields
-    if (!name || !description || !category || !priority || !status || !startDate || !targetEndDate) {
+    // 3. Validate required fields (allow empty strings for description)
+    const missingFields = [];
+    if (!name) missingFields.push('name');
+    if (description === undefined || description === null) missingFields.push('description');
+    if (!category) missingFields.push('category');
+    if (!priority) missingFields.push('priority');
+    if (!status) missingFields.push('status');
+    if (!startDate) missingFields.push('startDate');
+    if (!targetEndDate) missingFields.push('targetEndDate');
+
+    if (missingFields.length > 0) {
+      console.error('❌ Missing required fields:', missingFields);
+      console.error('Received values:', { name, description, category, priority, status, startDate, targetEndDate });
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields', fields: missingFields },
         { status: 400 }
       );
     }
@@ -206,11 +259,18 @@ export async function POST(request: NextRequest) {
         priority,
         status,
         time_allocated: timeAllocated || 0,
+        payment_type: paymentType || null,
+        currency: currency || null,
+        hourly_rate: hourlyRate || null,
+        fixed_rate: fixedRate || null,
+        fixed_rate_period: fixedRatePeriod || null,
         progress_percentage: progressPercentage || 0,
         start_date: ensureDateString(startDate),
         target_end_date: ensureDateString(targetEndDate),
         actual_end_date: ensureDateString(actualEndDate),
         tags: tags || [],
+        icon_url: iconUrl,
+        url: url,
         embedding,
       })
       .select()
@@ -232,11 +292,18 @@ export async function POST(request: NextRequest) {
       priority: goal.priority as GoalPriority,
       status: goal.status as GoalStatus,
       timeAllocated: goal.time_allocated,
+      paymentType: goal.payment_type || undefined,
+      currency: goal.currency || undefined,
+      hourlyRate: goal.hourly_rate || undefined,
+      fixedRate: goal.fixed_rate || undefined,
+      fixedRatePeriod: goal.fixed_rate_period || undefined,
       progressPercentage: goal.progress_percentage,
       startDate: new Date(goal.start_date),
       targetEndDate: new Date(goal.target_end_date),
       actualEndDate: goal.actual_end_date ? new Date(goal.actual_end_date) : undefined,
       tags: goal.tags || [],
+      iconUrl: goal.icon_url,
+      url: goal.url,
       createdAt: new Date(goal.created_at),
       updatedAt: new Date(goal.updated_at),
       connections: [],

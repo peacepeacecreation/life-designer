@@ -14,8 +14,8 @@
   --muted-foreground: oklch(0.30 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: 0 0% 98%;
+  --destructive: oklch(0.65 0.22 20);
+  --destructive-foreground: oklch(1 0 0);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -26,6 +26,14 @@
   --goal-learning: 221 83% 53%;  /* Синій для навчання */
   --goal-health: 142 71% 45%;    /* Зелений для здоров'я */
   --goal-hobbies: 280 65% 60%;   /* Фіолетовий для хобі */
+
+  /* Pastel colors for statistics */
+  --pastel-red: #fca5a5;
+  --pastel-blue: #93c5fd;
+  --pastel-green: #6ee7b7;
+  --pastel-purple: #c4b5fd;
+  --pastel-yellow: #fcd34d;
+  --pastel-pink: #f9a8d4;
 
   --background: oklch(0.96 0 0);
   --foreground: oklch(0.145 0 0);
@@ -58,8 +66,8 @@
     --muted-foreground: 240 5% 64.9%;
     --accent: 240 3.7% 15.9%;
     --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 72% 60%;
+    --destructive-foreground: 0 0% 100%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
@@ -333,7 +341,7 @@ body {
   --muted-foreground: oklch(0.708 0 0);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
+  --destructive: oklch(0.70 0.22 20);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
@@ -363,4 +371,27 @@ body {
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+}
+
+/* Striped patterns for goal time progress */
+.bg-striped-black {
+  background-image: repeating-linear-gradient(
+    45deg,
+    #000,
+    #000 2px,
+    transparent 2px,
+    transparent 6px
+  );
+  background-size: 8.49px 8.49px; /* sqrt(2) * 6px for diagonal */
+}
+
+.dark .bg-striped-white {
+  background-image: repeating-linear-gradient(
+    45deg,
+    #fff,
+    #fff 2px,
+    transparent 2px,
+    transparent 6px
+  );
+  background-size: 8.49px 8.49px;
 }

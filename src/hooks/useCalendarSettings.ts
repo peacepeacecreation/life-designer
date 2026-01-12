@@ -1,10 +1,12 @@
 /**
  * Calendar Settings Hook
  *
- * Manages calendar display settings including work hours
+ * Інтегрований з глобальними налаштуваннями платформи.
+ * Використовує робочі години з GlobalSettingsContext.
  */
 
-import { useState, useEffect } from 'react';
+import { useGlobalSettings } from '@/contexts/GlobalSettingsContext';
+import { useMemo } from 'react';
 
 export interface CalendarSettings {
   startHour: number; // 0-23
@@ -12,48 +14,33 @@ export interface CalendarSettings {
   hiddenHours?: { start: number; end: number }[]; // Optional hidden time ranges
 }
 
-const DEFAULT_SETTINGS: CalendarSettings = {
-  startHour: 0,
-  endHour: 23,
-  hiddenHours: [],
-};
-
-const STORAGE_KEY = 'calendar-settings';
-
 export function useCalendarSettings() {
-  const [settings, setSettings] = useState<CalendarSettings>(DEFAULT_SETTINGS);
+  const { settings: globalSettings, updateWorkHours } = useGlobalSettings();
 
-  // Load settings from localStorage on mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setSettings({
-          ...DEFAULT_SETTINGS,
-          ...parsed,
-        });
-      }
-    } catch (error) {
-      console.error('Error loading calendar settings:', error);
-    }
-  }, []);
+  // Мапимо глобальні налаштування робочих годин до формату CalendarSettings
+  const settings: CalendarSettings = useMemo(
+    () => ({
+      startHour: globalSettings.workHours.startHour,
+      endHour: globalSettings.workHours.endHour,
+      hiddenHours: [],
+    }),
+    [globalSettings.workHours]
+  );
 
-  // Save settings to localStorage whenever they change
+  // Оновлення налаштувань тепер оновлює глобальні робочі години
   const updateSettings = (newSettings: Partial<CalendarSettings>) => {
-    const updated = { ...settings, ...newSettings };
-    setSettings(updated);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch (error) {
-      console.error('Error saving calendar settings:', error);
-    }
+    updateWorkHours({
+      startHour: newSettings.startHour,
+      endHour: newSettings.endHour,
+    });
   };
 
-  // Reset to defaults
+  // Скидання до глобальних значень за замовчуванням
   const resetSettings = () => {
-    setSettings(DEFAULT_SETTINGS);
-    localStorage.removeItem(STORAGE_KEY);
+    updateWorkHours({
+      startHour: 9,
+      endHour: 22,
+    });
   };
 
   // Get min/max Date objects for react-big-calendar
