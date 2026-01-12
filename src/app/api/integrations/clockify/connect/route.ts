@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
       sync_frequency_minutes: 30,
     };
 
-    const connectionResult: any = await supabase
+    const connectionResult: any = await (supabase as any)
       .from('clockify_connections')
       .upsert(connectionData, {
         onConflict: 'user_id,workspace_id',
