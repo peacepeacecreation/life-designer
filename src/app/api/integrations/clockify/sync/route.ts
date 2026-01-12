@@ -249,7 +249,7 @@ async function cacheProjects(
     const projects = await clockifyClient.getProjects(connection.workspace_id, false);
 
     for (const project of projects) {
-      await supabase.from('clockify_projects').upsert(
+      await (supabase as any).from('clockify_projects').upsert(
         {
           connection_id: connectionId,
           clockify_project_id: project.id,

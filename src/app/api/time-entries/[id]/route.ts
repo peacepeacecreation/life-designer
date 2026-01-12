@@ -95,7 +95,7 @@ export async function GET(
     const userId = userResult.data.id;
 
     // 4. Fetch time entry with details using SQL function
-    const { data, error } = await supabase.rpc('get_time_entries_with_details', {
+    const { data, error } = await (supabase as any).rpc('get_time_entries_with_details', {
       p_user_id: userId,
       p_start_date: null,
       p_end_date: null,

@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 6. Soft delete: set is_active = false
-    const updateResult: any = await supabase
+    const updateResult: any = await (supabase as any)
       .from('clockify_connections')
       .update({
         is_active: false,

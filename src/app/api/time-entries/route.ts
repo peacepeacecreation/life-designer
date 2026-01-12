@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
     const pageSize = parseInt(searchParams.get('pageSize') || '50');
 
     // 5. Use SQL function to get entries with details
-    const { data, error } = await supabase.rpc('get_time_entries_with_details', {
+    const { data, error } = await (supabase as any).rpc('get_time_entries_with_details', {
       p_user_id: userId,
       p_start_date: startDate || null,
       p_end_date: endDate || null,
