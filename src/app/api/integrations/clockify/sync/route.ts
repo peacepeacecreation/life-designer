@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
     };
 
     // 11. Fetch and cache projects
-    await cacheProjects(supabase, clockifyClient, connection, connectionId);
+    await cacheProjects(supabase, clockifyClient, connection, connectionId!);
 
     // 12. Import time entries from Clockify
     await importFromClockify(
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
 
     // 13. Update sync log with success
     const duration = Math.floor((Date.now() - startTime) / 1000);
-    await supabase
+    await (supabase as any)
       .from('clockify_sync_logs')
       .update({
         status: 'completed',
@@ -175,10 +175,10 @@ export async function POST(request: NextRequest) {
         entries_updated: stats.updated,
         entries_skipped: stats.skipped,
       })
-      .eq('id', syncLogId);
+      .eq('id', syncLogId!);
 
     // 14. Update connection with success
-    await supabase
+    await (supabase as any)
       .from('clockify_connections')
       .update({
         sync_status: 'success',
@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
         last_successful_sync_at: new Date().toISOString(),
         last_sync_error: null,
       })
-      .eq('id', connectionId);
+      .eq('id', connectionId!);
 
     // 15. Return success response
     return NextResponse.json({

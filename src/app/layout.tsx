@@ -18,11 +18,32 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Life Designer",
-  description: "Design your life with purpose and intention",
+  title: {
+    default: "Life Designer",
+    template: "%s | Life Designer",
+  },
+  description: "Design your life with purpose and intention. Set goals, track time, plan your calendar, and reflect on your journey.",
+  keywords: ["life design", "goal tracking", "time management", "personal development", "productivity"],
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3077"
   ),
+  openGraph: {
+    type: "website",
+    locale: "uk_UA",
+    title: "Life Designer",
+    description: "Design your life with purpose and intention",
+    siteName: "Life Designer",
+    images: [{
+      url: "/og-image.svg",
+      width: 1200,
+      height: 630,
+      alt: "Life Designer",
+    }],
+  },
+  icons: {
+    icon: "/logo.svg",
+    apple: "/logo.svg",
+  },
 };
 
 export default function RootLayout({
