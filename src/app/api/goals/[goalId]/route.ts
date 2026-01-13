@@ -37,7 +37,7 @@ function ensureDateString(date: Date | string | undefined): string | undefined {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ goalId: string }> }
 ) {
   try {
     // 1. Authenticate user
@@ -46,7 +46,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { goalId: id } = await params;
     const supabase = getServerClient();
 
     if (!supabase) {
@@ -132,9 +132,9 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ goalId: string }> }
 ) {
-  const { id } = await params;
+  const { goalId: id } = await params;
   try {
     // 1. Authenticate user
     const session = await getServerSession(authOptions);
@@ -286,9 +286,9 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ goalId: string }> }
 ) {
-  const { id } = await params;
+  const { goalId: id } = await params;
   try {
     // 1. Authenticate user
     const session = await getServerSession(authOptions);

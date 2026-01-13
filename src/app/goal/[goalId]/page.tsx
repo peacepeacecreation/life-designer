@@ -14,6 +14,7 @@ import Link from 'next/link';
 import GoalForm from '@/components/goals/GoalForm';
 import WeeklyProgress from '@/components/goals/WeeklyProgress';
 import GoalWeekCalendar from '@/components/goals/GoalWeekCalendar';
+import GoalNotes from '@/components/goals/GoalNotes';
 import { useGoals } from '@/contexts/GoalsContext';
 import { isPredefinedIcon, getIconById } from '@/lib/goalIcons';
 
@@ -213,16 +214,7 @@ export default function GoalDetailPage() {
 
         {/* Notes Tab */}
         <TabsContent value="notes">
-          <Card className="bg-white dark:bg-card">
-            <CardHeader>
-              <h2 className="text-xl font-semibold text-black dark:text-white">Нотатки</h2>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-center py-12">
-                Функціонал нотаток буде додано незабаром
-              </p>
-            </CardContent>
-          </Card>
+          <GoalNotes goalId={goal.id} />
         </TabsContent>
 
         {/* Details Tab */}
