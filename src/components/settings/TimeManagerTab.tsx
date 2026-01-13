@@ -196,11 +196,18 @@ export default function TimeManagerTab() {
               </Label>
               <Input
                 id="focus-session"
-                type="number"
-                min="15"
-                max="120"
+                type="text"
+                inputMode="numeric"
                 value={focusSession}
-                onChange={(e) => setFocusSession(parseInt(e.target.value) || 50)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d+$/.test(val)) {
+                    const num = val === '' ? 0 : parseInt(val);
+                    if (num <= 120) {
+                      setFocusSession(num);
+                    }
+                  }
+                }}
               />
               <p className="text-xs text-muted-foreground">
                 Рекомендовано: 50-60 хвилин
@@ -215,11 +222,18 @@ export default function TimeManagerTab() {
               </Label>
               <Input
                 id="short-break"
-                type="number"
-                min="5"
-                max="30"
+                type="text"
+                inputMode="numeric"
                 value={shortBreak}
-                onChange={(e) => setShortBreak(parseInt(e.target.value) || 10)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d+$/.test(val)) {
+                    const num = val === '' ? 0 : parseInt(val);
+                    if (num <= 30) {
+                      setShortBreak(num);
+                    }
+                  }
+                }}
               />
               <p className="text-xs text-muted-foreground">
                 Рекомендовано: 10-15 хвилин
@@ -234,11 +248,18 @@ export default function TimeManagerTab() {
               </Label>
               <Input
                 id="long-break"
-                type="number"
-                min="15"
-                max="60"
+                type="text"
+                inputMode="numeric"
                 value={longBreak}
-                onChange={(e) => setLongBreak(parseInt(e.target.value) || 30)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d+$/.test(val)) {
+                    const num = val === '' ? 0 : parseInt(val);
+                    if (num <= 60) {
+                      setLongBreak(num);
+                    }
+                  }
+                }}
               />
               <p className="text-xs text-muted-foreground">
                 Рекомендовано: 20-30 хвилин
@@ -252,11 +273,18 @@ export default function TimeManagerTab() {
               </Label>
               <Input
                 id="productive-hours"
-                type="number"
-                min="1"
-                max="12"
+                type="text"
+                inputMode="numeric"
                 value={productiveHours}
-                onChange={(e) => setProductiveHours(parseInt(e.target.value) || 6)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d+$/.test(val)) {
+                    const num = val === '' ? 0 : parseInt(val);
+                    if (num <= 12) {
+                      setProductiveHours(num);
+                    }
+                  }
+                }}
               />
               <p className="text-xs text-muted-foreground">
                 Скільки годин активної роботи на день

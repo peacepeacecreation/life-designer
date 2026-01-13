@@ -349,12 +349,19 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
               </Label>
               <Input
                 id="timeAllocated"
-                type="number"
+                type="text"
+                inputMode="numeric"
                 required
-                min="1"
-                max="168"
                 value={formData.timeAllocated}
-                onChange={(e) => setFormData({ ...formData, timeAllocated: parseInt(e.target.value) || 1 })}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d+$/.test(val)) {
+                    const num = val === '' ? 0 : parseInt(val);
+                    if (num <= 168) {
+                      setFormData({ ...formData, timeAllocated: num });
+                    }
+                  }
+                }}
               />
             </div>
           </div>
@@ -561,12 +568,18 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
                       </Label>
                       <Input
                         id="hourlyRate"
-                        type="number"
+                        type="text"
+                        inputMode="decimal"
                         required
-                        min="0"
-                        step="0.01"
                         value={formData.hourlyRate}
-                        onChange={(e) => setFormData({ ...formData, hourlyRate: parseFloat(e.target.value) || 0 })}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          // Allow empty, numbers, and one decimal point
+                          if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                            const num = val === '' ? 0 : parseFloat(val) || 0;
+                            setFormData({ ...formData, hourlyRate: num });
+                          }
+                        }}
                         placeholder="0.00"
                       />
                       {formData.currency && formData.hourlyRate > 0 && formData.timeAllocated > 0 && (
@@ -586,12 +599,18 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
                           </Label>
                           <Input
                             id="fixedRate"
-                            type="number"
+                            type="text"
+                            inputMode="decimal"
                             required
-                            min="0"
-                            step="0.01"
                             value={formData.fixedRate}
-                            onChange={(e) => setFormData({ ...formData, fixedRate: parseFloat(e.target.value) || 0 })}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              // Allow empty, numbers, and one decimal point
+                              if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                                const num = val === '' ? 0 : parseFloat(val) || 0;
+                                setFormData({ ...formData, fixedRate: num });
+                              }
+                            }}
                             placeholder="0.00"
                           />
                         </div>

@@ -236,10 +236,15 @@ export function EditRecurringEventDialog({
               </Label>
               <Input
                 id="edit-duration"
-                type="number"
-                min="1"
+                type="text"
+                inputMode="numeric"
                 value={duration}
-                onChange={(e) => setDuration(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d+$/.test(val)) {
+                    setDuration(val);
+                  }
+                }}
                 placeholder="60"
               />
             </div>
@@ -274,10 +279,15 @@ export function EditRecurringEventDialog({
             <Label htmlFor="edit-interval">Кожен N {frequency === RecurrenceFrequency.DAILY ? 'день' : frequency === RecurrenceFrequency.WEEKLY ? 'тиждень' : 'місяць'}</Label>
             <Input
               id="edit-interval"
-              type="number"
-              min="1"
+              type="text"
+              inputMode="numeric"
               value={interval}
-              onChange={(e) => setInterval(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '' || /^\d+$/.test(val)) {
+                  setInterval(val);
+                }
+              }}
             />
             <p className="text-xs text-muted-foreground">
               Наприклад: 1 = кожного {frequency === RecurrenceFrequency.DAILY ? 'дня' : frequency === RecurrenceFrequency.WEEKLY ? 'тижня' : 'місяця'}, 2 = кожного другого

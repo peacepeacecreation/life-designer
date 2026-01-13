@@ -47,8 +47,9 @@ export async function GET(request: NextRequest) {
       .eq('email', session.user.email)
       .single();
 
+    // If user doesn't exist yet, return empty array (new user case)
     if (userResult.error || !userResult.data) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ notes: [] });
     }
 
     const userData = userResult.data;
