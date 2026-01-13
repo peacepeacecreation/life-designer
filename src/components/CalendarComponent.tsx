@@ -16,7 +16,7 @@ import type { CalendarEventWithGoal, CreateCalendarEventInput } from '@/types/ca
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 
-const Calendar = withDragAndDrop(BigCalendar);
+const Calendar = withDragAndDrop<CalendarEvent>(BigCalendar);
 
 const locales = {
   uk: uk,
@@ -201,7 +201,7 @@ export default function CalendarComponent({ googleEvents = [] }: CalendarCompone
 
   // Handle event drop (drag to new time slot)
   const handleEventDrop = useCallback(
-    async ({ event, start, end }: { event: any; start: Date; end: Date }) => {
+    async ({ event, start, end }: { event: any; start: string | Date; end: string | Date }) => {
       // Only allow dragging DB events (not Google or recurring)
       if (!event.isFromDb) {
         alert('Ця подія не може бути переміщена. Тільки власні події можна редагувати.');
@@ -209,12 +209,15 @@ export default function CalendarComponent({ googleEvents = [] }: CalendarCompone
       }
 
       try {
+        const startDate = start instanceof Date ? start : new Date(start);
+        const endDate = end instanceof Date ? end : new Date(end);
+
         const eventData: CreateCalendarEventInput = {
           title: event.title,
           description: event.description,
           location: event.location,
-          startTime: start,
-          endTime: end,
+          startTime: startDate,
+          endTime: endDate,
           allDay: event.allDay,
           goalId: event.goalId,
           color: event.color,
@@ -231,7 +234,7 @@ export default function CalendarComponent({ googleEvents = [] }: CalendarCompone
 
   // Handle event resize (drag edges to change duration)
   const handleEventResize = useCallback(
-    async ({ event, start, end }: { event: any; start: Date; end: Date }) => {
+    async ({ event, start, end }: { event: any; start: string | Date; end: string | Date }) => {
       // Only allow resizing DB events
       if (!event.isFromDb) {
         alert('Ця подія не може бути змінена. Тільки власні події можна редагувати.');
@@ -239,12 +242,15 @@ export default function CalendarComponent({ googleEvents = [] }: CalendarCompone
       }
 
       try {
+        const startDate = start instanceof Date ? start : new Date(start);
+        const endDate = end instanceof Date ? end : new Date(end);
+
         const eventData: CreateCalendarEventInput = {
           title: event.title,
           description: event.description,
           location: event.location,
-          startTime: start,
-          endTime: end,
+          startTime: startDate,
+          endTime: endDate,
           allDay: event.allDay,
           goalId: event.goalId,
           color: event.color,
