@@ -27,6 +27,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3077"
   ),
+  verification: {
+    google: "KfzEPpq_Kig0MYFqDaXAZ4VUD7Q3a-dMSATNzoZy8hg",
+  },
   openGraph: {
     type: "website",
     locale: "uk_UA",
