@@ -1,52 +1,14 @@
 'use client';
 
-import { useState } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LogIn, LogOut, Key, Copy, Plus, Trash2, CheckCircle, RefreshCw } from 'lucide-react';
+import { LogIn, LogOut, Key, Copy, Plus, Trash2, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function UserSettingsTab() {
   const { data: session, status } = useSession();
-  const [regenerating, setRegenerating] = useState(false);
-  const [regenerateResult, setRegenerateResult] = useState<{
-    success: boolean;
-    message: string;
-  } | null>(null);
-
-  const handleRegenerateEmbeddings = async () => {
-    try {
-      setRegenerating(true);
-      setRegenerateResult(null);
-
-      const response = await fetch('/api/goals/regenerate-embeddings', {
-        method: 'POST',
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setRegenerateResult({
-          success: true,
-          message: data.message + `. Оновлено: ${data.updated}, Помилок: ${data.failed}`,
-        });
-      } else {
-        setRegenerateResult({
-          success: false,
-          message: data.error || 'Помилка регенерації',
-        });
-      }
-    } catch (error) {
-      setRegenerateResult({
-        success: false,
-        message: 'Помилка підключення до сервера',
-      });
-    } finally {
-      setRegenerating(false);
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -171,46 +133,6 @@ export default function UserSettingsTab() {
         </CardContent>
       </Card>
 
-      {/* Регенерація Embeddings */}
-      {status === 'authenticated' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <RefreshCw className="h-5 w-5" />
-              Оптимізація даних
-            </CardTitle>
-            <CardDescription>
-              Оновіть семантичні індекси для покращення пошуку цілей
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert>
-              <AlertDescription>
-                Якщо деякі цілі не відображаються в селектах або пошуку, спробуйте регенерувати embeddings.
-                Це оновить семантичні індекси для всіх цілей.
-              </AlertDescription>
-            </Alert>
-
-            {regenerateResult && (
-              <Alert variant={regenerateResult.success ? 'default' : 'destructive'}>
-                <AlertDescription>
-                  {regenerateResult.message}
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <Button
-              onClick={handleRegenerateEmbeddings}
-              disabled={regenerating}
-              variant="outline"
-              className="w-full"
-            >
-              <RefreshCw className={`mr-2 h-4 w-4 ${regenerating ? 'animate-spin' : ''}`} />
-              {regenerating ? 'Оновлення...' : 'Регенерувати Embeddings'}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

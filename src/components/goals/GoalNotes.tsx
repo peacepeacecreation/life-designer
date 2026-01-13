@@ -8,6 +8,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
+import { useConfirm } from '@/hooks/use-confirm';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,6 +20,7 @@ interface GoalNotesProps {
 }
 
 export default function GoalNotes({ goalId }: GoalNotesProps) {
+  const confirm = useConfirm();
   const [notes, setNotes] = useState<GoalNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [newNoteContent, setNewNoteContent] = useState('');
@@ -128,7 +130,12 @@ export default function GoalNotes({ goalId }: GoalNotesProps) {
   };
 
   const handleDeleteNote = async (noteId: string) => {
-    const confirmed = confirm('Ви впевнені, що хочете видалити цю нотатку?');
+    const confirmed = await confirm({
+      title: 'Видалити нотатку?',
+      description: 'Ви впевнені, що хочете видалити цю нотатку?',
+      variant: 'destructive',
+    });
+
     if (!confirmed) {
       return;
     }

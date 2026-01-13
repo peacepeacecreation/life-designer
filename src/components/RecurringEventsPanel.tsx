@@ -7,10 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useRecurringEvents } from '@/contexts/RecurringEventsContext';
 import { useGoals } from '@/contexts/GoalsContext';
-import { getSeedRecurringEvents } from '@/utils/seedRecurringEvents';
 import { getRecurrenceDescription } from '@/utils/recurringEvents';
 import { getCategoryMeta } from '@/lib/categoryConfig';
-import { Sparkles, ToggleLeft, ToggleRight, Trash2, Clock, Plus, Pencil, Target } from 'lucide-react';
+import { ToggleLeft, ToggleRight, Trash2, Clock, Plus, Pencil, Target } from 'lucide-react';
 import { isPredefinedIcon, getIconById } from '@/lib/goalIcons';
 import { AddRecurringEventDialog } from '@/components/calendar/AddRecurringEventDialog';
 import { EditRecurringEventDialog } from '@/components/calendar/EditRecurringEventDialog';
@@ -36,17 +35,6 @@ export default function RecurringEventsPanel() {
     return goals.find((goal) => goal.id === goalId);
   };
 
-  const handleLoadExamples = async () => {
-    try {
-      const seedEvents = getSeedRecurringEvents();
-      for (const event of seedEvents) {
-        await addRecurringEvent(event);
-      }
-    } catch (error) {
-      console.error('Error loading example events:', error);
-      toast({ variant: "destructive", title: "Помилка", description: "Помилка при завантаженні подій. Спробуйте ще раз." });
-    }
-  };
 
   const handleEditClick = (event: RecurringEvent) => {
     setEventToEdit(event);
@@ -63,19 +51,10 @@ export default function RecurringEventsPanel() {
             <p className="text-sm text-muted-foreground mb-4">
               Додайте регулярні події, які повторюються щодня/щотижня
             </p>
-            <div className="flex flex-col gap-2">
-              <Button onClick={() => setDialogOpen(true)} variant="default" size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                Додати подію
-              </Button>
-              <Button onClick={handleLoadExamples} variant="outline" size="sm">
-                <Sparkles className="mr-2 h-4 w-4" />
-                Додати мої созвони
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              13:00 (Пн-Пт) • 20:00 (Пн/Ср/Пт)
-            </p>
+            <Button onClick={() => setDialogOpen(true)} variant="outline" size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Додати подію
+            </Button>
           </div>
         </Card>
 
