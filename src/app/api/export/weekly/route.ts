@@ -397,10 +397,14 @@ export async function GET(request: NextRequest) {
         .order('reflection_date', { ascending: false }),
     ]);
 
+    // Parse recurring events from DB format to app format
+    const recurringEventsRaw: RecurringEventRow[] = recurringResult.data || [];
+    const recurringEvents = recurringEventsRaw.map(parseRecurringEventFromDb);
+
     // 5. Calculate weekly time summary
     const summary = calculateWeeklyTimeSummary(
       goalsResult.data || [],
-      recurringResult.data || [],
+      recurringEvents,
       eventsResult.data || [],
       weekStart,
       weekEnd
@@ -473,7 +477,7 @@ export async function GET(request: NextRequest) {
         const goalProgress = calculateGoalTimeProgress(
           g.id,
           g.time_allocated || 0,
-          recurringResult.data || [],
+          recurringEvents,
           eventsResult.data || [],
           weekStart,
           weekEnd
