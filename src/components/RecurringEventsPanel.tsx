@@ -33,9 +33,16 @@ export default function RecurringEventsPanel() {
     return goals.find((goal) => goal.id === goalId);
   };
 
-  const handleLoadExamples = () => {
-    const seedEvents = getSeedRecurringEvents();
-    seedEvents.forEach((event) => addRecurringEvent(event));
+  const handleLoadExamples = async () => {
+    try {
+      const seedEvents = getSeedRecurringEvents();
+      for (const event of seedEvents) {
+        await addRecurringEvent(event);
+      }
+    } catch (error) {
+      console.error('Error loading example events:', error);
+      alert('Помилка при завантаженні подій. Спробуйте ще раз.');
+    }
   };
 
   const handleEditClick = (event: RecurringEvent) => {
@@ -148,7 +155,14 @@ export default function RecurringEventsPanel() {
                   </div>
                 <div className="flex gap-0.5">
                   <Button
-                    onClick={() => toggleRecurringEvent(event.id)}
+                    onClick={async () => {
+                      try {
+                        await toggleRecurringEvent(event.id);
+                      } catch (error) {
+                        console.error('Error toggling event:', error);
+                        alert('Помилка при зміні статусу події');
+                      }
+                    }}
                     variant="ghost"
                     size="sm"
                     className="h-8 w-8 p-0"
@@ -168,7 +182,16 @@ export default function RecurringEventsPanel() {
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <Button
-                    onClick={() => deleteRecurringEvent(event.id)}
+                    onClick={async () => {
+                      if (confirm('Ви впевнені, що хочете видалити цю подію?')) {
+                        try {
+                          await deleteRecurringEvent(event.id);
+                        } catch (error) {
+                          console.error('Error deleting event:', error);
+                          alert('Помилка при видаленні події');
+                        }
+                      }
+                    }}
                     variant="ghost"
                     size="sm"
                     className="h-8 w-8 p-0 text-destructive hover:text-destructive"

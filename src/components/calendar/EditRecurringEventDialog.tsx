@@ -39,7 +39,7 @@ interface EditRecurringEventDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   event: RecurringEvent | null;
-  onUpdate: (id: string, updates: Partial<RecurringEvent>) => void;
+  onUpdate: (id: string, updates: Partial<RecurringEvent>) => Promise<void>;
 }
 
 const WEEKDAY_LABELS: Record<DayOfWeek, string> = {
@@ -85,6 +85,7 @@ export function EditRecurringEventDialog({
   const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([]);
   const [color, setColor] = useState(DEFAULT_COLORS[0].value);
   const [goalId, setGoalId] = useState<string | undefined>(undefined);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Populate form when event changes
   useEffect(() => {
@@ -101,7 +102,7 @@ export function EditRecurringEventDialog({
     }
   }, [event]);
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!event) return;
 
     // Валідація
@@ -146,8 +147,16 @@ export function EditRecurringEventDialog({
       goalId,
     };
 
-    onUpdate(event.id, updates);
-    onOpenChange(false);
+    setIsSubmitting(true);
+    try {
+      await onUpdate(event.id, updates);
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error updating recurring event:', error);
+      alert('Помилка при оновленні події. Спробуйте ще раз.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const toggleDay = (day: DayOfWeek) => {
@@ -352,12 +361,13 @@ export function EditRecurringEventDialog({
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
           >
             Скасувати
           </Button>
-          <Button type="button" onClick={handleUpdate}>
+          <Button type="button" onClick={handleUpdate} disabled={isSubmitting}>
             <Pencil className="mr-2 h-4 w-4" />
-            Зберегти зміни
+            {isSubmitting ? 'Збереження...' : 'Зберегти зміни'}
           </Button>
         </DialogFooter>
       </DialogContent>

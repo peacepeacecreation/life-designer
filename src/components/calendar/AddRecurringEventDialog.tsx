@@ -38,7 +38,7 @@ import { useGoals } from '@/contexts/GoalsContext';
 interface AddRecurringEventDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (event: Omit<RecurringEvent, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onAdd: (event: Omit<RecurringEvent, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
 }
 
 const WEEKDAY_LABELS: Record<DayOfWeek, string> = {
@@ -88,6 +88,7 @@ export function AddRecurringEventDialog({
   const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([]);
   const [color, setColor] = useState(DEFAULT_COLORS[0].value);
   const [goalId, setGoalId] = useState<string | undefined>(undefined);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const resetForm = () => {
     setTitle('');
@@ -101,7 +102,7 @@ export function AddRecurringEventDialog({
     setGoalId(undefined);
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     // Валідація
     if (!title.trim()) {
       alert('Будь ласка, введіть назву події');
@@ -145,9 +146,17 @@ export function AddRecurringEventDialog({
       isActive: true,
     };
 
-    onAdd(newEvent);
-    resetForm();
-    onOpenChange(false);
+    setIsSubmitting(true);
+    try {
+      await onAdd(newEvent);
+      resetForm();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error adding recurring event:', error);
+      alert('Помилка при додаванні події. Спробуйте ще раз.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const toggleDay = (day: DayOfWeek) => {
@@ -353,12 +362,13 @@ export function AddRecurringEventDialog({
               resetForm();
               onOpenChange(false);
             }}
+            disabled={isSubmitting}
           >
             Скасувати
           </Button>
-          <Button type="button" onClick={handleAdd}>
+          <Button type="button" onClick={handleAdd} disabled={isSubmitting}>
             <Plus className="mr-2 h-4 w-4" />
-            Додати подію
+            {isSubmitting ? 'Додавання...' : 'Додати подію'}
           </Button>
         </DialogFooter>
       </DialogContent>
