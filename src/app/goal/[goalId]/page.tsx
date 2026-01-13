@@ -17,6 +17,7 @@ import GoalWeekCalendar from '@/components/goals/GoalWeekCalendar';
 import GoalNotes from '@/components/goals/GoalNotes';
 import { useGoals } from '@/contexts/GoalsContext';
 import { isPredefinedIcon, getIconById } from '@/lib/goalIcons';
+import { LoadingInline } from '@/components/ui/loader';
 
 const categoryIcons: Record<GoalCategory, React.ElementType> = {
   [GoalCategory.WORK_STARTUPS]: Briefcase,
@@ -74,7 +75,7 @@ export default function GoalDetailPage() {
     return (
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="flex flex-col items-center justify-center min-h-[400px]">
-          <p className="text-muted-foreground">Завантаження...</p>
+          <LoadingInline message="Завантаження цілі..." />
         </div>
       </main>
     );

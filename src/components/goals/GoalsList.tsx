@@ -6,6 +6,7 @@ import GoalCard from './GoalCard';
 import { Target, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getSeedGoals } from '@/utils/seedGoals';
+import { LoadingInline } from '@/components/ui/loader';
 import {
   DndContext,
   closestCenter,
@@ -88,11 +89,7 @@ export default function GoalsList() {
   };
 
   if (loading) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">Завантаження цілей...</p>
-      </div>
-    );
+    return <LoadingInline message="Завантаження цілей..." />;
   }
 
   const handleLoadExamples = () => {

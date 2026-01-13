@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2 } from 'lucide-react';
+import { Loader } from '@/components/ui/loader';
 
 interface NoteFormProps {
   isOpen: boolean;
@@ -214,7 +214,7 @@ export default function NoteForm({ isOpen, onClose, noteToEdit }: NoteFormProps)
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader size="sm" className="mr-2" />
                   Збереження...
                 </>
               ) : (

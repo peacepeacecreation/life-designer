@@ -269,7 +269,7 @@ export default function ReflectionForm({ isOpen, onClose, reflectionToEdit }: Re
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader size="sm" className="mr-2" />
                   Збереження...
                 </>
               ) : (

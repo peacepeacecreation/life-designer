@@ -2,11 +2,10 @@
 
 import { Suspense } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import TimeStatsCharts from '@/components/time-tracking/TimeStatsCharts';
 import TimeEntriesList from '@/components/time-tracking/TimeEntriesList';
 import { Clock } from 'lucide-react';
+import { LoadingInline } from '@/components/ui/loader';
 
 export default function TimeTrackingPage() {
   return (
@@ -32,34 +31,17 @@ export default function TimeTrackingPage() {
         </TabsList>
 
         <TabsContent value="statistics" className="mt-6">
-          <Suspense fallback={<LoadingSkeleton />}>
+          <Suspense fallback={<LoadingInline message="Завантаження статистики..." />}>
             <TimeStatsCharts />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="entries" className="mt-6">
-          <Suspense fallback={<LoadingSkeleton />}>
+          <Suspense fallback={<LoadingInline message="Завантаження записів..." />}>
             <TimeEntriesList />
           </Suspense>
         </TabsContent>
       </Tabs>
-    </div>
-  );
-}
-
-function LoadingSkeleton() {
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardContent className="p-6">
-          <Skeleton className="h-64 w-full" />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="p-6">
-          <Skeleton className="h-96 w-full" />
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerClient } from '@/lib/supabase/pool';
 import type { GoalNote, CreateGoalNoteInput } from '@/types/goal-notes';
+import type { Database } from '@/types/database';
 
 export async function GET(
   request: NextRequest,
@@ -104,7 +105,7 @@ export async function POST(
         goal_id: goalId,
         user_id: user.id,
         content: body.content.trim(),
-      })
+      } as Database['public']['Tables']['goal_notes']['Insert'])
       .select()
       .single();
 

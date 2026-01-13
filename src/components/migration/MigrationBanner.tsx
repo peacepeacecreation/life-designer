@@ -22,7 +22,7 @@ import { useGoals } from '@/contexts/GoalsContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {  Sparkles, CheckCircle2, AlertCircle, Brain, CloudUpload, Database } from 'lucide-react';
+import { Sparkles, CheckCircle2, AlertCircle, Brain, CloudUpload, Database } from 'lucide-react';
 import { Goal } from '@/types/goals';
 
 type BannerMode = 'migration' | 'embedding-regeneration';
@@ -189,7 +189,9 @@ export function MigrationBanner() {
               ) : status === 'error' ? (
                 <AlertCircle className="h-7 w-7 text-rose-600 dark:text-rose-400" />
               ) : status === 'processing' ? (
-                <Loader2 className="h-7 w-7 text-slate-600 dark:text-slate-400 animate-spin" />
+                <div className="flex items-center justify-center h-7 w-7">
+                  <Loader size="sm" />
+                </div>
               ) : mode === 'migration' ? (
                 <CloudUpload className="h-7 w-7 text-slate-600 dark:text-slate-400" />
               ) : (
@@ -265,7 +267,7 @@ export function MigrationBanner() {
                     : 'Аналіз семантичних зв\'язків...'}
                 </p>
                 <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-slate-600 dark:text-slate-400" />
+                  <Loader size="sm" />
                   <span className="text-sm text-slate-500 dark:text-slate-400">
                     {mode === 'migration' ? `Обробка ${localStorageGoals.length} цілей...` : 'Обробка...'}
                   </span>

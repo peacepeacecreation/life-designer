@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Copy, ExternalLink, CheckCircle2, AlertCircle } from 'lucide-react';
+import { LoadingInline } from '@/components/ui/loader';
 
 export default function MigrateDBPage() {
   const [sql, setSql] = useState<string>('');
@@ -37,7 +38,7 @@ export default function MigrateDBPage() {
     return (
       <div className="container mx-auto p-8">
         <div className="max-w-4xl mx-auto">
-          <p className="text-slate-600">Завантаження...</p>
+          <LoadingInline message="Завантаження SQL міграції..." />
         </div>
       </div>
     );

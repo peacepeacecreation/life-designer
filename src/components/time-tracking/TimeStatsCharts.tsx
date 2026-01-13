@@ -26,7 +26,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { Clock, TrendingUp, Target, Calendar, Loader2, AlertCircle } from 'lucide-react';
+import { Clock, TrendingUp, Target, Calendar, AlertCircle } from 'lucide-react';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { uk } from 'date-fns/locale';
 

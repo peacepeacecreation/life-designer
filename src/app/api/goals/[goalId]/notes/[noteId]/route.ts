@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerClient } from '@/lib/supabase/pool';
 import type { GoalNote, UpdateGoalNoteInput } from '@/types/goal-notes';
+import type { Database } from '@/types/database';
 
 export async function PATCH(
   request: NextRequest,
@@ -47,7 +48,7 @@ export async function PATCH(
       .from('goal_notes')
       .update({
         content: body.content.trim(),
-      })
+      } as Database['public']['Tables']['goal_notes']['Update'])
       .eq('id', noteId)
       .eq('goal_id', goalId)
       .eq('user_id', user.id)

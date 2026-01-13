@@ -27,7 +27,6 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
-  Loader2,
   Calendar as CalendarIcon,
   AlertCircle,
 } from 'lucide-react';
