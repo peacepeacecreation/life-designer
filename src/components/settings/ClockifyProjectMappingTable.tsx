@@ -40,6 +40,7 @@ interface Goal {
   name: string;
   category: string;
   iconUrl?: string;
+  color?: string;
 }
 
 interface ProjectMapping {

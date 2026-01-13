@@ -157,6 +157,7 @@ export default function StatsCharts() {
       on_hold: 0,
       completed: 0,
       abandoned: 0,
+      ongoing: 0,
     };
 
     goals.forEach(goal => {
@@ -170,12 +171,13 @@ export default function StatsCharts() {
     const labels = filteredStatuses.map(status => statusLabels[status]);
     const data = filteredStatuses.map(status => statusCounts[status]);
 
-    const statusColors = {
+    const statusColors: Record<GoalStatus, string> = {
       not_started: PASTEL_COLORS.pink,
       in_progress: PASTEL_COLORS.blue,
       on_hold: PASTEL_COLORS.yellow,
       completed: PASTEL_COLORS.green,
       abandoned: mutedColor,
+      ongoing: PASTEL_COLORS.purple,
     };
 
     const backgroundColor = filteredStatuses.map(status => statusColors[status]);

@@ -196,19 +196,21 @@ export default function GoalCard({ goal }: GoalCardProps) {
               </div>
             )}
 
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                <span>Завершення:</span>
+            {!goal.isOngoing && goal.targetEndDate && (
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
+                  <span>Завершення:</span>
+                </div>
+                <span className="font-semibold text-black dark:text-white">
+                  {new Date(goal.targetEndDate).toLocaleDateString('uk-UA', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                </span>
               </div>
-              <span className="font-semibold text-black dark:text-white">
-                {new Date(goal.targetEndDate).toLocaleDateString('uk-UA', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric',
-                })}
-              </span>
-            </div>
+            )}
           </div>
         </CardContent>
       </Link>

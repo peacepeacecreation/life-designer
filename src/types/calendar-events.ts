@@ -16,6 +16,9 @@ export interface CalendarEvent {
   endTime: Date;
   allDay: boolean;
 
+  // Time tracking integration
+  createsTimeEntry?: boolean; // Whether this event should create a time entry
+
   // Goal association (optional)
   goalId?: string;
 
@@ -53,6 +56,7 @@ export interface CalendarEventRow {
   start_time: string; // ISO timestamp string in database
   end_time: string;   // ISO timestamp string in database
   all_day: boolean;
+  creates_time_entry?: boolean; // Whether this event should create a time entry
   goal_id?: string;
   color?: string;
   google_event_id?: string;

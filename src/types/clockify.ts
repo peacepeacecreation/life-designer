@@ -89,6 +89,7 @@ export interface TimeEntryWithDetails extends TimeEntry {
     name: string;
     category: string;
     iconUrl?: string;
+    color?: string;
   };
   clockifyProject?: {
     id: string;
