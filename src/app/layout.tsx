@@ -37,15 +37,20 @@ export const metadata: Metadata = {
     description: "Design your life with purpose and intention",
     siteName: "Life Designer",
     images: [{
-      url: "/og-image.svg",
+      url: "/og-image.png",
       width: 1200,
       height: 630,
       alt: "Life Designer",
+      type: "image/png",
     }],
   },
   icons: {
-    icon: "/logo.svg",
-    apple: "/logo.svg",
+    icon: [
+      { url: "/icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/logo.svg", type: "image/svg+xml" },
+    ],
+    apple: { url: "/apple-icon.png", sizes: "512x512", type: "image/png" },
+    shortcut: "/favicon.ico",
   },
 };
 
