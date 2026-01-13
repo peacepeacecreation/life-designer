@@ -6,6 +6,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getServerClient } from '@/lib/supabase/pool';
 import type { GoalNote, UpdateGoalNoteInput } from '@/types/goal-notes';
 import type { Database } from '@/types/database';
@@ -16,20 +18,27 @@ export async function PATCH(
 ) {
   try {
     const { goalId, noteId } = await context.params;
-    const supabase = getServerClient();
 
+    // Authenticate user
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const supabase = getServerClient();
     if (!supabase) {
       return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
     }
 
-    // Get authenticated user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    // Get user ID from email
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', session.user.email)
+      .single();
 
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (userError || !userData) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Parse request body
@@ -51,7 +60,7 @@ export async function PATCH(
       })
       .eq('id', noteId)
       .eq('goal_id', goalId)
-      .eq('user_id', user.id)
+      .eq('user_id', userData.id)
       .select()
       .single();
 
@@ -90,20 +99,27 @@ export async function DELETE(
 ) {
   try {
     const { goalId, noteId } = await context.params;
-    const supabase = getServerClient();
 
+    // Authenticate user
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const supabase = getServerClient();
     if (!supabase) {
       return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
     }
 
-    // Get authenticated user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    // Get user ID from email
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', session.user.email)
+      .single();
 
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (userError || !userData) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Delete note
@@ -112,7 +128,7 @@ export async function DELETE(
       .delete()
       .eq('id', noteId)
       .eq('goal_id', goalId)
-      .eq('user_id', user.id);
+      .eq('user_id', userData.id);
 
     if (error) {
       console.error('Error deleting goal note:', error);

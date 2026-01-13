@@ -6,6 +6,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getServerClient } from '@/lib/supabase/pool';
 import type { GoalNote, CreateGoalNoteInput } from '@/types/goal-notes';
 import type { Database } from '@/types/database';
@@ -16,20 +18,27 @@ export async function GET(
 ) {
   try {
     const { goalId } = await context.params;
-    const supabase = getServerClient();
 
+    // Authenticate user
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const supabase = getServerClient();
     if (!supabase) {
       return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
     }
 
-    // Get authenticated user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    // Get user ID from email
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', session.user.email)
+      .single();
 
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (userError || !userData) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Fetch notes for the goal
@@ -37,7 +46,7 @@ export async function GET(
       .from('goal_notes')
       .select('*')
       .eq('goal_id', goalId)
-      .eq('user_id', user.id)
+      .eq('user_id', userData.id)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -71,20 +80,27 @@ export async function POST(
 ) {
   try {
     const { goalId } = await context.params;
-    const supabase = getServerClient();
 
+    // Authenticate user
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const supabase = getServerClient();
     if (!supabase) {
       return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
     }
 
-    // Get authenticated user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    // Get user ID from email
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', session.user.email)
+      .single();
 
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (userError || !userData) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Parse request body
@@ -103,7 +119,7 @@ export async function POST(
       .from('goal_notes')
       .insert({
         goal_id: goalId,
-        user_id: user.id,
+        user_id: userData.id,
         content: body.content.trim(),
       })
       .select()
