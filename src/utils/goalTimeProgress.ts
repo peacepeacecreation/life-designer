@@ -1,7 +1,8 @@
 import { RecurringEvent } from '@/types/recurring-events';
 import { CalendarEventWithGoal } from '@/types/calendar-events';
 import { generateEventsFromRecurring } from './recurringEvents';
-import { startOfWeek, endOfWeek, isBefore, isWithinInterval } from 'date-fns';
+import { startOfWeek, endOfWeek, isBefore, isWithinInterval, format } from 'date-fns';
+import { uk } from 'date-fns/locale';
 
 export interface GoalTimeProgress {
   totalAllocated: number;    // Загальна кількість годин виділених на ціль
@@ -14,23 +15,30 @@ export interface GoalTimeProgress {
 }
 
 /**
- * Розраховує прогрес виконання цілі на поточний тиждень
+ * Розраховує прогрес виконання цілі на вказаний тиждень
  *
  * @param goalId - ID цілі
  * @param goalTimeAllocated - Виділено годин на тиждень для цілі
  * @param recurringEvents - Всі повторювані події
  * @param calendarEvents - Всі одноразові події з календаря
+ * @param weekOffset - Зміщення тижня від поточного (0 = поточний, -1 = минулий, -2 = два тижні тому, і т.д.)
  * @returns Детальна інформація про прогрес
  */
 export function calculateGoalTimeProgress(
   goalId: string,
   goalTimeAllocated: number,
   recurringEvents: RecurringEvent[],
-  calendarEvents: CalendarEventWithGoal[] = []
+  calendarEvents: CalendarEventWithGoal[] = [],
+  weekOffset: number = 0
 ): GoalTimeProgress {
   const now = new Date();
-  const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Понеділок
-  const weekEnd = endOfWeek(now, { weekStartsOn: 1 }); // Неділя
+
+  // Обчислюємо початок і кінець потрібного тижня
+  const targetDate = new Date(now);
+  targetDate.setDate(targetDate.getDate() + (weekOffset * 7));
+
+  const weekStart = startOfWeek(targetDate, { weekStartsOn: 1 }); // Понеділок
+  const weekEnd = endOfWeek(targetDate, { weekStartsOn: 1 }); // Неділя
 
   // Фільтруємо тільки активні події пов'язані з цією ціллю
   const goalEvents = recurringEvents.filter(
@@ -47,12 +55,17 @@ export function calculateGoalTimeProgress(
     events.forEach(event => {
       const durationMinutes = (event.end.getTime() - event.start.getTime()) / (1000 * 60);
 
-      // Якщо подія вже пройшла (end < now), вважаємо виконаною
-      if (isBefore(event.end, now)) {
+      // Для минулих тижнів всі події вважаються виконаними
+      if (weekOffset < 0) {
         completedMinutes += durationMinutes;
       } else {
-        // Інакше - заплановано на майбутнє
-        scheduledMinutes += durationMinutes;
+        // Для поточного або майбутніх тижнів перевіряємо чи подія пройшла
+        if (isBefore(event.end, now)) {
+          completedMinutes += durationMinutes;
+        } else {
+          // Інакше - заплановано на майбутнє
+          scheduledMinutes += durationMinutes;
+        }
       }
     });
   });
@@ -73,12 +86,17 @@ export function calculateGoalTimeProgress(
     if (isInWeek) {
       const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
 
-      // Якщо подія вже пройшла (end < now), вважаємо виконаною
-      if (isBefore(eventEnd, now)) {
+      // Для минулих тижнів всі події вважаються виконаними
+      if (weekOffset < 0) {
         completedMinutes += durationMinutes;
       } else {
-        // Інакше - заплановано на майбутнє
-        scheduledMinutes += durationMinutes;
+        // Для поточного або майбутніх тижнів перевіряємо чи подія пройшла
+        if (isBefore(eventEnd, now)) {
+          completedMinutes += durationMinutes;
+        } else {
+          // Інакше - заплановано на майбутнє
+          scheduledMinutes += durationMinutes;
+        }
       }
     }
   });
@@ -96,5 +114,46 @@ export function calculateGoalTimeProgress(
     completedPercent: goalTimeAllocated > 0 ? (completed / goalTimeAllocated) * 100 : 0,
     scheduledPercent: goalTimeAllocated > 0 ? (scheduled / goalTimeAllocated) * 100 : 0,
     unscheduledPercent: goalTimeAllocated > 0 ? (unscheduled / goalTimeAllocated) * 100 : 0,
+  };
+}
+
+/**
+ * Повертає мітку для тижня (наприклад "Поточний тиждень", "Минулий тиждень", "16 грудня - 22 грудня")
+ *
+ * @param weekOffset - Зміщення тижня від поточного (0 = поточний, -1 = минулий, і т.д.)
+ * @returns Мітка для відображення
+ */
+export function getWeekLabel(weekOffset: number): string {
+  if (weekOffset === 0) {
+    return 'Поточний тиждень';
+  }
+  if (weekOffset === -1) {
+    return 'Минулий тиждень';
+  }
+
+  const now = new Date();
+  const targetDate = new Date(now);
+  targetDate.setDate(targetDate.getDate() + (weekOffset * 7));
+
+  const weekStart = startOfWeek(targetDate, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(targetDate, { weekStartsOn: 1 });
+
+  return `${format(weekStart, 'd MMM', { locale: uk })} - ${format(weekEnd, 'd MMM yyyy', { locale: uk })}`;
+}
+
+/**
+ * Повертає діапазон дат для тижня
+ *
+ * @param weekOffset - Зміщення тижня від поточного
+ * @returns Об'єкт з початком і кінцем тижня
+ */
+export function getWeekRange(weekOffset: number): { start: Date; end: Date } {
+  const now = new Date();
+  const targetDate = new Date(now);
+  targetDate.setDate(targetDate.getDate() + (weekOffset * 7));
+
+  return {
+    start: startOfWeek(targetDate, { weekStartsOn: 1 }),
+    end: endOfWeek(targetDate, { weekStartsOn: 1 }),
   };
 }

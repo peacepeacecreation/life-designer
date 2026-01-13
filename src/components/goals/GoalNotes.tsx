@@ -158,28 +158,64 @@ export default function GoalNotes({ goalId }: GoalNotesProps) {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-    const diffInMinutes = Math.floor(diffInMs / 60000);
-    const diffInHours = Math.floor(diffInMs / 3600000);
-    const diffInDays = Math.floor(diffInMs / 86400000);
-
-    if (diffInMinutes < 1) {
-      return 'щойно';
-    } else if (diffInMinutes < 60) {
-      return `${diffInMinutes} хв. тому`;
-    } else if (diffInHours < 24) {
-      return `${diffInHours} год. тому`;
-    } else if (diffInDays < 7) {
-      return `${diffInDays} дн. тому`;
-    } else {
-      return date.toLocaleDateString('uk-UA', {
-        day: 'numeric',
-        month: 'short',
-        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
-      });
-    }
+    return date.toLocaleDateString('uk-UA', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }) + ' о ' + date.toLocaleTimeString('uk-UA', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
+
+  const getWeekLabel = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+
+    // Get start of week (Monday)
+    const startOfWeek = new Date(date);
+    startOfWeek.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+    const currentWeekStart = new Date(now);
+    currentWeekStart.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    currentWeekStart.setHours(0, 0, 0, 0);
+
+    const lastWeekStart = new Date(currentWeekStart);
+    lastWeekStart.setDate(currentWeekStart.getDate() - 7);
+
+    // Check if it's current week
+    if (startOfWeek.getTime() === currentWeekStart.getTime()) {
+      return 'Поточний тиждень';
+    }
+
+    // Check if it's last week
+    if (startOfWeek.getTime() === lastWeekStart.getTime()) {
+      return 'Минулий тиждень';
+    }
+
+    // Otherwise show date range
+    return `${startOfWeek.getDate()} ${startOfWeek.toLocaleDateString('uk-UA', { month: 'short' })} - ${endOfWeek.getDate()} ${endOfWeek.toLocaleDateString('uk-UA', { month: 'short' })}`;
+  };
+
+  const groupNotesByWeek = (notes: GoalNote[]) => {
+    const groups: { [key: string]: GoalNote[] } = {};
+
+    notes.forEach(note => {
+      const weekLabel = getWeekLabel(note.createdAt);
+      if (!groups[weekLabel]) {
+        groups[weekLabel] = [];
+      }
+      groups[weekLabel].push(note);
+    });
+
+    return groups;
+  };
+
+  const notesByWeek = groupNotesByWeek(notes);
 
   if (loading) {
     return (
@@ -226,83 +262,95 @@ export default function GoalNotes({ goalId }: GoalNotesProps) {
             </Button>
           </div>
 
-          {/* Notes list */}
+          {/* Notes list grouped by week */}
           {notes.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <p>Немає нотаток.</p>
               <p className="text-sm mt-2">Додайте першу нотатку вище.</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {notes.map((note) => (
-                <div
-                  key={note.id}
-                  className="p-4 rounded-lg border bg-muted/30 space-y-3"
-                >
-                  {editingNoteId === note.id ? (
-                    // Edit mode
-                    <>
-                      <Textarea
-                        value={editingContent}
-                        onChange={(e) => setEditingContent(e.target.value)}
-                        rows={3}
-                        className="resize-none"
-                        autoFocus
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => handleSaveEdit(note.id)}
-                          disabled={!editingContent.trim() || saving}
-                        >
-                          <Check className="h-4 w-4 mr-1" />
-                          Зберегти
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={handleCancelEdit}
-                          disabled={saving}
-                        >
-                          <X className="h-4 w-4 mr-1" />
-                          Скасувати
-                        </Button>
+            <div className="space-y-6">
+              {Object.entries(notesByWeek).map(([weekLabel, weekNotes]) => (
+                <div key={weekLabel} className="space-y-3">
+                  {/* Week header */}
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                    {weekLabel}
+                  </h3>
+
+                  {/* Notes in this week */}
+                  <div className="space-y-3">
+                    {weekNotes.map((note) => (
+                      <div
+                        key={note.id}
+                        className="p-4 rounded-lg border bg-muted/30 space-y-3"
+                      >
+                        {editingNoteId === note.id ? (
+                          // Edit mode
+                          <>
+                            <Textarea
+                              value={editingContent}
+                              onChange={(e) => setEditingContent(e.target.value)}
+                              rows={3}
+                              className="resize-none"
+                              autoFocus
+                            />
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => handleSaveEdit(note.id)}
+                                disabled={!editingContent.trim() || saving}
+                              >
+                                <Check className="h-4 w-4 mr-1" />
+                                Зберегти
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={handleCancelEdit}
+                                disabled={saving}
+                              >
+                                <X className="h-4 w-4 mr-1" />
+                                Скасувати
+                              </Button>
+                            </div>
+                          </>
+                        ) : (
+                          // View mode
+                          <>
+                            <p className="text-foreground whitespace-pre-wrap">
+                              {note.content}
+                            </p>
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground">
+                                {formatDate(note.createdAt)}
+                                {note.updatedAt !== note.createdAt && (
+                                  <span className="ml-1">(змінено)</span>
+                                )}
+                              </span>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleStartEdit(note)}
+                                  className="h-8 px-2"
+                                >
+                                  <Edit2 className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleDeleteNote(note.id)}
+                                  className="h-8 px-2 text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
-                    </>
-                  ) : (
-                    // View mode
-                    <>
-                      <p className="text-foreground whitespace-pre-wrap">
-                        {note.content}
-                      </p>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          {formatDate(note.createdAt)}
-                          {note.updatedAt !== note.createdAt && (
-                            <span className="ml-1">(змінено)</span>
-                          )}
-                        </span>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleStartEdit(note)}
-                            className="h-8 px-2"
-                          >
-                            <Edit2 className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDeleteNote(note.id)}
-                            className="h-8 px-2 text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </div>
-                    </>
-                  )}
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>

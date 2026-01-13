@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PROJECT_REF="gxzzkcthcdtmkdwfdrhv"
-SQL_FILE="supabase/migrations/008_remove_progress_percentage.sql"
+SQL_FILE="supabase/migrations/012_add_weekly_snapshots.sql"
 
 echo "🚀 Supabase Database Migration Script"
 echo "════════════════════════════════════════════════════════════"
@@ -59,9 +59,11 @@ echo ""
 if [ "$HTTP_CODE" = "201" ] || [ "$HTTP_CODE" = "200" ]; then
   echo "✅ Migration executed successfully!"
   echo ""
-  echo "Removed progress_percentage column from goals table:"
-  echo "  • Manual progress tracking removed"
-  echo "  • Now using automatic time-based progress only"
+  echo "Added weekly snapshots tables:"
+  echo "  • weekly_snapshots - main table for weekly statistics"
+  echo "  • weekly_goal_snapshots - goal settings snapshots"
+  echo "  • weekly_recurring_event_snapshots - recurring event settings snapshots"
+  echo "  • All tables have RLS enabled and proper indexes"
   echo ""
 else
   echo "❌ Migration failed"

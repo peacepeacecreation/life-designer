@@ -22,6 +22,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { GoalProgressList } from '@/components/stats/GoalProgressList';
 import { FinancialStats } from '@/components/stats/FinancialStats';
 import { FutureProfile } from '@/components/stats/FutureProfile';
+import { WeekSelector } from '@/components/stats/WeekSelector';
+import { WeekHistoryCard } from '@/components/stats/WeekHistoryCard';
 
 // Реєстрація компонентів Chart.js
 ChartJS.register(
@@ -50,6 +52,7 @@ export default function StatsCharts() {
   const { timeAllocation } = useTimeCalculator();
   const [selectedCategory, setSelectedCategory] = useState<GoalCategory | 'all'>('all');
   const [selectedPriority, setSelectedPriority] = useState<GoalPriority | 'all'>('all');
+  const [selectedWeekOffset, setSelectedWeekOffset] = useState<number>(0);
 
   useEffect(() => {
     const checkTheme = () => {
@@ -211,9 +214,7 @@ export default function StatsCharts() {
   const categoryStats = useMemo(() => {
     const filtered = filteredGoalsByCategory;
     const totalHours = filtered.reduce((sum, g) => sum + g.timeAllocated, 0);
-    const avgProgress = filtered.length > 0
-      ? filtered.reduce((sum, g) => sum + g.0 // progressPercentage removed, 0) / filtered.length
-      : 0;
+    const avgProgress = 0; // Progress percentage removed
 
     return {
       count: filtered.length,
@@ -225,9 +226,7 @@ export default function StatsCharts() {
   const priorityStats = useMemo(() => {
     const filtered = filteredGoalsByPriority;
     const totalHours = filtered.reduce((sum, g) => sum + g.timeAllocated, 0);
-    const avgProgress = filtered.length > 0
-      ? filtered.reduce((sum, g) => sum + g.0 // progressPercentage removed, 0) / filtered.length
-      : 0;
+    const avgProgress = 0; // Progress percentage removed
 
     return {
       count: filtered.length,
@@ -290,8 +289,9 @@ export default function StatsCharts() {
 
   return (
     <Tabs defaultValue="overview" className="w-full">
-      <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 mb-8">
+      <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7 mb-8">
         <TabsTrigger value="overview">Огляд</TabsTrigger>
+        <TabsTrigger value="history">Історія</TabsTrigger>
         <TabsTrigger value="finances">Фінанси</TabsTrigger>
         <TabsTrigger value="future">Майбутнє</TabsTrigger>
         <TabsTrigger value="categories">Категорії</TabsTrigger>
@@ -372,6 +372,16 @@ export default function StatsCharts() {
             </div>
           </Card>
         </div>
+      </TabsContent>
+
+      {/* Таб: Історія */}
+      <TabsContent value="history" className="space-y-6">
+        <WeekSelector
+          selectedWeekOffset={selectedWeekOffset}
+          onWeekChange={setSelectedWeekOffset}
+          weeksToShow={12}
+        />
+        <WeekHistoryCard weekOffset={selectedWeekOffset} goals={goals} />
       </TabsContent>
 
       {/* Таб: Фінанси */}
