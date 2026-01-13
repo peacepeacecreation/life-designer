@@ -44,18 +44,6 @@ export const metadata: Metadata = {
       type: "image/png",
     }],
   },
-  icons: {
-    icon: [
-      { url: "/favicon.ico?v=2", sizes: "32x32" },
-      { url: "/icon.png?v=2", sizes: "180x180", type: "image/png" },
-      { url: "/logo.svg?v=2", type: "image/svg+xml" },
-    ],
-    apple: [
-      { url: "/apple-icon.png?v=2", sizes: "512x512", type: "image/png" },
-      { url: "/apple-icon.png?v=2", sizes: "180x180", type: "image/png" },
-    ],
-    shortcut: [{ url: "/favicon.ico?v=2" }],
-  },
 };
 
 export default function RootLayout({
