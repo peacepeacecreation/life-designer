@@ -52,6 +52,7 @@ export function IconPicker({
       {/* Tab Switcher */}
       <div className="flex gap-2 border-b">
         <button
+          type="button"
           onClick={() => setActiveTab('predefined')}
           className={cn(
             'px-4 py-2 text-sm font-medium transition-colors',
@@ -63,6 +64,7 @@ export function IconPicker({
           Готові іконки
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab('custom')}
           className={cn(
             'px-4 py-2 text-sm font-medium transition-colors',
