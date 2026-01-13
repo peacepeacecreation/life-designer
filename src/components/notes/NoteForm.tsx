@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
+import { Loader } from '@/components/ui/loader';
 import { useNotes } from '@/contexts/NotesContext';
 import { Note, NoteType } from '@/types/notes';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';

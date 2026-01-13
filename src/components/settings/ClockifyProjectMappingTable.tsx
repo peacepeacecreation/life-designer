@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Plus, Trash2, CheckCircle, AlertCircle, FolderKanban, Target } from 'lucide-react';
+import {  Plus, Trash2, CheckCircle, AlertCircle, FolderKanban, Target } from 'lucide-react';
 import { useGoals } from '@/contexts/GoalsContext';
 import { isPredefinedIcon, getIconById } from '@/lib/goalIcons';
 
@@ -185,7 +185,7 @@ export default function ClockifyProjectMappingTable({ connectionId }: ClockifyPr
     return (
       <Card>
         <CardContent className="flex items-center justify-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
+          <Loader size="md" />
         </CardContent>
       </Card>
     );
@@ -319,7 +319,7 @@ export default function ClockifyProjectMappingTable({ connectionId }: ClockifyPr
                 >
                   {creating ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader size="sm" />
                       Створення...
                     </>
                   ) : (

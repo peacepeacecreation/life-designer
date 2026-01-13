@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { Loader } from '@/components/ui/loader';
 import { useReflections } from '@/contexts/ReflectionsContext';
 import { Reflection, ReflectionType } from '@/types/reflections';
 import ReflectionCard from './ReflectionCard';
 import ReflectionForm from './ReflectionForm';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Lightbulb, Loader2 } from 'lucide-react';
+import { Lightbulb } from 'lucide-react';
 
 export default function ReflectionsList() {
   const { reflections, isLoading, error, getFilteredReflections, filters, setFilters } = useReflections();

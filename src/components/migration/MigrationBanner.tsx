@@ -17,11 +17,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Loader } from '@/components/ui/loader';
 import { useGoals } from '@/contexts/GoalsContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Sparkles, CheckCircle2, AlertCircle, Brain, CloudUpload, Database } from 'lucide-react';
+import {  Sparkles, CheckCircle2, AlertCircle, Brain, CloudUpload, Database } from 'lucide-react';
 import { Goal } from '@/types/goals';
 
 type BannerMode = 'migration' | 'embedding-regeneration';

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect, useRef } from 'react';
+import { Loader } from '@/components/ui/loader';
 import { useGoals } from '@/contexts/GoalsContext';
 import { Goal, GoalCategory, GoalPriority, GoalStatus } from '@/types';
 import { categoryMeta, priorityLabels, statusLabels, getCategoryMeta } from '@/lib/categoryConfig';
@@ -11,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { AlertCircle, Upload, Link as LinkIcon, Loader2 } from 'lucide-react';
+import { AlertCircle, Upload, Link as LinkIcon } from 'lucide-react';
 import { IconPicker } from '@/components/goals/IconPicker';
 
 interface GoalFormProps {
@@ -393,7 +394,7 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
                     title="Витягнути логотип з посилання"
                   >
                     {fetchingLogo ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader size="sm" />
                     ) : (
                       <LinkIcon className="h-4 w-4" />
                     )}

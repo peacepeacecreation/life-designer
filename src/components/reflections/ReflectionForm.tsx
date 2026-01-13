@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
+import { Loader } from '@/components/ui/loader';
 import { useReflections } from '@/contexts/ReflectionsContext';
 import { Reflection, ReflectionType } from '@/types/reflections';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -10,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Loader2, Smile, Zap } from 'lucide-react';
+import {  Smile, Zap } from 'lucide-react';
 
 interface ReflectionFormProps {
   isOpen: boolean;

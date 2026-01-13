@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { Loader } from '@/components/ui/loader';
 import { useNotes } from '@/contexts/NotesContext';
 import { Note, NoteType } from '@/types/notes';
 import NoteCard from './NoteCard';
 import NoteForm from './NoteForm';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Loader2 } from 'lucide-react';
+import { FileText } from 'lucide-react';
 
 export default function NotesList() {
   const { notes, isLoading, error, getFilteredNotes, filters, setFilters } = useNotes();

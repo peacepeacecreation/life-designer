@@ -21,12 +21,12 @@ import {
   RefreshCw,
   CheckCircle,
   XCircle,
-  Loader2,
   ExternalLink,
   AlertCircle,
   Eye,
   EyeOff,
 } from 'lucide-react';
+import { Loader } from '@/components/ui/loader';
 import ClockifyProjectMappingTable from './ClockifyProjectMappingTable';
 
 interface ClockifyWorkspace {
@@ -245,7 +245,7 @@ export default function ClockifyIntegrationTab() {
       case 'error':
         return <XCircle className="h-5 w-5 text-red-500" />;
       case 'syncing':
-        return <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />;
+        return <Loader size="sm" className="text-blue-500" />;
       default:
         return <AlertCircle className="h-5 w-5 text-yellow-500" />;
     }
@@ -254,7 +254,7 @@ export default function ClockifyIntegrationTab() {
   if (loadingConnection) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <Loader size="md" />
       </div>
     );
   }
@@ -319,7 +319,7 @@ export default function ClockifyIntegrationTab() {
               >
                 {syncing ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader size="sm" />
                     Синхронізація...
                   </>
                 ) : (
@@ -347,7 +347,7 @@ export default function ClockifyIntegrationTab() {
               >
                 {disconnecting ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader size="sm" />
                     Відключення...
                   </>
                 ) : (
@@ -406,7 +406,7 @@ export default function ClockifyIntegrationTab() {
                   disabled={!apiKey || loadingWorkspaces}
                 >
                   {loadingWorkspaces ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader size="sm" />
                   ) : (
                     'Завантажити'
                   )}
@@ -451,7 +451,7 @@ export default function ClockifyIntegrationTab() {
               >
                 {connecting ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader size="sm" />
                     Підключення...
                   </>
                 ) : (
