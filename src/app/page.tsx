@@ -126,6 +126,27 @@ export default function Home() {
             </Card>
           </Link>
         </div>
+
+        {/* Footer with Privacy Policy and Terms */}
+        <footer className="mt-16 pt-8 border-t border-border text-center">
+          <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
+            <Link href="/privacy" className="hover:text-primary transition-colors">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="hover:text-primary transition-colors">
+              Terms of Service
+            </Link>
+            <a
+              href="mailto:ukrainianmartyn@gmail.com"
+              className="hover:text-primary transition-colors"
+            >
+              Contact Us
+            </a>
+          </div>
+          <p className="mt-4 text-xs text-muted-foreground">
+            © {new Date().getFullYear()} Life Designer. All rights reserved.
+          </p>
+        </footer>
       </div>
     </main>
   );
