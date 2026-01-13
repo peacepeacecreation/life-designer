@@ -15,7 +15,7 @@ export async function PATCH(
 ) {
   try {
     const { goalId, noteId } = await context.params;
-    const supabase = await createClient();
+    const supabase = await getServerClient();
 
     // Get authenticated user
     const {
@@ -85,7 +85,7 @@ export async function DELETE(
 ) {
   try {
     const { goalId, noteId } = await context.params;
-    const supabase = await createClient();
+    const supabase = await getServerClient();
 
     // Get authenticated user
     const {
