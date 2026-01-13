@@ -86,6 +86,7 @@ export default function GoalCard({ goal }: GoalCardProps) {
     on_hold: 'text-yellow-600 dark:text-yellow-400',
     completed: 'text-green-600 dark:text-green-400',
     abandoned: 'text-muted-foreground line-through',
+    ongoing: 'text-purple-600 dark:text-purple-400',
   };
 
   return (

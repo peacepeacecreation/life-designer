@@ -2,11 +2,8 @@
 
 import { Calendar as BigCalendar, dateFnsLocalizer, View } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
-import format from 'date-fns/format';
-import parse from 'date-fns/parse';
-import startOfWeek from 'date-fns/startOfWeek';
-import getDay from 'date-fns/getDay';
-import uk from 'date-fns/locale/uk';
+import { format, parse, startOfWeek, getDay } from 'date-fns';
+import { uk } from 'date-fns/locale';
 import { useState, useCallback, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Card } from '@/components/ui/card';
@@ -53,7 +50,7 @@ export default function CalendarComponent({ googleEvents = [] }: CalendarCompone
   const { getTimeRange } = useCalendarSettings();
   const { showRecurringEvents, hiddenGoalIds, hiddenCategories } = useCalendarVisibility();
   const { events: dbEventsFromContext, createEvent, updateEvent, deleteEvent } = useCalendarEventsContext();
-  const [view, setView] = useState<View>('month');
+  const [view, setView] = useState<View>('week');
   const currentViewForHook = (view === 'work_week' ? 'week' : view) as 'month' | 'week' | 'day' | 'agenda';
   const { events, setGoogleEvents, setCurrentDate } = useCalendarEvents({
     showRecurringEvents,

@@ -9,10 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Briefcase, BookOpen, Dumbbell, Palette, Clock, Calendar, ArrowLeft, Edit2, ExternalLink, TrendingUp, Info, Trash2 } from 'lucide-react';
+import { Briefcase, BookOpen, Dumbbell, Palette, Clock, Calendar, ArrowLeft, Edit2, ExternalLink, TrendingUp, Info, Trash2, CalendarPlus, FileText } from 'lucide-react';
 import Link from 'next/link';
 import GoalForm from '@/components/goals/GoalForm';
 import WeeklyProgress from '@/components/goals/WeeklyProgress';
+import GoalWeekCalendar from '@/components/goals/GoalWeekCalendar';
 import { useGoals } from '@/contexts/GoalsContext';
 import { isPredefinedIcon, getIconById } from '@/lib/goalIcons';
 
@@ -111,6 +112,7 @@ export default function GoalDetailPage() {
     on_hold: 'text-yellow-600 dark:text-yellow-400',
     completed: 'text-green-600 dark:text-green-400',
     abandoned: 'text-muted-foreground line-through',
+    ongoing: 'text-purple-600 dark:text-purple-400',
   };
 
   return (
@@ -180,10 +182,18 @@ export default function GoalDetailPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="progress" className="w-full">
-        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
+        <TabsList className="grid w-full max-w-4xl mx-auto grid-cols-4 mb-8">
           <TabsTrigger value="progress" className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
             Прогрес тижня
+          </TabsTrigger>
+          <TabsTrigger value="calendar" className="flex items-center gap-2">
+            <CalendarPlus className="h-4 w-4" />
+            Додати подію
+          </TabsTrigger>
+          <TabsTrigger value="notes" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Нотатки
           </TabsTrigger>
           <TabsTrigger value="details" className="flex items-center gap-2">
             <Info className="h-4 w-4" />
@@ -194,6 +204,25 @@ export default function GoalDetailPage() {
         {/* Weekly Progress Tab */}
         <TabsContent value="progress">
           <WeeklyProgress goal={goal} />
+        </TabsContent>
+
+        {/* Week Calendar Tab */}
+        <TabsContent value="calendar">
+          <GoalWeekCalendar goal={goal} />
+        </TabsContent>
+
+        {/* Notes Tab */}
+        <TabsContent value="notes">
+          <Card className="bg-white dark:bg-card">
+            <CardHeader>
+              <h2 className="text-xl font-semibold text-black dark:text-white">Нотатки</h2>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground text-center py-12">
+                Функціонал нотаток буде додано незабаром
+              </p>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Details Tab */}
@@ -324,35 +353,37 @@ export default function GoalDetailPage() {
                     <span className="text-xl font-semibold text-black dark:text-white">{goal.timeAllocated} год</span>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                        <Calendar className="h-5 w-5" />
-                        <span>Дата початку</span>
+                  {!goal.isOngoing && goal.startDate && goal.targetEndDate && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                          <Calendar className="h-5 w-5" />
+                          <span>Дата початку</span>
+                        </div>
+                        <p className="text-lg font-semibold text-black dark:text-white">
+                          {new Date(goal.startDate).toLocaleDateString('uk-UA', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                          })}
+                        </p>
                       </div>
-                      <p className="text-lg font-semibold text-black dark:text-white">
-                        {new Date(goal.startDate).toLocaleDateString('uk-UA', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric',
-                        })}
-                      </p>
-                    </div>
 
-                    <div>
-                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                        <Calendar className="h-5 w-5" />
-                        <span>Цільова дата завершення</span>
+                      <div>
+                        <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                          <Calendar className="h-5 w-5" />
+                          <span>Цільова дата завершення</span>
+                        </div>
+                        <p className="text-lg font-semibold text-black dark:text-white">
+                          {new Date(goal.targetEndDate).toLocaleDateString('uk-UA', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                          })}
+                        </p>
                       </div>
-                      <p className="text-lg font-semibold text-black dark:text-white">
-                        {new Date(goal.targetEndDate).toLocaleDateString('uk-UA', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric',
-                        })}
-                      </p>
                     </div>
-                  </div>
+                  )}
 
                   {goal.actualEndDate && (
                     <div>
