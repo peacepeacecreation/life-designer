@@ -44,11 +44,11 @@ export async function PATCH(
     }
 
     // Update note
-    const { data: note, error } = await supabase
+    const { data: note, error } = await (supabase as any)
       .from('goal_notes')
       .update({
         content: body.content.trim(),
-      } as Database['public']['Tables']['goal_notes']['Update'])
+      })
       .eq('id', noteId)
       .eq('goal_id', goalId)
       .eq('user_id', user.id)
@@ -107,7 +107,7 @@ export async function DELETE(
     }
 
     // Delete note
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('goal_notes')
       .delete()
       .eq('id', noteId)

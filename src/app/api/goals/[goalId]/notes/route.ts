@@ -33,7 +33,7 @@ export async function GET(
     }
 
     // Fetch notes for the goal
-    const { data: notes, error } = await supabase
+    const { data: notes, error } = await (supabase as any)
       .from('goal_notes')
       .select('*')
       .eq('goal_id', goalId)
@@ -99,13 +99,13 @@ export async function POST(
     }
 
     // Create note
-    const { data: note, error } = await supabase
+    const { data: note, error } = await (supabase as any)
       .from('goal_notes')
       .insert({
         goal_id: goalId,
         user_id: user.id,
         content: body.content.trim(),
-      } as Database['public']['Tables']['goal_notes']['Insert'])
+      })
       .select()
       .single();
 
