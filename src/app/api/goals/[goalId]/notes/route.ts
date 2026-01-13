@@ -31,7 +31,7 @@ export async function GET(
     }
 
     // Get user ID from email
-    const { data: userData, error: userError } = await supabase
+    const { data: userData, error: userError } = await (supabase as any)
       .from('users')
       .select('id')
       .eq('email', session.user.email)
@@ -93,7 +93,7 @@ export async function POST(
     }
 
     // Get user ID from email
-    const { data: userData, error: userError } = await supabase
+    const { data: userData, error: userError } = await (supabase as any)
       .from('users')
       .select('id')
       .eq('email', session.user.email)
