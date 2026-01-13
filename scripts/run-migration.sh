@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PROJECT_REF="gxzzkcthcdtmkdwfdrhv"
-SQL_FILE="supabase/migrations/008_add_goal_notes.sql"
+SQL_FILE="supabase/migrations/008_remove_progress_percentage.sql"
 
 echo "🚀 Supabase Database Migration Script"
 echo "════════════════════════════════════════════════════════════"
@@ -59,10 +59,9 @@ echo ""
 if [ "$HTTP_CODE" = "201" ] || [ "$HTTP_CODE" = "200" ]; then
   echo "✅ Migration executed successfully!"
   echo ""
-  echo "Made goal dates nullable:"
-  echo "  • start_date is now nullable"
-  echo "  • target_end_date is now nullable"
-  echo "  • Ongoing goals can now be created without dates"
+  echo "Removed progress_percentage column from goals table:"
+  echo "  • Manual progress tracking removed"
+  echo "  • Now using automatic time-based progress only"
   echo ""
 else
   echo "❌ Migration failed"

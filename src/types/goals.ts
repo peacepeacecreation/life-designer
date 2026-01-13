@@ -57,9 +57,6 @@ export interface Goal {
   actualEndDate?: Date;
   isOngoing?: boolean; // True якщо це постійна ціль без дедлайнів
 
-  // Progress tracking
-  progressPercentage: number; // 0-100
-
   // Connections to other goals
   connections: GoalConnection[];
 

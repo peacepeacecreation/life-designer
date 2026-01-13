@@ -95,7 +95,6 @@ export async function GET(
       hourlyRate: goal.hourly_rate || undefined,
       fixedRate: goal.fixed_rate || undefined,
       fixedRatePeriod: goal.fixed_rate_period || undefined,
-      progressPercentage: goal.progress_percentage,
       startDate: new Date(goal.start_date),
       targetEndDate: new Date(goal.target_end_date),
       actualEndDate: goal.actual_end_date ? new Date(goal.actual_end_date) : undefined,
@@ -193,7 +192,6 @@ export async function PATCH(
     if (body.hourlyRate !== undefined) updateData.hourly_rate = body.hourlyRate || null;
     if (body.fixedRate !== undefined) updateData.fixed_rate = body.fixedRate || null;
     if (body.fixedRatePeriod !== undefined) updateData.fixed_rate_period = body.fixedRatePeriod || null;
-    if (body.progressPercentage !== undefined) updateData.progress_percentage = body.progressPercentage;
     if (body.startDate !== undefined) updateData.start_date = ensureDateString(body.startDate);
     if (body.targetEndDate !== undefined) updateData.target_end_date = ensureDateString(body.targetEndDate);
     if (body.actualEndDate !== undefined) updateData.actual_end_date = ensureDateString(body.actualEndDate);
@@ -249,7 +247,6 @@ export async function PATCH(
       hourlyRate: goal.hourly_rate || undefined,
       fixedRate: goal.fixed_rate || undefined,
       fixedRatePeriod: goal.fixed_rate_period || undefined,
-      progressPercentage: goal.progress_percentage,
       startDate: new Date(goal.start_date),
       targetEndDate: new Date(goal.target_end_date),
       actualEndDate: goal.actual_end_date ? new Date(goal.actual_end_date) : undefined,

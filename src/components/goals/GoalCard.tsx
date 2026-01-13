@@ -6,7 +6,6 @@ import { useGoals } from '@/contexts/GoalsContext';
 import { useConfirm } from '@/hooks/use-confirm';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Briefcase, BookOpen, Dumbbell, Palette, Trash2, Calendar, ExternalLink, DollarSign, GripVertical } from 'lucide-react';
 import Link from 'next/link';
@@ -191,16 +190,6 @@ export default function GoalCard({ goal }: GoalCardProps) {
                     )}
                   </span>
                 ) : null}
-              </div>
-            )}
-
-            {goal.progressPercentage > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Прогрес:</span>
-                  <span className="font-semibold text-black dark:text-white">{goal.progressPercentage}%</span>
-                </div>
-                <Progress value={goal.progressPercentage} />
               </div>
             )}
 

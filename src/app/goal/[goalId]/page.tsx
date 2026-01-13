@@ -7,7 +7,6 @@ import { getCategoryMeta, priorityLabels, statusLabels } from '@/lib/categoryCon
 import { useConfirm } from '@/hooks/use-confirm';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Briefcase, BookOpen, Dumbbell, Palette, Clock, Calendar, ArrowLeft, Edit2, ExternalLink, TrendingUp, Info, Trash2, CalendarPlus, FileText } from 'lucide-react';
@@ -43,17 +42,6 @@ export default function GoalDetailPage() {
       setGoal(foundGoal);
     }
   }, [goalId, goals]);
-
-  const handleProgressChange = async (newProgress: number) => {
-    if (goal) {
-      const updatedGoal = await updateGoalInContext(goal.id, {
-        progressPercentage: newProgress,
-      });
-      if (updatedGoal) {
-        setGoal(updatedGoal);
-      }
-    }
-  };
 
   const handleStatusChange = async (newStatus: Goal['status']) => {
     if (goal) {
@@ -289,53 +277,6 @@ export default function GoalDetailPage() {
                     >
                       Завершено
                     </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Progress */}
-            <Card className="bg-white dark:bg-card">
-              <CardHeader>
-                <h2 className="text-xl font-semibold text-black dark:text-white">Прогрес</h2>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-muted-foreground">Виконано</span>
-                      <span className="text-2xl font-bold text-black dark:text-white">{goal.progressPercentage}%</span>
-                    </div>
-                    <Progress value={goal.progressPercentage} className="h-3" />
-                  </div>
-
-                  {/* Progress Slider */}
-                  <div className="space-y-2 pt-2">
-                    <label htmlFor="progress-slider" className="text-sm font-medium text-black dark:text-white">
-                      Швидке оновлення прогресу
-                    </label>
-                    <div className="relative pt-1">
-                      <input
-                        id="progress-slider"
-                        type="range"
-                        min="0"
-                        max="100"
-                        step="5"
-                        value={goal.progressPercentage}
-                        onChange={(e) => handleProgressChange(parseInt(e.target.value))}
-                        className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-0"
-                        style={{
-                          background: `linear-gradient(to right, hsl(var(--primary)) ${goal.progressPercentage}%, hsl(var(--muted)) ${goal.progressPercentage}%)`
-                        }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>0%</span>
-                      <span>25%</span>
-                      <span>50%</span>
-                      <span>75%</span>
-                      <span>100%</span>
-                    </div>
                   </div>
                 </div>
               </CardContent>

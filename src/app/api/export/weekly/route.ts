@@ -11,9 +11,243 @@ import { getServerClient } from '@/lib/supabase/pool';
 import { Goal, GoalCategory, GoalPriority, GoalStatus } from '@/types/goals';
 import { CalendarEventRow } from '@/types/calendar-events';
 import { RecurringEventRow, parseRecurringEventFromDb } from '@/types/recurring-events';
+import { startOfWeek, endOfWeek, isBefore, isWithinInterval } from 'date-fns';
 
 export const runtime = 'nodejs';
 export const maxDuration = 10;
+
+// Helper: Calculate weekly time summary for all goals
+interface WeeklyTimeSummary {
+  totalAllocated: number;
+  totalCompleted: number;
+  totalScheduled: number;
+  totalUnscheduled: number;
+  otherPlansCompleted: number;
+  otherPlansScheduled: number;
+  completionRate: number;
+}
+
+function calculateWeeklyTimeSummary(
+  goals: any[],
+  recurringEvents: any[],
+  calendarEvents: any[],
+  weekStart: Date,
+  weekEnd: Date
+): WeeklyTimeSummary {
+  const now = new Date();
+  let totalAllocated = 0;
+  let totalCompletedMinutes = 0;
+  let totalScheduledMinutes = 0;
+  let otherPlansCompletedMinutes = 0;
+  let otherPlansScheduledMinutes = 0;
+
+  // Sum up time allocated from all goals
+  goals.forEach(goal => {
+    totalAllocated += goal.time_allocated || 0;
+  });
+
+  // Get goal IDs
+  const goalIds = goals.map(g => g.id);
+
+  // Process recurring events
+  recurringEvents.forEach((recurringEvent: any) => {
+    if (!recurringEvent.is_active) return;
+
+    // Generate instances for this week
+    const instances = generateRecurringInstances(recurringEvent, weekStart, weekEnd);
+
+    instances.forEach(instance => {
+      const durationMinutes = recurringEvent.duration;
+      const isCompleted = isBefore(instance.end, now);
+
+      // Check if this event is associated with a goal
+      if (recurringEvent.goal_id && goalIds.includes(recurringEvent.goal_id)) {
+        // Part of goals
+        if (isCompleted) {
+          totalCompletedMinutes += durationMinutes;
+        } else {
+          totalScheduledMinutes += durationMinutes;
+        }
+      } else {
+        // Other plans (not associated with goals)
+        if (isCompleted) {
+          otherPlansCompletedMinutes += durationMinutes;
+        } else {
+          otherPlansScheduledMinutes += durationMinutes;
+        }
+      }
+    });
+  });
+
+  // Process calendar events
+  calendarEvents.forEach((event: any) => {
+    const eventStart = new Date(event.start_time);
+    const eventEnd = new Date(event.end_time);
+
+    const isInWeek = isWithinInterval(eventStart, { start: weekStart, end: weekEnd }) ||
+                     isWithinInterval(eventEnd, { start: weekStart, end: weekEnd });
+
+    if (isInWeek) {
+      const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
+      const isCompleted = isBefore(eventEnd, now);
+
+      // Check if this event is associated with a goal
+      if (event.goal_id && goalIds.includes(event.goal_id)) {
+        // Part of goals
+        if (isCompleted) {
+          totalCompletedMinutes += durationMinutes;
+        } else {
+          totalScheduledMinutes += durationMinutes;
+        }
+      } else {
+        // Other plans (not associated with goals)
+        if (isCompleted) {
+          otherPlansCompletedMinutes += durationMinutes;
+        } else {
+          otherPlansScheduledMinutes += durationMinutes;
+        }
+      }
+    }
+  });
+
+  const totalCompleted = totalCompletedMinutes / 60;
+  const totalScheduled = totalScheduledMinutes / 60;
+  const otherPlansCompleted = otherPlansCompletedMinutes / 60;
+  const otherPlansScheduled = otherPlansScheduledMinutes / 60;
+  const totalSpent = totalCompleted + totalScheduled;
+  const totalUnscheduled = Math.max(0, totalAllocated - totalSpent);
+  const completionRate = totalAllocated > 0 ? Math.round((totalCompleted / totalAllocated) * 100) : 0;
+
+  return {
+    totalAllocated: Math.round(totalAllocated * 10) / 10,
+    totalCompleted: Math.round(totalCompleted * 10) / 10,
+    totalScheduled: Math.round(totalScheduled * 10) / 10,
+    totalUnscheduled: Math.round(totalUnscheduled * 10) / 10,
+    otherPlansCompleted: Math.round(otherPlansCompleted * 10) / 10,
+    otherPlansScheduled: Math.round(otherPlansScheduled * 10) / 10,
+    completionRate,
+  };
+}
+
+// Helper: Generate recurring event instances for a week
+function generateRecurringInstances(recurringEvent: any, weekStart: Date, weekEnd: Date) {
+  const instances = [];
+  const [hours, minutes] = recurringEvent.start_time.split(':').map(Number);
+
+  // Simple implementation: generate for each day if daily, or for specified days if weekly
+  if (recurringEvent.frequency === 'daily') {
+    const current = new Date(weekStart);
+    while (current <= weekEnd) {
+      const start = new Date(current);
+      start.setHours(hours, minutes, 0, 0);
+      const end = new Date(start);
+      end.setMinutes(end.getMinutes() + recurringEvent.duration);
+
+      instances.push({ start, end });
+      current.setDate(current.getDate() + 1);
+    }
+  } else if (recurringEvent.frequency === 'weekly' && recurringEvent.days_of_week) {
+    const current = new Date(weekStart);
+    while (current <= weekEnd) {
+      const dayOfWeek = current.getDay();
+      if (recurringEvent.days_of_week.includes(dayOfWeek)) {
+        const start = new Date(current);
+        start.setHours(hours, minutes, 0, 0);
+        const end = new Date(start);
+        end.setMinutes(end.getMinutes() + recurringEvent.duration);
+
+        instances.push({ start, end });
+      }
+      current.setDate(current.getDate() + 1);
+    }
+  }
+
+  return instances;
+}
+
+// Helper: Calculate time progress for a single goal
+function calculateGoalTimeProgress(
+  goalId: string,
+  timeAllocated: number,
+  recurringEvents: any[],
+  calendarEvents: any[],
+  weekStart: Date,
+  weekEnd: Date
+) {
+  const now = new Date();
+  let completedMinutes = 0;
+  let scheduledMinutes = 0;
+  const events: any[] = [];
+
+  // Process recurring events for this goal
+  recurringEvents
+    .filter(event => event.is_active && event.goal_id === goalId)
+    .forEach(recurringEvent => {
+      const instances = generateRecurringInstances(recurringEvent, weekStart, weekEnd);
+
+      instances.forEach(instance => {
+        const durationMinutes = recurringEvent.duration;
+        const isCompleted = isBefore(instance.end, now);
+
+        if (isCompleted) {
+          completedMinutes += durationMinutes;
+        } else {
+          scheduledMinutes += durationMinutes;
+        }
+
+        events.push({
+          title: recurringEvent.title,
+          start: instance.start,
+          end: instance.end,
+          isCompleted,
+          duration: durationMinutes,
+        });
+      });
+    });
+
+  // Process calendar events for this goal
+  calendarEvents
+    .filter(event => event.goal_id === goalId)
+    .forEach(event => {
+      const eventStart = new Date(event.start_time);
+      const eventEnd = new Date(event.end_time);
+
+      const isInWeek = isWithinInterval(eventStart, { start: weekStart, end: weekEnd }) ||
+                       isWithinInterval(eventEnd, { start: weekStart, end: weekEnd });
+
+      if (isInWeek) {
+        const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
+        const isCompleted = isBefore(eventEnd, now);
+
+        if (isCompleted) {
+          completedMinutes += durationMinutes;
+        } else {
+          scheduledMinutes += durationMinutes;
+        }
+
+        events.push({
+          title: event.title,
+          start: eventStart,
+          end: eventEnd,
+          isCompleted,
+          duration: durationMinutes,
+        });
+      }
+    });
+
+  const completed = completedMinutes / 60;
+  const scheduled = scheduledMinutes / 60;
+  const totalSpent = completed + scheduled;
+  const unscheduled = Math.max(0, timeAllocated - totalSpent);
+
+  return {
+    totalAllocated: timeAllocated,
+    completed: Math.round(completed * 10) / 10,
+    scheduled: Math.round(scheduled * 10) / 10,
+    unscheduled: Math.round(unscheduled * 10) / 10,
+    events: events.sort((a, b) => a.start.getTime() - b.start.getTime()),
+  };
+}
 
 // Helper: Get start and end of current week (Monday to Sunday)
 function getWeekBounds(): { startOfWeek: Date; endOfWeek: Date } {
@@ -115,7 +349,7 @@ export async function GET(request: NextRequest) {
     }
 
     const userId = userResult.data.id;
-    const { startOfWeek, endOfWeek } = getWeekBounds();
+    const { startOfWeek: weekStart, endOfWeek: weekEnd } = getWeekBounds();
 
     // 4. Fetch all data in parallel
     const [goalsResult, eventsResult, recurringResult, notesResult, reflectionsResult] = await Promise.all([
@@ -132,8 +366,8 @@ export async function GET(request: NextRequest) {
         .from('calendar_events')
         .select('*, goals(name, category, color)')
         .eq('user_id', userId)
-        .gte('start_time', startOfWeek.toISOString())
-        .lte('start_time', endOfWeek.toISOString())
+        .gte('start_time', weekStart.toISOString())
+        .lte('start_time', weekEnd.toISOString())
         .order('start_time', { ascending: true }),
 
       // Recurring events (active)
@@ -149,8 +383,8 @@ export async function GET(request: NextRequest) {
         .from('notes')
         .select('*')
         .eq('user_id', userId)
-        .gte('created_at', startOfWeek.toISOString())
-        .lte('created_at', endOfWeek.toISOString())
+        .gte('created_at', weekStart.toISOString())
+        .lte('created_at', weekEnd.toISOString())
         .order('created_at', { ascending: false }),
 
       // Reflections from this week
@@ -158,20 +392,76 @@ export async function GET(request: NextRequest) {
         .from('reflections')
         .select('*')
         .eq('user_id', userId)
-        .gte('reflection_date', startOfWeek.toISOString())
-        .lte('reflection_date', endOfWeek.toISOString())
+        .gte('reflection_date', weekStart.toISOString())
+        .lte('reflection_date', weekEnd.toISOString())
         .order('reflection_date', { ascending: false }),
     ]);
 
-    // 5. Format output as Markdown
+    // 5. Calculate weekly time summary
+    const summary = calculateWeeklyTimeSummary(
+      goalsResult.data || [],
+      recurringResult.data || [],
+      eventsResult.data || [],
+      weekStart,
+      weekEnd
+    );
+
+    // 6. Format output as Markdown
     let output = '';
 
     // Header
     output += '# 📊 Тижневий звіт Life Designer\n\n';
     output += '## 📋 Загальна інформація\n\n';
-    output += `- **Період**: ${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}\n`;
+    output += `- **Період**: ${formatDate(weekStart)} - ${formatDate(weekEnd)}\n`;
     output += `- **Користувач**: ${session.user.email}\n`;
     output += `- **Згенеровано**: ${formatDate(new Date())} о ${formatTime(new Date())}\n\n`;
+    output += '---\n\n';
+
+    // Weekly Time Calculator Section
+    output += '## ⏱️ Тижневий калькулятор\n\n';
+    output += '### Статистика часу на цілі\n\n';
+    output += `- **Заплановано на тиждень**: ${summary.totalAllocated} год\n`;
+    output += `- **Фактично виконано**: ${summary.totalCompleted} год\n`;
+    output += `- **Заброньовано (майбутні події)**: ${summary.totalScheduled} год\n`;
+    output += `- **Не заплановано**: ${summary.totalUnscheduled} год\n`;
+    output += `- **Відсоток виконання**: ${summary.completionRate}%\n\n`;
+
+    // Other plans (events without goals)
+    const totalOtherPlans = summary.otherPlansCompleted + summary.otherPlansScheduled;
+    if (totalOtherPlans > 0) {
+      output += '### Інші плани (не пов\'язані з цілями)\n\n';
+      output += `- **Всього**: ${Math.round(totalOtherPlans * 10) / 10} год\n`;
+      output += `- **Виконано**: ${summary.otherPlansCompleted} год\n`;
+      output += `- **Заплановано**: ${summary.otherPlansScheduled} год\n\n`;
+      output += '_Це події та завдання, які не пов\'язані з вашими основними цілями._\n\n';
+    }
+
+    // Status assessment
+    let statusEmoji = '🔴';
+    let statusText = 'Потрібно підтягнути';
+    if (summary.completionRate >= 100) {
+      statusEmoji = '🎉';
+      statusText = 'План виконано повністю!';
+    } else if (summary.completionRate >= 80) {
+      statusEmoji = '🟢';
+      statusText = 'Чудовий прогрес!';
+    } else if (summary.completionRate >= 50) {
+      statusEmoji = '🟡';
+      statusText = 'Добре йде';
+    }
+
+    output += `**Статус**: ${statusEmoji} ${statusText}\n\n`;
+
+    // Insights
+    if (summary.totalUnscheduled > 0) {
+      output += `> ⚠️ **Увага**: Залишилось ${summary.totalUnscheduled} год не заброньовано. `;
+      output += 'Рекомендується додати події в календар або створити повторювані події.\n\n';
+    }
+
+    if (summary.completionRate >= 100) {
+      output += '> ✅ **Вітаємо!** Ви виконали весь запланований обсяг роботи на цей тиждень!\n\n';
+    }
+
     output += '---\n\n';
 
     // Goals Section
@@ -179,22 +469,73 @@ export async function GET(request: NextRequest) {
 
     if (goalsResult.data && goalsResult.data.length > 0) {
       goalsResult.data.forEach((g: any, index: number) => {
+        // Calculate time progress for this goal
+        const goalProgress = calculateGoalTimeProgress(
+          g.id,
+          g.time_allocated || 0,
+          recurringResult.data || [],
+          eventsResult.data || [],
+          weekStart,
+          weekEnd
+        );
+
         output += `### ${index + 1}. ${g.name}\n\n`;
         output += `- **Категорія**: ${formatCategory(g.category)}\n`;
-        output += `- **Статус**: ${formatStatus(g.status)}\n`;
         output += `- **Пріоритет**: ${formatPriority(g.priority)}\n`;
-        output += `- **Прогрес**: ${g.progress_percentage}%\n`;
-        output += `- **Виділено часу**: ${g.time_allocated} год/тиждень\n`;
+
         if (g.description) {
           output += `- **Опис**: ${g.description}\n`;
         }
+
+        output += '\n**⏱️ Калькулятор часу:**\n\n';
+        output += `- Заплановано на тиждень: **${goalProgress.totalAllocated} год**\n`;
+        output += `- ✅ Фактично виконано: **${goalProgress.completed} год**\n`;
+        output += `- 📅 Заброньовано (майбутні): **${goalProgress.scheduled} год**\n`;
+        output += `- ⚠️ Не заплановано: **${goalProgress.unscheduled} год**\n`;
+
+        const goalCompletionRate = goalProgress.totalAllocated > 0
+          ? Math.round((goalProgress.completed / goalProgress.totalAllocated) * 100)
+          : 0;
+        output += `- 📊 Виконання плану: **${goalCompletionRate}%**\n\n`;
+
+        // Show events if any
+        if (goalProgress.events.length > 0) {
+          output += '**Події цього тижня:**\n\n';
+
+          const completedEvents = goalProgress.events.filter(e => e.isCompleted);
+          const scheduledEvents = goalProgress.events.filter(e => !e.isCompleted);
+
+          if (completedEvents.length > 0) {
+            output += '_Виконані:_\n';
+            completedEvents.forEach(event => {
+              const eventDate = formatDate(event.start);
+              const eventTime = `${formatTime(event.start)} - ${formatTime(event.end)}`;
+              const hours = Math.round(event.duration / 60 * 10) / 10;
+              output += `- ✅ ${event.title} (${eventDate}, ${eventTime}, ${hours} год)\n`;
+            });
+            output += '\n';
+          }
+
+          if (scheduledEvents.length > 0) {
+            output += '_Заплановані:_\n';
+            scheduledEvents.forEach(event => {
+              const eventDate = formatDate(event.start);
+              const eventTime = `${formatTime(event.start)} - ${formatTime(event.end)}`;
+              const hours = Math.round(event.duration / 60 * 10) / 10;
+              output += `- 📅 ${event.title} (${eventDate}, ${eventTime}, ${hours} год)\n`;
+            });
+            output += '\n';
+          }
+        } else {
+          output += '_Немає подій на цьому тижні для цієї цілі._\n\n';
+        }
+
         if (g.tags && g.tags.length > 0) {
-          output += `- **Теги**: ${g.tags.map((t: string) => `\`${t}\``).join(', ')}\n`;
+          output += `**Теги**: ${g.tags.map((t: string) => `\`${t}\``).join(', ')}\n\n`;
         }
         if (g.url) {
-          output += `- **Посилання**: [${g.url}](${g.url})\n`;
+          output += `**Посилання**: [${g.url}](${g.url})\n\n`;
         }
-        output += '\n';
       });
     } else {
       output += '_Немає активних цілей._\n\n';
@@ -315,7 +656,7 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         'Content-Type': 'text/markdown; charset=utf-8',
-        'Content-Disposition': `attachment; filename="life-designer-weekly-${startOfWeek.toISOString().split('T')[0]}.md"`,
+        'Content-Disposition': `attachment; filename="life-designer-weekly-${weekStart.toISOString().split('T')[0]}.md"`,
       },
     });
 

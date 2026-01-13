@@ -104,8 +104,8 @@ export default function GoalsPage() {
 
         {/* Visualizations Sidebar - Takes 1 column on large screens */}
         <div className="space-y-6">
-          <WeeklyTimeSummary goals={goals} />
           <TimeAllocationPie />
+          <WeeklyTimeSummary goals={goals} />
         </div>
       </div>
 
