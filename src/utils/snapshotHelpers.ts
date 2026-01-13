@@ -51,11 +51,12 @@ export function calculateWeeklyStats(
 
   const freeTime = Math.max(0, totalAvailableHours - totalAllocated);
 
+  // Ensure no NaN values
   return {
-    totalAllocatedHours: Math.round(totalAllocated * 100) / 100,
-    totalCompletedHours: Math.round(totalCompleted * 100) / 100,
-    totalScheduledHours: Math.round(totalScheduled * 100) / 100,
-    freeTimeHours: Math.round(freeTime * 100) / 100,
+    totalAllocatedHours: Number.isFinite(totalAllocated) ? Math.round(totalAllocated * 100) / 100 : 0,
+    totalCompletedHours: Number.isFinite(totalCompleted) ? Math.round(totalCompleted * 100) / 100 : 0,
+    totalScheduledHours: Number.isFinite(totalScheduled) ? Math.round(totalScheduled * 100) / 100 : 0,
+    freeTimeHours: Number.isFinite(freeTime) ? Math.round(freeTime * 100) / 100 : totalAvailableHours,
   };
 }
 

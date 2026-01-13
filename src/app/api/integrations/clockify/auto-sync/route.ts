@@ -5,7 +5,7 @@
  * Automatically synchronizes time entries for active users
  * - Triggered by external cron service (cron-job.org)
  * - Batch processes users to stay within Vercel timeout (10s on free tier)
- * - Only syncs users active in last 7 days
+ * - Prioritizes connections that haven't synced recently
  * - Incremental sync (new entries since last sync)
  */
 
@@ -19,7 +19,6 @@ export const runtime = 'nodejs';
 export const maxDuration = 10; // Vercel Free tier limit
 
 const BATCH_SIZE = 10; // Max users to sync per cron run
-const ACTIVE_DAYS_THRESHOLD = 7; // Only sync users active in last N days
 
 interface SyncStats {
   imported: number;
@@ -47,7 +46,6 @@ interface ClockifyConnection {
   users: {
     id: string;
     email: string;
-    last_sign_in_at: string | null;
   };
 }
 
@@ -81,10 +79,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. Get active Clockify connections
-    // Only users who have logged in within last 7 days
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - ACTIVE_DAYS_THRESHOLD);
-
+    // Prioritize connections that haven't synced recently (oldest first)
     const { data: connections, error: connectionsError } = await supabase
       .from('clockify_connections')
       .select(`
@@ -97,12 +92,10 @@ export async function POST(request: NextRequest) {
         last_successful_sync_at,
         users!inner (
           id,
-          email,
-          last_sign_in_at
+          email
         )
       `)
       .eq('is_active', true)
-      .gte('users.last_sign_in_at', cutoffDate.toISOString())
       .order('last_successful_sync_at', { ascending: true, nullsFirst: true })
       .limit(BATCH_SIZE) as { data: ClockifyConnection[] | null; error: any };
 

@@ -18,7 +18,7 @@ import {
   getWeekBoundaries,
 } from '@/utils/snapshotHelpers';
 import { Goal } from '@/types';
-import { RecurringEvent } from '@/types/recurring-events';
+import { RecurringEvent, parseRecurringEventFromDb, RecurringEventRow } from '@/types/recurring-events';
 import { CalendarEventWithGoal } from '@/types/calendar-events';
 
 export const runtime = 'nodejs';
@@ -105,7 +105,8 @@ export async function POST(request: NextRequest) {
         if (calendarEventsResult.error) throw calendarEventsResult.error;
 
         const goals: Goal[] = goalsResult.data || [];
-        const recurringEvents: RecurringEvent[] = recurringEventsResult.data || [];
+        const recurringEventsRaw: RecurringEventRow[] = recurringEventsResult.data || [];
+        const recurringEvents: RecurringEvent[] = recurringEventsRaw.map(parseRecurringEventFromDb);
         const calendarEvents: CalendarEventWithGoal[] = calendarEventsResult.data || [];
         const totalAvailableHours = settingsResult.data?.weekly_available_hours || 112;
 

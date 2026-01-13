@@ -11,7 +11,7 @@ import { authOptions } from '../../auth/[...nextauth]/route';
 import { getServerClient } from '@/lib/supabase/pool';
 import { generateSnapshotHash, getWeekBoundaries } from '@/utils/snapshotHelpers';
 import { Goal } from '@/types';
-import { RecurringEvent } from '@/types/recurring-events';
+import { RecurringEvent, parseRecurringEventFromDb, RecurringEventRow } from '@/types/recurring-events';
 
 export const runtime = 'nodejs';
 export const maxDuration = 10;
@@ -83,7 +83,8 @@ export async function GET(request: NextRequest) {
     if (recurringEventsResult.error) throw recurringEventsResult.error;
 
     const goals: Goal[] = goalsResult.data || [];
-    const recurringEvents: RecurringEvent[] = recurringEventsResult.data || [];
+    const recurringEventsRaw: RecurringEventRow[] = recurringEventsResult.data || [];
+    const recurringEvents: RecurringEvent[] = recurringEventsRaw.map(parseRecurringEventFromDb);
 
     // 8. Generate current hash
     const currentHash = generateSnapshotHash(goals, recurringEvents);
