@@ -15,6 +15,11 @@ export default function Terms() {
           You agree to use the service in accordance with all applicable laws.
         </p>
       </section>
+
+      <section className="mt-6">
+        <h2 className="text-2xl font-semibold mb-3">Contact</h2>
+        <p>Email: ukrainianmartyn@gmail.com</p>
+      </section>
     </div>
   );
 }

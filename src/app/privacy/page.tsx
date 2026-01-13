@@ -21,7 +21,7 @@ export default function Privacy() {
 
       <section className="mt-6">
         <h2 className="text-2xl font-semibold mb-3">Contact</h2>
-        <p>Email: your-email@example.com</p>
+        <p>Email: ukrainianmartyn@gmail.com</p>
       </section>
     </div>
   );
