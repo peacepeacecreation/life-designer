@@ -4,7 +4,7 @@ import { useState, FormEvent, useEffect } from 'react';
 import { Loader } from '@/components/ui/loader';
 import { useReflections } from '@/contexts/ReflectionsContext';
 import { Reflection, ReflectionType } from '@/types/reflections';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -129,6 +129,9 @@ export default function ReflectionForm({ isOpen, onClose, reflectionToEdit }: Re
           <DialogTitle>
             {isEditMode ? 'Редагувати роздум' : 'Новий роздум'}
           </DialogTitle>
+          <DialogDescription>
+            {isEditMode ? 'Оновіть ваш роздум' : 'Додайте новий роздум для аналізу та планування'}
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">

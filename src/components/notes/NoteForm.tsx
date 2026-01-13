@@ -4,7 +4,7 @@ import { useState, FormEvent, useEffect } from 'react';
 import { Loader } from '@/components/ui/loader';
 import { useNotes } from '@/contexts/NotesContext';
 import { Note, NoteType } from '@/types/notes';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -113,6 +113,9 @@ export default function NoteForm({ isOpen, onClose, noteToEdit }: NoteFormProps)
           <DialogTitle>
             {isEditMode ? 'Редагувати нотатку' : 'Нова нотатка'}
           </DialogTitle>
+          <DialogDescription>
+            {isEditMode ? 'Оновіть вашу нотатку' : 'Створіть нову нотатку для збереження думок'}
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">

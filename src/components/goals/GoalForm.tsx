@@ -5,7 +5,7 @@ import { Loader } from '@/components/ui/loader';
 import { useGoals } from '@/contexts/GoalsContext';
 import { Goal, GoalCategory, GoalPriority, GoalStatus } from '@/types';
 import { categoryMeta, priorityLabels, statusLabels, getCategoryMeta } from '@/lib/categoryConfig';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -240,6 +240,9 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
           <DialogTitle className="text-black dark:text-white">
             {isEditMode ? 'Редагувати ціль' : 'Створити нову ціль'}
           </DialogTitle>
+          <DialogDescription>
+            {isEditMode ? 'Оновіть інформацію про вашу ціль' : 'Додайте нову ціль до свого плану життя'}
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="general" className="w-full">
