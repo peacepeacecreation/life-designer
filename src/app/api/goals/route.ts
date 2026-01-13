@@ -187,6 +187,7 @@ export async function POST(request: NextRequest) {
       iconUrl,
       url,
       color,
+      isOngoing,
     } = body;
 
     // 3. Validate required fields (allow empty strings for description)
@@ -196,8 +197,9 @@ export async function POST(request: NextRequest) {
     if (!category) missingFields.push('category');
     if (!priority) missingFields.push('priority');
     if (!status) missingFields.push('status');
-    if (!startDate) missingFields.push('startDate');
-    if (!targetEndDate) missingFields.push('targetEndDate');
+    // Only require dates for non-ongoing goals
+    if (!isOngoing && !startDate) missingFields.push('startDate');
+    if (!isOngoing && !targetEndDate) missingFields.push('targetEndDate');
 
     if (missingFields.length > 0) {
       console.error('❌ Missing required fields:', missingFields);
