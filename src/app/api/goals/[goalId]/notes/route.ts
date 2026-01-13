@@ -46,7 +46,7 @@ export async function GET(
     }
 
     // Transform to camelCase
-    const transformedNotes: GoalNote[] = notes.map((note) => ({
+    const transformedNotes: GoalNote[] = notes.map((note: any) => ({
       id: note.id,
       goalId: note.goal_id,
       userId: note.user_id,
