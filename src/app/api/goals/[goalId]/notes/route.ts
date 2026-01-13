@@ -15,7 +15,11 @@ export async function GET(
 ) {
   try {
     const { goalId } = await context.params;
-    const supabase = await getServerClient();
+    const supabase = getServerClient();
+
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
+    }
 
     // Get authenticated user
     const {
@@ -66,7 +70,11 @@ export async function POST(
 ) {
   try {
     const { goalId } = await context.params;
-    const supabase = await getServerClient();
+    const supabase = getServerClient();
+
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
+    }
 
     // Get authenticated user
     const {
