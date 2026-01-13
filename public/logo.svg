@@ -1,68 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" class="h-8 w-8 text-black dark:text-white"><style>
-          @keyframes shrinkToCenter {
-            0% {
-              transform: scale(1);
-              opacity: 1;
-              stroke-width: 3;
-            }
-            10% {
-              opacity: 1;
-            }
-            85% {
-              opacity: 1;
-              stroke-width: 3;
-            }
-            95% {
-              transform: scale(0.05);
-              opacity: 1;
-              stroke-width: 12;
-            }
-            100% {
-              transform: scale(0);
-              opacity: 1;
-              stroke-width: 12;
-            }
-          }
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- White circular background -->
+  <circle cx="50" cy="50" r="50" fill="white"/>
 
-          @keyframes expandFromCenter {
-            0% {
-              opacity: 1;
-            }
-            10% {
-              opacity: 1;
-            }
-            90% {
-              opacity: 1;
-            }
-            100% {
-              transform: scale(1);
-              opacity: 1;
-            }
-          }
-
-          .circle1 {
-            animation: shrinkToCenter 4s linear infinite;
-            animation-delay: -3.2s;
-            transform-origin: center;
-          }
-          .circle2 {
-            animation: shrinkToCenter 4s linear infinite;
-            animation-delay: -2.4s;
-            transform-origin: center;
-          }
-          .circle3 {
-            animation: shrinkToCenter 4s linear infinite;
-            animation-delay: -1.6s;
-            transform-origin: center;
-          }
-          .circle4 {
-            animation: shrinkToCenter 4s linear infinite;
-            animation-delay: -0.8s;
-            transform-origin: center;
-          }
-          .circle5 {
-            animation: shrinkToCenter 4s linear infinite;
-            animation-delay: 0s;
-            transform-origin: center;
-          }
-        </style><circle class="circle1" cx="50" cy="50" r="46" stroke="currentColor" stroke-width="3" fill="none"></circle><circle class="circle2" cx="50" cy="50" r="46" stroke="currentColor" stroke-width="3" fill="none"></circle><circle class="circle3" cx="50" cy="50" r="46" stroke="currentColor" stroke-width="3" fill="none"></circle><circle class="circle4" cx="50" cy="50" r="46" stroke="currentColor" stroke-width="3" fill="none"></circle><circle class="circle5" cx="50" cy="50" r="46" stroke="currentColor" stroke-width="3" fill="none"></circle></svg>
+  <!-- Logo circles (scaled from logo-full.png) -->
+  <circle cx="50" cy="50" r="43" stroke="black" stroke-width="2.5" fill="none"/>
+  <circle cx="50" cy="50" r="35" stroke="black" stroke-width="2.5" fill="none"/>
+  <circle cx="50" cy="50" r="27" stroke="black" stroke-width="2.5" fill="none"/>
+  <circle cx="50" cy="50" r="19" stroke="black" stroke-width="2.5" fill="none"/>
+  <circle cx="50" cy="50" r="11" stroke="black" stroke-width="2.5" fill="none"/>
+  <circle cx="50" cy="50" r="5" stroke="black" stroke-width="2.5" fill="none"/>
+</svg>
