@@ -7,6 +7,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/hooks/use-toast';
 import {
   Dialog,
   DialogContent,
@@ -107,39 +108,39 @@ export function EditRecurringEventDialog({
 
     // Валідація
     if (!title.trim()) {
-      alert('Будь ласка, введіть назву події');
+      toast({ variant: "destructive", title: "Помилка", description: "Будь ласка, введіть назву події" });
       return;
     }
 
     if (!startTime.match(/^\d{2}:\d{2}$/)) {
-      alert('Будь ласка, введіть час у форматі ГГ:ХХ (наприклад, 09:00)');
+      toast({ variant: "destructive", title: "Помилка", description: "Будь ласка, введіть час у форматі ГГ:ХХ (наприклад, 09:00)" });
       return;
     }
 
     if (!duration || duration.trim() === '') {
-      alert('Будь ласка, введіть тривалість у хвилинах');
+      toast({ variant: "destructive", title: "Помилка", description: "Будь ласка, введіть тривалість у хвилинах" });
       return;
     }
 
     const durationNum = parseInt(duration);
     if (isNaN(durationNum) || durationNum <= 0) {
-      alert('Будь ласка, введіть коректну тривалість у хвилинах');
+      toast({ variant: "destructive", title: "Помилка", description: "Будь ласка, введіть коректну тривалість у хвилинах" });
       return;
     }
 
     if (!interval || interval.trim() === '') {
-      alert('Будь ласка, введіть інтервал');
+      toast({ variant: "destructive", title: "Помилка", description: "Будь ласка, введіть інтервал" });
       return;
     }
 
     const intervalNum = parseInt(interval);
     if (isNaN(intervalNum) || intervalNum <= 0) {
-      alert('Будь ласка, введіть коректний інтервал');
+      toast({ variant: "destructive", title: "Помилка", description: "Будь ласка, введіть коректний інтервал" });
       return;
     }
 
     if (frequency === RecurrenceFrequency.WEEKLY && selectedDays.length === 0) {
-      alert('Будь ласка, оберіть хоча б один день тижня');
+      toast({ variant: "destructive", title: "Помилка", description: "Будь ласка, оберіть хоча б один день тижня" });
       return;
     }
 
@@ -163,7 +164,7 @@ export function EditRecurringEventDialog({
       onOpenChange(false);
     } catch (error) {
       console.error('Error updating recurring event:', error);
-      alert('Помилка при оновленні події. Спробуйте ще раз.');
+      toast({ variant: "destructive", title: "Помилка", description: "Помилка при оновленні події. Спробуйте ще раз." });
     } finally {
       setIsSubmitting(false);
     }

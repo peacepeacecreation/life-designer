@@ -8,6 +8,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "@/hooks/use-toast";
+import { useConfirm } from "@/hooks/use-confirm";
 import {
   Dialog,
   DialogContent,
@@ -69,6 +71,7 @@ export function AddCalendarEventDialog({
   initialGoalId,
 }: AddCalendarEventDialogProps) {
   const { goals } = useGoals();
+  const confirm = useConfirm();
   const isEditing = !!event;
 
   // Form state
@@ -177,17 +180,17 @@ export function AddCalendarEventDialog({
   const handleSave = async () => {
     // Validation
     if (!title.trim()) {
-      alert("Будь ласка, введіть назву події");
+      toast({ variant: "destructive", title: "Помилка", description: "Будь ласка, введіть назву події" });
       return;
     }
 
     if (!startDate || !endDate) {
-      alert("Будь ласка, оберіть дату початку та кінця");
+      toast({ variant: "destructive", title: "Помилка", description: "Будь ласка, оберіть дату початку та кінця" });
       return;
     }
 
     if (!allDay && (!startTime || !endTime)) {
-      alert("Будь ласка, оберіть час початку та кінця");
+      toast({ variant: "destructive", title: "Помилка", description: "Будь ласка, оберіть час початку та кінця" });
       return;
     }
 
@@ -206,7 +209,7 @@ export function AddCalendarEventDialog({
 
     // Validate time range
     if (end <= start) {
-      alert("Час кінця має бути після часу початку");
+      toast({ variant: "destructive", title: "Помилка", description: "Час кінця має бути після часу початку" });
       return;
     }
 
@@ -228,7 +231,7 @@ export function AddCalendarEventDialog({
       onOpenChange(false);
     } catch (error) {
       console.error("Error saving event:", error);
-      alert("Помилка при збереженні події");
+      toast({ variant: "destructive", title: "Помилка", description: "Помилка при збереженні події" });
     } finally {
       setSaving(false);
     }
@@ -237,7 +240,11 @@ export function AddCalendarEventDialog({
   const handleDelete = async () => {
     if (!isEditing || !event || !onDelete) return;
 
-    const confirmed = confirm("Ви впевнені, що хочете видалити цю подію?");
+    const confirmed = await confirm({
+      title: "Видалити подію?",
+      description: "Ви впевнені, що хочете видалити цю подію?",
+      variant: "destructive"
+    });
     if (!confirmed) return;
 
     try {
@@ -247,7 +254,7 @@ export function AddCalendarEventDialog({
       onOpenChange(false);
     } catch (error) {
       console.error("Error deleting event:", error);
-      alert("Помилка при видаленні події");
+      toast({ variant: "destructive", title: "Помилка", description: "Помилка при видаленні події" });
     } finally {
       setDeleting(false);
     }

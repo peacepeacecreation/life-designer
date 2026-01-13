@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/hooks/use-toast';
+import { useConfirm } from '@/hooks/use-confirm';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useRecurringEvents } from '@/contexts/RecurringEventsContext';
@@ -23,6 +25,7 @@ export default function RecurringEventsPanel() {
     toggleRecurringEvent,
   } = useRecurringEvents();
   const { goals } = useGoals();
+  const confirm = useConfirm();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [eventToEdit, setEventToEdit] = useState<RecurringEvent | null>(null);
@@ -41,7 +44,7 @@ export default function RecurringEventsPanel() {
       }
     } catch (error) {
       console.error('Error loading example events:', error);
-      alert('Помилка при завантаженні подій. Спробуйте ще раз.');
+      toast({ variant: "destructive", title: "Помилка", description: "Помилка при завантаженні подій. Спробуйте ще раз." });
     }
   };
 
@@ -160,7 +163,7 @@ export default function RecurringEventsPanel() {
                         await toggleRecurringEvent(event.id);
                       } catch (error) {
                         console.error('Error toggling event:', error);
-                        alert('Помилка при зміні статусу події');
+                        toast({ variant: "destructive", title: "Помилка", description: "Помилка при зміні статусу події" });
                       }
                     }}
                     variant="ghost"
@@ -183,12 +186,17 @@ export default function RecurringEventsPanel() {
                   </Button>
                   <Button
                     onClick={async () => {
-                      if (confirm('Ви впевнені, що хочете видалити цю подію?')) {
+                      const confirmed = await confirm({
+                        title: "Видалити подію?",
+                        description: "Ви впевнені, що хочете видалити цю подію?",
+                        variant: "destructive"
+                      });
+                      if (confirmed) {
                         try {
                           await deleteRecurringEvent(event.id);
                         } catch (error) {
                           console.error('Error deleting event:', error);
-                          alert('Помилка при видаленні події');
+                          toast({ variant: "destructive", title: "Помилка", description: "Помилка при видаленні події" });
                         }
                       }
                     }}

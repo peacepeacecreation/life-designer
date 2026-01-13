@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -54,25 +55,25 @@ export default function TimeManagerTab() {
 
   const handleSave = () => {
     if (startHour >= endHour) {
-      alert('Початкова година має бути меншою за кінцеву');
+      toast({ variant: "destructive", title: "Помилка", description: "Початкова година має бути меншою за кінцеву" });
       return;
     }
 
     // Валідація числових полів
     if (!focusSession || focusSession < 15 || focusSession > 120) {
-      alert('Фокус-сесія має бути від 15 до 120 хвилин');
+      toast({ variant: "destructive", title: "Помилка", description: "Фокус-сесія має бути від 15 до 120 хвилин" });
       return;
     }
     if (!shortBreak || shortBreak < 5 || shortBreak > 30) {
-      alert('Коротка перерва має бути від 5 до 30 хвилин');
+      toast({ variant: "destructive", title: "Помилка", description: "Коротка перерва має бути від 5 до 30 хвилин" });
       return;
     }
     if (!longBreak || longBreak < 15 || longBreak > 60) {
-      alert('Довга перерва має бути від 15 до 60 хвилин');
+      toast({ variant: "destructive", title: "Помилка", description: "Довга перерва має бути від 15 до 60 хвилин" });
       return;
     }
     if (!productiveHours || productiveHours < 1 || productiveHours > 12) {
-      alert('Денна ціль має бути від 1 до 12 годин');
+      toast({ variant: "destructive", title: "Помилка", description: "Денна ціль має бути від 1 до 12 годин" });
       return;
     }
 

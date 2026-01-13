@@ -7,6 +7,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -75,7 +76,7 @@ export default function GoalNotes({ goalId }: GoalNotesProps) {
       setNewNoteContent('');
     } catch (error) {
       console.error('Error creating note:', error);
-      alert('Помилка при створенні нотатки');
+      toast({ variant: "destructive", title: "Помилка", description: 'Помилка при створенні нотатки' });
     } finally {
       setSaving(false);
     }
@@ -120,7 +121,7 @@ export default function GoalNotes({ goalId }: GoalNotesProps) {
       setEditingContent('');
     } catch (error) {
       console.error('Error updating note:', error);
-      alert('Помилка при оновленні нотатки');
+      toast({ variant: "destructive", title: "Помилка", description: 'Помилка при оновленні нотатки' });
     } finally {
       setSaving(false);
     }
@@ -144,7 +145,7 @@ export default function GoalNotes({ goalId }: GoalNotesProps) {
       setNotes(notes.filter((note) => note.id !== noteId));
     } catch (error) {
       console.error('Error deleting note:', error);
-      alert('Помилка при видаленні нотатки');
+      toast({ variant: "destructive", title: "Помилка", description: 'Помилка при видаленні нотатки' });
     }
   };
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { toast } from '@/hooks/use-toast';
 import { Calendar as BigCalendar, dateFnsLocalizer, View } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
@@ -102,7 +103,7 @@ export default function GoalWeekCalendar({ goal }: GoalWeekCalendarProps) {
         if (event.htmlLink && confirm(`${message}\n\nВідкрити в Google Calendar?`)) {
           window.open(event.htmlLink, '_blank');
         } else {
-          alert(message);
+          toast({ variant: "destructive", title: "Помилка", description: message });
         }
       }
     },
@@ -149,7 +150,7 @@ export default function GoalWeekCalendar({ goal }: GoalWeekCalendarProps) {
   const handleEventDrop = useCallback(
     async ({ event, start, end }: { event: any; start: string | Date; end: string | Date }) => {
       if (!event.isFromDb) {
-        alert('Ця подія не може бути переміщена. Тільки власні події можна редагувати.');
+        toast({ variant: "destructive", title: "Помилка", description: 'Ця подія не може бути переміщена. Тільки власні події можна редагувати.' });
         return;
       }
 
@@ -171,7 +172,7 @@ export default function GoalWeekCalendar({ goal }: GoalWeekCalendarProps) {
         await updateEvent(event.id, eventData);
       } catch (error) {
         console.error('Error updating event:', error);
-        alert('Помилка при переміщенні події');
+        toast({ variant: "destructive", title: "Помилка", description: 'Помилка при переміщенні події' });
       }
     },
     [updateEvent, goal.id]
@@ -181,7 +182,7 @@ export default function GoalWeekCalendar({ goal }: GoalWeekCalendarProps) {
   const handleEventResize = useCallback(
     async ({ event, start, end }: { event: any; start: string | Date; end: string | Date }) => {
       if (!event.isFromDb) {
-        alert('Ця подія не може бути змінена. Тільки власні події можна редагувати.');
+        toast({ variant: "destructive", title: "Помилка", description: 'Ця подія не може бути змінена. Тільки власні події можна редагувати.' });
         return;
       }
 
@@ -203,7 +204,7 @@ export default function GoalWeekCalendar({ goal }: GoalWeekCalendarProps) {
         await updateEvent(event.id, eventData);
       } catch (error) {
         console.error('Error resizing event:', error);
-        alert('Помилка при зміні розміру події');
+        toast({ variant: "destructive", title: "Помилка", description: 'Помилка при зміні розміру події' });
       }
     },
     [updateEvent, goal.id]

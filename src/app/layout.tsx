@@ -11,6 +11,7 @@ import { NotesProvider } from "@/contexts/NotesContext";
 import { ReflectionsProvider } from "@/contexts/ReflectionsContext";
 import SessionProvider from "@/components/SessionProvider";
 import Header from "@/components/Header";
+import { ConfirmProvider } from "@/hooks/use-confirm";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -63,9 +64,11 @@ export default function RootLayout({
                   <ReflectionsProvider>
                     <RecurringEventsProvider>
                       <TimeCalculatorProvider>
-                        <Toaster />
-                        <Header />
-                        {children}
+                        <ConfirmProvider>
+                          <Toaster />
+                          <Header />
+                          {children}
+                        </ConfirmProvider>
                       </TimeCalculatorProvider>
                     </RecurringEventsProvider>
                   </ReflectionsProvider>

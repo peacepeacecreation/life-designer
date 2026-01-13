@@ -126,7 +126,7 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
       setFormData((prev) => ({ ...prev, iconUrl: data.iconUrl }));
     } catch (error) {
       console.error('Error uploading icon:', error);
-      alert('Не вдалося завантажити іконку. Спробуйте ще раз.');
+      toast({ variant: "destructive", title: "Помилка", description: 'Не вдалося завантажити іконку. Спробуйте ще раз.' });
     } finally {
       setUploadingIcon(false);
     }
@@ -154,7 +154,7 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
       setFormData((prev) => ({ ...prev, iconUrl: data.iconUrl }));
     } catch (error) {
       console.error('Error fetching logo:', error);
-      alert('Не вдалося витягнути логотип. Спробуйте завантажити іконку вручну.');
+      toast({ variant: "destructive", title: "Помилка", description: 'Не вдалося витягнути логотип. Спробуйте завантажити іконку вручну.' });
     } finally {
       setFetchingLogo(false);
     }
@@ -524,7 +524,7 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
                     .then((data) => setFormData({ ...formData, iconUrl: data.iconUrl }))
                     .catch((error) => {
                       console.error('Error uploading icon:', error);
-                      alert('Не вдалося завантажити іконку');
+                      toast({ variant: "destructive", title: "Помилка", description: 'Не вдалося завантажити іконку' });
                     })
                     .finally(() => setUploadingIcon(false));
                 }}

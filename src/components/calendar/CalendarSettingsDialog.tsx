@@ -7,6 +7,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/hooks/use-toast';
 import {
   Dialog,
   DialogContent,
@@ -53,7 +54,7 @@ export function CalendarSettingsDialog({
 
   const handleSave = () => {
     if (startHour >= endHour) {
-      alert('Початкова година має бути меншою за кінцеву');
+      toast({ variant: "destructive", title: "Помилка", description: 'Початкова година має бути меншою за кінцеву' });
       return;
     }
 
