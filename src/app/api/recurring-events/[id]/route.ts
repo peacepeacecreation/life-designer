@@ -34,7 +34,7 @@ export async function GET(
 
     const userId = userData.id;
 
-    const { data: recurringEvent, error } = await supabase
+    const { data: recurringEvent, error } = await (supabase as any)
       .from('recurring_events')
       .select('*')
       .eq('id', id)
@@ -108,7 +108,7 @@ export async function PATCH(
     if (body.goal_id !== undefined) updateData.goal_id = body.goal_id;
     if (body.is_active !== undefined) updateData.is_active = body.is_active;
 
-    const { data: recurringEvent, error } = await supabase
+    const { data: recurringEvent, error } = await (supabase as any)
       .from('recurring_events')
       .update(updateData)
       .eq('id', id)
@@ -166,7 +166,7 @@ export async function DELETE(
 
     const userId = userData.id;
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('recurring_events')
       .delete()
       .eq('id', id)
