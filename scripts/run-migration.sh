@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PROJECT_REF="gxzzkcthcdtmkdwfdrhv"
-SQL_FILE="supabase/migrations/009_add_calendar_tokens.sql"
+SQL_FILE="supabase/migrations/009_make_goal_dates_nullable.sql"
 
 echo "🚀 Supabase Database Migration Script"
 echo "════════════════════════════════════════════════════════════"
@@ -59,10 +59,10 @@ echo ""
 if [ "$HTTP_CODE" = "201" ] || [ "$HTTP_CODE" = "200" ]; then
   echo "✅ Migration executed successfully!"
   echo ""
-  echo "Added display_order field to goals table:"
-  echo "  • display_order column added (NOT NULL)"
-  echo "  • Initial order set based on creation date"
-  echo "  • Index created for faster sorting"
+  echo "Made goal dates nullable:"
+  echo "  • start_date is now nullable"
+  echo "  • target_end_date is now nullable"
+  echo "  • Ongoing goals can now be created without dates"
   echo ""
 else
   echo "❌ Migration failed"

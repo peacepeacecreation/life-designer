@@ -116,9 +116,19 @@ export function EditRecurringEventDialog({
       return;
     }
 
+    if (!duration || duration.trim() === '') {
+      alert('Будь ласка, введіть тривалість у хвилинах');
+      return;
+    }
+
     const durationNum = parseInt(duration);
     if (isNaN(durationNum) || durationNum <= 0) {
       alert('Будь ласка, введіть коректну тривалість у хвилинах');
+      return;
+    }
+
+    if (!interval || interval.trim() === '') {
+      alert('Будь ласка, введіть інтервал');
       return;
     }
 

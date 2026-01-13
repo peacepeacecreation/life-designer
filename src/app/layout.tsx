@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "@/components/ui/toaster";
 import { GlobalSettingsProvider } from "@/contexts/GlobalSettingsContext";
 import { GoalsProvider } from "@/contexts/GoalsContext";
 import { CalendarEventsProvider } from "@/contexts/CalendarEventsContext";
@@ -62,6 +63,7 @@ export default function RootLayout({
                   <ReflectionsProvider>
                     <RecurringEventsProvider>
                       <TimeCalculatorProvider>
+                        <Toaster />
                         <Header />
                         {children}
                       </TimeCalculatorProvider>

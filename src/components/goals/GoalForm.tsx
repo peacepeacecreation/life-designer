@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect, useRef } from 'react';
+import { toast } from '@/hooks/use-toast';
 import { Loader } from '@/components/ui/loader';
 import { useGoals } from '@/contexts/GoalsContext';
 import { Goal, GoalCategory, GoalPriority, GoalStatus } from '@/types';
@@ -161,6 +162,16 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    // Валідація обов'язкових полів
+    if (!formData.timeAllocated || formData.timeAllocated <= 0) {
+      toast({
+        variant: "destructive",
+        title: "Помилка валідації",
+        description: "Будь ласка, вкажіть кількість годин на тиждень (мінімум 1)",
+      });
+      return;
+    }
 
     // Якщо це постійна ціль, статус автоматично ongoing
     const goalStatus = formData.isOngoing ? GoalStatus.ONGOING : formData.status;
@@ -351,8 +362,7 @@ export default function GoalForm({ isOpen, onClose, goalToEdit, onGoalUpdated }:
                 id="timeAllocated"
                 type="text"
                 inputMode="numeric"
-                required
-                value={formData.timeAllocated}
+                value={formData.timeAllocated || ''}
                 onChange={(e) => {
                   const val = e.target.value;
                   if (val === '' || /^\d+$/.test(val)) {
