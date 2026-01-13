@@ -23,9 +23,9 @@ export async function GET(request: NextRequest) {
       .eq('email', session.user.email)
       .single();
 
+    // If user doesn't exist yet, return empty array (new user case)
     if (userError || !userData) {
-      console.error('User lookup error:', userError);
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ recurringEvents: [] });
     }
 
     const userId = userData.id;

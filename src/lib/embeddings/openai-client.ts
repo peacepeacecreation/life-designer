@@ -40,7 +40,8 @@ export class OpenAIEmbeddingsClient {
 
   constructor(apiKey?: string, options?: { useOpenRouter?: boolean; model?: string }) {
     // Support both OpenAI and OpenRouter API keys
-    this.apiKey = apiKey || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || '';
+    // Trim to remove any whitespace or newlines from environment variables
+    this.apiKey = (apiKey || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || '').trim();
     this.useOpenRouter = options?.useOpenRouter ?? !!process.env.OPENROUTER_API_KEY;
 
     // Set base URL based on provider
