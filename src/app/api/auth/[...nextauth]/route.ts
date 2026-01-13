@@ -50,11 +50,11 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
       authorization: {
         params: {
+          // Only basic profile scopes for initial authentication
+          // Calendar access will be requested separately when needed
           scope: [
             'https://www.googleapis.com/auth/userinfo.email',
             'https://www.googleapis.com/auth/userinfo.profile',
-            'https://www.googleapis.com/auth/calendar.readonly',
-            'https://www.googleapis.com/auth/calendar.events',
           ].join(' '),
           prompt: 'consent',
           access_type: 'offline',
