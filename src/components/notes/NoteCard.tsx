@@ -2,6 +2,7 @@
 
 import { Note, NoteType } from '@/types/notes';
 import { useNotes } from '@/contexts/NotesContext';
+import { useConfirm } from '@/hooks/use-confirm';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -48,11 +49,18 @@ const noteTypeColors: Record<NoteType, string> = {
 
 export default function NoteCard({ note, onEdit }: NoteCardProps) {
   const { deleteNote } = useNotes();
+  const confirm = useConfirm();
   const NoteIcon = noteTypeIcons[note.noteType];
   const typeColor = noteTypeColors[note.noteType];
 
   const handleDelete = async () => {
-    if (confirm(`Ви впевнені, що хочете видалити нотатку "${note.title}"?`)) {
+    const confirmed = await confirm({
+      title: 'Видалити нотатку?',
+      description: `Ви впевнені, що хочете видалити нотатку "${note.title}"?`,
+      variant: 'destructive',
+    });
+
+    if (confirmed) {
       await deleteNote(note.id);
     }
   };

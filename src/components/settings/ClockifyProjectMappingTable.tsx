@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useConfirm } from '@/hooks/use-confirm';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -58,6 +59,7 @@ interface ClockifyProjectMappingTableProps {
 
 export default function ClockifyProjectMappingTable({ connectionId }: ClockifyProjectMappingTableProps) {
   const { goals } = useGoals();
+  const confirm = useConfirm();
 
   // State
   const [mappings, setMappings] = useState<ProjectMapping[]>([]);
@@ -152,7 +154,13 @@ export default function ClockifyProjectMappingTable({ connectionId }: ClockifyPr
   };
 
   const handleDeleteMapping = async (mappingId: string) => {
-    if (!confirm('Ви впевнені, що хочете видалити цей зв\'язок?')) {
+    const confirmed = await confirm({
+      title: 'Видалити зв\'язок?',
+      description: 'Ви впевнені, що хочете видалити цей зв\'язок?',
+      variant: 'destructive',
+    });
+
+    if (!confirmed) {
       return;
     }
 

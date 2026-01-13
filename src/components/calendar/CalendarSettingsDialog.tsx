@@ -8,6 +8,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
+import { useConfirm } from '@/hooks/use-confirm';
 import {
   Dialog,
   DialogContent,
@@ -43,6 +44,7 @@ export function CalendarSettingsDialog({
   onSave,
   onReset,
 }: CalendarSettingsDialogProps) {
+  const confirm = useConfirm();
   const [startHour, setStartHour] = useState(settings.startHour);
   const [endHour, setEndHour] = useState(settings.endHour);
 
@@ -65,8 +67,14 @@ export function CalendarSettingsDialog({
     onOpenChange(false);
   };
 
-  const handleReset = () => {
-    if (confirm('Скинути налаштування до значень за замовчуванням?')) {
+  const handleReset = async () => {
+    const confirmed = await confirm({
+      title: 'Скинути налаштування?',
+      description: 'Ви впевнені, що хочете скинути налаштування до значень за замовчуванням?',
+      variant: 'default',
+    });
+
+    if (confirmed) {
       onReset();
       setStartHour(0);
       setEndHour(23);

@@ -2,6 +2,7 @@
 
 import { Reflection, ReflectionType } from '@/types/reflections';
 import { useReflections } from '@/contexts/ReflectionsContext';
+import { useConfirm } from '@/hooks/use-confirm';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -66,11 +67,18 @@ const getEnergyColor = (level: number): string => {
 
 export default function ReflectionCard({ reflection, onEdit }: ReflectionCardProps) {
   const { deleteReflection } = useReflections();
+  const confirm = useConfirm();
   const ReflectionIcon = reflectionTypeIcons[reflection.reflectionType];
   const typeColor = reflectionTypeColors[reflection.reflectionType];
 
   const handleDelete = async () => {
-    if (confirm(`Ви впевнені, що хочете видалити роздум "${reflection.title}"?`)) {
+    const confirmed = await confirm({
+      title: 'Видалити роздум?',
+      description: `Ви впевнені, що хочете видалити роздум "${reflection.title}"?`,
+      variant: 'destructive',
+    });
+
+    if (confirmed) {
       await deleteReflection(reflection.id);
     }
   };

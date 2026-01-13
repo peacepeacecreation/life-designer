@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Goal, GoalCategory, GoalStatus } from '@/types';
 import { getCategoryMeta, priorityLabels, statusLabels } from '@/lib/categoryConfig';
+import { useConfirm } from '@/hooks/use-confirm';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -29,6 +30,7 @@ const categoryIcons: Record<GoalCategory, React.ElementType> = {
 export default function GoalDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const confirm = useConfirm();
   const goalId = params.goalId as string;
   const { goals, updateGoal: updateGoalInContext, deleteGoal, loading } = useGoals();
 
@@ -65,7 +67,15 @@ export default function GoalDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (goal && confirm(`Ви впевнені, що хочете видалити ціль "${goal.name}"?`)) {
+    if (!goal) return;
+
+    const confirmed = await confirm({
+      title: 'Видалити ціль?',
+      description: `Ви впевнені, що хочете видалити ціль "${goal.name}"?`,
+      variant: 'destructive',
+    });
+
+    if (confirmed) {
       await deleteGoal(goal.id);
       router.push('/goals');
     }

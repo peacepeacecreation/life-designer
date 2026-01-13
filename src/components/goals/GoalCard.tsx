@@ -3,6 +3,7 @@
 import { Goal, GoalCategory } from '@/types';
 import { getCategoryMeta, priorityLabels, statusLabels } from '@/lib/categoryConfig';
 import { useGoals } from '@/contexts/GoalsContext';
+import { useConfirm } from '@/hooks/use-confirm';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -27,6 +28,7 @@ const categoryIcons: Record<GoalCategory, React.ElementType> = {
 
 export default function GoalCard({ goal }: GoalCardProps) {
   const { deleteGoal } = useGoals();
+  const confirm = useConfirm();
   const categoryMeta = getCategoryMeta(goal.category);
   const goalColor = goal.color || categoryMeta.color;
 
@@ -67,8 +69,14 @@ export default function GoalCard({ goal }: GoalCardProps) {
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const handleDelete = () => {
-    if (confirm(`Ви впевнені, що хочете видалити ціль "${goal.name}"?`)) {
+  const handleDelete = async () => {
+    const confirmed = await confirm({
+      title: 'Видалити ціль?',
+      description: `Ви впевнені, що хочете видалити ціль "${goal.name}"?`,
+      variant: 'destructive',
+    });
+
+    if (confirmed) {
       deleteGoal(goal.id);
     }
   };

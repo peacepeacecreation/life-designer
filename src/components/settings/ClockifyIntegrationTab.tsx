@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useConfirm } from '@/hooks/use-confirm';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -46,6 +47,8 @@ interface ClockifyConnection {
 }
 
 export default function ClockifyIntegrationTab() {
+  const confirm = useConfirm();
+
   // Connection state
   const [connection, setConnection] = useState<ClockifyConnection | null>(null);
   const [loadingConnection, setLoadingConnection] = useState(true);
@@ -171,7 +174,13 @@ export default function ClockifyIntegrationTab() {
   const handleDisconnect = async () => {
     if (!connection) return;
 
-    if (!confirm('Ви впевнені, що хочете відключити Clockify? Дані не будуть видалені.')) {
+    const confirmed = await confirm({
+      title: 'Відключити Clockify?',
+      description: 'Ви впевнені, що хочете відключити Clockify? Дані не будуть видалені.',
+      variant: 'destructive',
+    });
+
+    if (!confirmed) {
       return;
     }
 

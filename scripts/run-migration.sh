@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PROJECT_REF="gxzzkcthcdtmkdwfdrhv"
-SQL_FILE="supabase/migrations/009_make_goal_dates_nullable.sql"
+SQL_FILE="supabase/migrations/008_add_goal_notes.sql"
 
 echo "🚀 Supabase Database Migration Script"
 echo "════════════════════════════════════════════════════════════"

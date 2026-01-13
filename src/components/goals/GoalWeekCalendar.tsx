@@ -1,6 +1,7 @@
 'use client';
 
 import { toast } from '@/hooks/use-toast';
+import { useConfirm } from '@/hooks/use-confirm';
 import { Calendar as BigCalendar, dateFnsLocalizer, View } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
@@ -49,6 +50,7 @@ interface GoalWeekCalendarProps {
 }
 
 export default function GoalWeekCalendar({ goal }: GoalWeekCalendarProps) {
+  const confirm = useConfirm();
   const { getTimeRange } = useCalendarSettings();
   const { events: dbEventsFromContext, createEvent, updateEvent, deleteEvent } = useCalendarEventsContext();
   const { events, setCurrentDate } = useCalendarEvents({
@@ -100,10 +102,19 @@ export default function GoalWeekCalendar({ goal }: GoalWeekCalendarProps) {
         const message = `Подія: ${event.title}\n${event.description || ''}\n${
           event.location ? `Місце: ${event.location}` : ''
         }`;
-        if (event.htmlLink && confirm(`${message}\n\nВідкрити в Google Calendar?`)) {
-          window.open(event.htmlLink, '_blank');
+        if (event.htmlLink) {
+          const confirmed = await confirm({
+            title: event.title,
+            description: `${message}\n\nВідкрити в Google Calendar?`,
+            variant: 'default',
+            confirmText: 'Відкрити',
+            cancelText: 'Скасувати',
+          });
+          if (confirmed) {
+            window.open(event.htmlLink, '_blank');
+          }
         } else {
-          toast({ variant: "destructive", title: "Помилка", description: message });
+          toast({ variant: "default", title: event.title, description: message });
         }
       }
     },
