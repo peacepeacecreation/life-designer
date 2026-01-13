@@ -173,9 +173,7 @@ export function MigrationBanner() {
   };
 
   // Different styles based on mode
-  const cardClassName = mode === 'migration'
-    ? "mb-6 border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900"
-    : "mb-6 border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900";
+  const cardClassName = "mb-6 border border-border bg-card";
 
   return (
     <Card className={cardClassName}>
@@ -183,7 +181,7 @@ export function MigrationBanner() {
         <div className="flex items-start gap-4">
           {/* Icon */}
           <div className="flex-shrink-0">
-            <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+            <div className="p-3 bg-background rounded-xl border border-border shadow-sm">
               {(status as ProcessStatus) === 'success' ? (
                 <CheckCircle2 className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
               ) : status === 'error' ? (
@@ -215,7 +213,7 @@ export function MigrationBanner() {
                   <Button
                     onClick={handleMigrate}
                     size="default"
-                    className="bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-slate-200 dark:text-slate-900 shadow-sm"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
                   >
                     <CloudUpload className="mr-2 h-4 w-4" />
                     Мігрувати {localStorageGoals.length} {localStorageGoals.length === 1 ? 'ціль' : 'цілей'}
@@ -238,7 +236,7 @@ export function MigrationBanner() {
                   <Button
                     onClick={handleRegenerate}
                     size="default"
-                    className="bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-slate-200 dark:text-slate-900 shadow-sm"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
                   >
                     <Sparkles className="mr-2 h-4 w-4" />
                     Оновити індекси
@@ -306,7 +304,7 @@ export function MigrationBanner() {
                     </summary>
                     <div className="mt-2 space-y-2">
                       {result.errorDetails.map((detail, idx) => (
-                        <div key={idx} className="text-xs bg-slate-100 dark:bg-slate-800 p-2 rounded">
+                        <div key={idx} className="text-xs bg-muted p-2 rounded">
                           <strong>Goal:</strong> {detail.goalId}<br />
                           <strong>Error:</strong> {detail.error}
                         </div>
@@ -319,7 +317,7 @@ export function MigrationBanner() {
                   <Button
                     onClick={mode === 'migration' ? handleMigrate : handleRegenerate}
                     size="default"
-                    className="bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-slate-200 dark:text-slate-900 shadow-sm"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
                   >
                     Спробувати знову
                   </Button>

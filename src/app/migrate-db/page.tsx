@@ -48,24 +48,24 @@ export default function MigrateDBPage() {
     <div className="container mx-auto p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             Міграція бази даних
           </h1>
-          <p className="text-slate-600 dark:text-slate-400">
+          <p className="text-muted-foreground">
             Виконайте SQL міграцію для додавання полів payment_type, fixed_rate та fixed_rate_period
           </p>
         </div>
 
         <Card className="p-6 mb-6 border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950">
           <div className="flex items-start gap-4">
-            <div className="p-2 bg-white dark:bg-slate-800 rounded-lg">
+            <div className="p-2 bg-background rounded-lg">
               <AlertCircle className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">
+              <h3 className="font-semibold text-foreground mb-2">
                 Інструкції
               </h3>
-              <ol className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
+              <ol className="space-y-2 text-sm text-card-foreground">
                 <li className="flex items-start gap-2">
                   <span className="font-semibold">1.</span>
                   <span>Натисніть кнопку "Копіювати SQL" нижче</span>
@@ -93,7 +93,7 @@ export default function MigrateDBPage() {
 
         <Card className="p-6 mb-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <h3 className="text-lg font-semibold text-foreground">
               SQL міграція
             </h3>
             <div className="flex gap-2">
@@ -124,27 +124,27 @@ export default function MigrateDBPage() {
             </div>
           </div>
 
-          <pre className="bg-slate-100 dark:bg-slate-900 p-4 rounded-lg overflow-x-auto text-sm text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+          <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm text-foreground border border-border">
             {sql}
           </pre>
         </Card>
 
-        <Card className="p-6 border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900">
-          <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">
+        <Card className="p-6 border-border bg-card dark:border-slate-700 dark:bg-slate-900">
+          <h3 className="font-semibold text-foreground mb-2">
             Що робить ця міграція?
           </h3>
-          <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
+          <ul className="space-y-2 text-sm text-card-foreground">
             <li className="flex items-start gap-2">
               <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
-              <span>Додає поле <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">payment_type</code> для вибору типу оплати (погодинна або фіксована)</span>
+              <span>Додає поле <code className="px-1.5 py-0.5 bg-muted rounded">payment_type</code> для вибору типу оплати (погодинна або фіксована)</span>
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
-              <span>Додає поле <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">fixed_rate</code> для суми фіксованої оплати</span>
+              <span>Додає поле <code className="px-1.5 py-0.5 bg-muted rounded">fixed_rate</code> для суми фіксованої оплати</span>
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
-              <span>Додає поле <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">fixed_rate_period</code> для періоду фіксованої оплати (тиждень або місяць)</span>
+              <span>Додає поле <code className="px-1.5 py-0.5 bg-muted rounded">fixed_rate_period</code> для періоду фіксованої оплати (тиждень або місяць)</span>
             </li>
           </ul>
         </Card>
