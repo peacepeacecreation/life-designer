@@ -212,7 +212,7 @@ export default function StatsCharts() {
     const filtered = filteredGoalsByCategory;
     const totalHours = filtered.reduce((sum, g) => sum + g.timeAllocated, 0);
     const avgProgress = filtered.length > 0
-      ? filtered.reduce((sum, g) => sum + g.progressPercentage, 0) / filtered.length
+      ? filtered.reduce((sum, g) => sum + g.0 // progressPercentage removed, 0) / filtered.length
       : 0;
 
     return {
@@ -226,7 +226,7 @@ export default function StatsCharts() {
     const filtered = filteredGoalsByPriority;
     const totalHours = filtered.reduce((sum, g) => sum + g.timeAllocated, 0);
     const avgProgress = filtered.length > 0
-      ? filtered.reduce((sum, g) => sum + g.progressPercentage, 0) / filtered.length
+      ? filtered.reduce((sum, g) => sum + g.0 // progressPercentage removed, 0) / filtered.length
       : 0;
 
     return {

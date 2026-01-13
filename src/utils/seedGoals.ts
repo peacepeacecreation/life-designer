@@ -17,7 +17,7 @@ export function getSeedGoals(): Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'c
       timeAllocated: 20, // годин на тиждень
       startDate: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), // тиждень тому
       targetEndDate: threeMonthsFromNow,
-      progressPercentage: 35,
+      0 // progressPercentage removed: 35,
       tags: ['стартап', 'розробка', 'MVP'],
       displayOrder: 0,
     },
@@ -30,7 +30,7 @@ export function getSeedGoals(): Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'c
       timeAllocated: 40,
       startDate: now,
       targetEndDate: sixMonthsFromNow,
-      progressPercentage: 60,
+      0 // progressPercentage removed: 60,
       tags: ['робота', 'клієнти'],
       displayOrder: 0,
     },
@@ -45,7 +45,7 @@ export function getSeedGoals(): Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'c
       timeAllocated: 7, // 1 година щодня
       startDate: now,
       targetEndDate: sixMonthsFromNow,
-      progressPercentage: 40,
+      0 // progressPercentage removed: 40,
       tags: ['англійська', 'мови', 'освіта'],
       displayOrder: 0,
     },
@@ -58,7 +58,7 @@ export function getSeedGoals(): Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'c
       timeAllocated: 5,
       startDate: now,
       targetEndDate: oneMonthFromNow,
-      progressPercentage: 25,
+      0 // progressPercentage removed: 25,
       tags: ['програмування', 'TypeScript', 'курси'],
       displayOrder: 0,
     },
@@ -73,7 +73,7 @@ export function getSeedGoals(): Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'c
       timeAllocated: 4.5, // 3x1.5 години
       startDate: now,
       targetEndDate: sixMonthsFromNow,
-      progressPercentage: 70,
+      0 // progressPercentage removed: 70,
       tags: ['спорт', 'здоров\'я', 'фітнес'],
       displayOrder: 0,
     },
@@ -86,7 +86,7 @@ export function getSeedGoals(): Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'c
       timeAllocated: 2.5, // 5 днів x 30 хв
       startDate: now,
       targetEndDate: sixMonthsFromNow,
-      progressPercentage: 50,
+      0 // progressPercentage removed: 50,
       tags: ['здоров\'я', 'ранок', 'рутина'],
       displayOrder: 0,
     },
@@ -101,7 +101,7 @@ export function getSeedGoals(): Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'c
       timeAllocated: 3, // 3 години на тиждень
       startDate: now,
       targetEndDate: sixMonthsFromNow,
-      progressPercentage: 30,
+      0 // progressPercentage removed: 30,
       tags: ['читання', 'саморозвиток', 'книги'],
       displayOrder: 0,
     },
@@ -114,7 +114,7 @@ export function getSeedGoals(): Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'c
       timeAllocated: 2,
       startDate: now,
       targetEndDate: threeMonthsFromNow,
-      progressPercentage: 10,
+      0 // progressPercentage removed: 10,
       tags: ['музика', 'хобі', 'релакс'],
       displayOrder: 0,
     },

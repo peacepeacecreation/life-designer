@@ -170,7 +170,6 @@ export async function POST(request: NextRequest) {
                 priority: goal.priority,
                 status: goal.status,
                 time_allocated: goal.timeAllocated,
-                progress_percentage: goal.progressPercentage,
                 start_date: toISOString(goal.startDate),
                 target_end_date: toISOString(goal.targetEndDate),
                 actual_end_date: toISOString(goal.actualEndDate),

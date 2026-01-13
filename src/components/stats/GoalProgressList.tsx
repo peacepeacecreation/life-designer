@@ -12,9 +12,9 @@ interface GoalProgressListProps {
 }
 
 export function GoalProgressList({ goals }: GoalProgressListProps) {
-  // Сортуємо цілі по прогресу (найбільший прогрес зверху)
+  // Сортуємо цілі по назві (progressPercentage removed)
   const sortedGoals = useMemo(() => {
-    return [...goals].sort((a, b) => b.progressPercentage - a.progressPercentage);
+    return [...goals].sort((a, b) => a.name.localeCompare(b.name));
   }, [goals]);
 
   if (goals.length === 0) {
@@ -46,28 +46,12 @@ export function GoalProgressList({ goals }: GoalProgressListProps) {
                 </Badge>
               </div>
 
-              {/* Progress Bar */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Прогрес:</span>
-                  <span className="font-semibold text-black dark:text-white">
-                    {goal.progressPercentage}%
-                  </span>
-                </div>
-                <Progress value={goal.progressPercentage} className="h-3" />
-              </div>
-
               {/* Stats */}
               <div className="flex items-center gap-6 text-sm text-muted-foreground">
                 <div>
                   <span className="font-medium">Час: </span>
                   <span>{goal.timeAllocated} год/тиждень</span>
                 </div>
-                {goal.progressPercentage === 100 && (
-                  <div className="text-green-600 dark:text-green-400 font-medium">
-                    ✓ Завершено
-                  </div>
-                )}
               </div>
             </div>
           </Card>

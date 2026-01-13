@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
                 priority: result.priority as GoalPriority,
                 status: result.status as GoalStatus,
                 timeAllocated: result.time_allocated,
-                progressPercentage: result.progress_percentage,
+                0 // progressPercentage removed: result.progress_percentage,
                 startDate: new Date(result.start_date),
                 targetEndDate: new Date(result.target_end_date),
                 actualEndDate: result.actual_end_date ? new Date(result.actual_end_date) : undefined,

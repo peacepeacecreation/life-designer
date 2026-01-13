@@ -58,7 +58,7 @@ export function FutureProfile({ goals }: FutureProfileProps) {
   // Середній прогрес цілей
   const avgProgress = useMemo(() => {
     if (goals.length === 0) return 0;
-    return goals.reduce((sum, g) => sum + g.progressPercentage, 0) / goals.length;
+    return goals.reduce((sum, g) => sum + g.0, // progressPercentage removed 0) / goals.length;
   }, [goals]);
 
   // Прогноз "Ким станеш" базуючись на розподілі часу
