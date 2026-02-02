@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { GlobalSettingsProvider } from "@/contexts/GlobalSettingsContext";
 import { GoalsProvider } from "@/contexts/GoalsContext";
+import { ClockifyProvider } from "@/contexts/ClockifyContext";
 import { CalendarEventsProvider } from "@/contexts/CalendarEventsContext";
 import { RecurringEventsProvider } from "@/contexts/RecurringEventsContext";
 import { TimeCalculatorProvider } from "@/contexts/TimeCalculatorContext";
@@ -59,21 +60,23 @@ export default function RootLayout({
         <SessionProvider>
           <GlobalSettingsProvider>
             <GoalsProvider>
-              <CalendarEventsProvider>
-                <NotesProvider>
-                  <ReflectionsProvider>
-                    <RecurringEventsProvider>
-                      <TimeCalculatorProvider>
-                        <ConfirmProvider>
-                          <Toaster />
-                          <Header />
-                          {children}
-                        </ConfirmProvider>
-                      </TimeCalculatorProvider>
-                    </RecurringEventsProvider>
-                  </ReflectionsProvider>
-                </NotesProvider>
-              </CalendarEventsProvider>
+              <ClockifyProvider>
+                <CalendarEventsProvider>
+                  <NotesProvider>
+                    <ReflectionsProvider>
+                      <RecurringEventsProvider>
+                        <TimeCalculatorProvider>
+                          <ConfirmProvider>
+                            <Toaster />
+                            <Header />
+                            {children}
+                          </ConfirmProvider>
+                        </TimeCalculatorProvider>
+                      </RecurringEventsProvider>
+                    </ReflectionsProvider>
+                  </NotesProvider>
+                </CalendarEventsProvider>
+              </ClockifyProvider>
             </GoalsProvider>
           </GlobalSettingsProvider>
         </SessionProvider>

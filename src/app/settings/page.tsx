@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { Suspense } from 'react';
 import { Settings as SettingsIcon } from 'lucide-react';
 import SettingsTabs from '@/components/settings/SettingsTabs';
 
@@ -21,7 +22,9 @@ export default function SettingsPage() {
           </p>
         </div>
 
-        <SettingsTabs />
+        <Suspense fallback={<div className="text-center py-8">Завантаження...</div>}>
+          <SettingsTabs />
+        </Suspense>
       </div>
     </main>
   );

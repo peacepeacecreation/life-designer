@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PROJECT_REF="gxzzkcthcdtmkdwfdrhv"
-SQL_FILE="supabase/migrations/012_add_weekly_snapshots.sql"
+SQL_FILE="supabase/migrations/014_update_clockify_projects_connection_id.sql"
 
 echo "🚀 Supabase Database Migration Script"
 echo "════════════════════════════════════════════════════════════"
@@ -59,11 +59,10 @@ echo ""
 if [ "$HTTP_CODE" = "201" ] || [ "$HTTP_CODE" = "200" ]; then
   echo "✅ Migration executed successfully!"
   echo ""
-  echo "Added weekly snapshots tables:"
-  echo "  • weekly_snapshots - main table for weekly statistics"
-  echo "  • weekly_goal_snapshots - goal settings snapshots"
-  echo "  • weekly_recurring_event_snapshots - recurring event settings snapshots"
-  echo "  • All tables have RLS enabled and proper indexes"
+  echo "Updated clockify_projects with connection_id:"
+  echo "  • Set connection_id for existing projects"
+  echo "  • Based on user_id and workspace_id"
+  echo "  • Enables proper project-goal mapping in sync"
   echo ""
 else
   echo "❌ Migration failed"

@@ -1,19 +1,22 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import CalendarComponent from '@/components/CalendarComponent';
-import RecurringEventsPanel from '@/components/RecurringEventsPanel';
-import { CalendarSyncBanner } from '@/components/calendar/CalendarSyncBanner';
-import { ConnectCalendarButton } from '@/components/calendar/ConnectCalendarButton';
-import { Button } from '@/components/ui/button';
-import { Settings2, Eye } from 'lucide-react';
-import { CalendarSettingsDialog } from '@/components/calendar/CalendarSettingsDialog';
-import { CalendarVisibilityDialog } from '@/components/calendar/CalendarVisibilityDialog';
-import { useCalendarSettings } from '@/hooks/useCalendarSettings';
-import { useCalendarVisibility } from '@/hooks/useCalendarVisibility';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import CalendarComponent from "@/components/CalendarComponent";
+import RecurringEventsPanel from "@/components/RecurringEventsPanel";
+import { CalendarSyncBanner } from "@/components/calendar/CalendarSyncBanner";
+import { ConnectCalendarButton } from "@/components/calendar/ConnectCalendarButton";
+import { Button } from "@/components/ui/button";
+import { Settings2, Eye } from "lucide-react";
+import { CalendarSettingsDialog } from "@/components/calendar/CalendarSettingsDialog";
+import { CalendarVisibilityDialog } from "@/components/calendar/CalendarVisibilityDialog";
+import { useCalendarSettings } from "@/hooks/useCalendarSettings";
+import { useCalendarVisibility } from "@/hooks/useCalendarVisibility";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { TimeSlotPanel } from "@/components/calendar/TimeSlotPanel";
+import { QuickStartCompact } from "@/components/calendar/QuickStartCompact";
 
 export default function CalendarPageWrapper() {
   const searchParams = useSearchParams();
@@ -39,11 +42,11 @@ export default function CalendarPageWrapper() {
   useEffect(() => {
     async function checkStatus() {
       try {
-        const response = await fetch('/api/calendar/status');
+        const response = await fetch("/api/calendar/status");
         const data = await response.json();
         setIsCalendarConnected(data.connected);
       } catch (error) {
-        console.error('Error checking calendar status:', error);
+        console.error("Error checking calendar status:", error);
       } finally {
         setCheckingStatus(false);
       }
@@ -53,8 +56,8 @@ export default function CalendarPageWrapper() {
 
   // Handle OAuth callback success
   useEffect(() => {
-    const connected = searchParams.get('connected');
-    if (connected === 'true') {
+    const connected = searchParams.get("connected");
+    if (connected === "true") {
       setIsCalendarConnected(true);
       setShowSuccessMessage(true);
 
@@ -62,7 +65,7 @@ export default function CalendarPageWrapper() {
       setTimeout(() => setShowSuccessMessage(false), 5000);
 
       // Clean up URL
-      window.history.replaceState({}, '', '/calendar');
+      window.history.replaceState({}, "", "/calendar");
     }
   }, [searchParams]);
 
@@ -73,7 +76,8 @@ export default function CalendarPageWrapper() {
           <div>
             <h1 className="text-4xl font-bold mb-2">Календар</h1>
             <p className="text-muted-foreground">
-              Керуйте своїми подіями та планами. Натисніть на вільний час, щоб додати нову подію.
+              Керуйте своїми подіями та планами. Натисніть на вільний час, щоб
+              додати нову подію.
             </p>
           </div>
           <div className="flex gap-2">
@@ -103,7 +107,8 @@ export default function CalendarPageWrapper() {
           <Alert className="mb-6 bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
             <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
             <AlertDescription className="text-green-800 dark:text-green-200">
-              Google Calendar успішно підключено! Події синхронізуються автоматично.
+              Google Calendar успішно підключено! Події синхронізуються
+              автоматично.
             </AlertDescription>
           </Alert>
         )}
@@ -113,10 +118,24 @@ export default function CalendarPageWrapper() {
             <CalendarComponent googleEvents={googleEvents} />
           </div>
           <div className="lg:col-span-1 space-y-6">
-            <RecurringEventsPanel />
+            <Tabs defaultValue="time" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="time">Часи</TabsTrigger>
+                <TabsTrigger value="recurring">Повторювані події</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="time" className="mt-0 space-y-4">
+                <QuickStartCompact />
+                <TimeSlotPanel />
+              </TabsContent>
+
+              <TabsContent value="recurring" className="mt-0">
+                <RecurringEventsPanel />
+              </TabsContent>
+            </Tabs>
 
             {/* Show Connect button if not connected, otherwise show sync banner */}
-            {checkingStatus ? (
+            {/*{checkingStatus ? (
               <div className="text-center p-4 text-muted-foreground">
                 Перевірка підключення...
               </div>
@@ -127,7 +146,7 @@ export default function CalendarPageWrapper() {
                 isConnected={false}
                 onConnect={() => setCheckingStatus(true)}
               />
-            )}
+            )}*/}
           </div>
         </div>
 

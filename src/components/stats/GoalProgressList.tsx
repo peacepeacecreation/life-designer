@@ -6,12 +6,18 @@ import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { statusLabels, getCategoryMeta } from '@/lib/categoryConfig';
+import { useRecurringEvents } from '@/contexts/RecurringEventsContext';
+import { useCalendarEventsContext } from '@/contexts/CalendarEventsContext';
+import { calculateGoalTimeProgress } from '@/utils/goalTimeProgress';
 
 interface GoalProgressListProps {
   goals: Goal[];
 }
 
 export function GoalProgressList({ goals }: GoalProgressListProps) {
+  const { recurringEvents } = useRecurringEvents();
+  const { events: calendarEvents } = useCalendarEventsContext();
+
   // Сортуємо цілі по назві (progressPercentage removed)
   const sortedGoals = useMemo(() => {
     return [...goals].sort((a, b) => a.name.localeCompare(b.name));
@@ -29,6 +35,12 @@ export function GoalProgressList({ goals }: GoalProgressListProps) {
     <div className="space-y-4">
       {sortedGoals.map((goal) => {
         const categoryMeta = getCategoryMeta(goal.category);
+        const progress = calculateGoalTimeProgress(
+          goal.id,
+          goal.timeAllocated,
+          recurringEvents,
+          calendarEvents
+        );
 
         return (
           <Card key={goal.id} className="p-6 bg-white dark:bg-card hover:shadow-md transition-shadow">
@@ -50,7 +62,11 @@ export function GoalProgressList({ goals }: GoalProgressListProps) {
               <div className="flex items-center gap-6 text-sm text-muted-foreground">
                 <div>
                   <span className="font-medium">Час: </span>
-                  <span>{goal.timeAllocated} год/тиждень</span>
+                  <span>
+                    {progress.completed > 0
+                      ? `${progress.completed}/${goal.timeAllocated} год/тиждень`
+                      : `${goal.timeAllocated} год/тиждень`}
+                  </span>
                 </div>
               </div>
             </div>

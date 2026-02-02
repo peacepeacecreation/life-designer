@@ -5,15 +5,18 @@
  * Automatically synchronizes time entries for active users
  * - Triggered by external cron service (cron-job.org)
  * - Batch processes users to stay within Vercel timeout (10s on free tier)
+ * - Syncs CURRENT WEEK only (Monday 00:00 → now)
+ * - Uses hash-based change detection for efficiency
  * - Prioritizes connections that haven't synced recently
- * - Incremental sync (new entries since last sync)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerClient } from '@/lib/supabase/pool';
 import { getClockifyClient } from '@/lib/clockify/client';
 import { decryptApiKey } from '@/lib/clockify/encryption';
+import { generateTimeEntryHash } from '@/lib/clockify/hash';
 import type { ClockifyTimeEntry } from '@/types/clockify';
+import { startOfWeek } from 'date-fns';
 
 export const runtime = 'nodejs';
 export const maxDuration = 10; // Vercel Free tier limit
@@ -57,14 +60,28 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
 
   try {
+    console.log('Auto-sync: Request received');
+
     // 1. Verify cron secret for security
     const authHeader = request.headers.get('authorization');
     const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
 
+    console.log('Auto-sync: Auth check', {
+      hasAuthHeader: !!authHeader,
+      hasEnvSecret: !!process.env.CRON_SECRET,
+      authHeaderPrefix: authHeader?.substring(0, 10),
+    });
+
     if (!authHeader || authHeader !== expectedAuth) {
-      console.error('Auto-sync: Unauthorized request');
+      console.error('Auto-sync: Unauthorized request', {
+        reason: !authHeader ? 'No auth header' : 'Invalid secret',
+        hasEnvSecret: !!process.env.CRON_SECRET,
+      });
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        {
+          error: 'Unauthorized',
+          details: !process.env.CRON_SECRET ? 'CRON_SECRET not configured' : 'Invalid authorization'
+        },
         { status: 401 }
       );
     }
@@ -308,7 +325,7 @@ async function cacheProjects(
 }
 
 /**
- * Import time entries from Clockify (incremental)
+ * Import time entries from Clockify (current week with hash detection)
  */
 async function importFromClockify(
   supabase: any,
@@ -317,27 +334,23 @@ async function importFromClockify(
   userId: string,
   stats: SyncStats
 ): Promise<void> {
-  // Incremental sync: since last successful sync (or last 7 days as fallback)
-  let startDate: string;
+  // Sync CURRENT WEEK only (Monday 00:00 → now)
+  const now = new Date();
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
 
-  if (connection.last_successful_sync_at) {
-    startDate = connection.last_successful_sync_at;
-  } else {
-    const date = new Date();
-    date.setDate(date.getDate() - 7);
-    startDate = date.toISOString();
-  }
+  console.log('Auto-sync: Syncing current week', {
+    weekStart: weekStart.toISOString(),
+    now: now.toISOString(),
+  });
 
-  const endDate = new Date().toISOString();
-
-  // Fetch time entries from Clockify
+  // Fetch time entries from Clockify for current week
   const clockifyEntries = await clockifyClient.getTimeEntries(
     connection.workspace_id,
     connection.clockify_user_id,
     {
-      start: startDate,
-      end: endDate,
-      pageSize: 100, // Limit for quick sync
+      start: weekStart.toISOString(),
+      end: now.toISOString(),
+      pageSize: 500,
     }
   );
 
@@ -392,7 +405,7 @@ async function importFromClockify(
 }
 
 /**
- * Import a single time entry
+ * Import a single time entry with hash-based change detection
  */
 async function importSingleEntry(
   supabase: any,
@@ -402,39 +415,55 @@ async function importSingleEntry(
   projectIdMap: Map<string, string>,
   stats: SyncStats
 ): Promise<void> {
-  // Check if entry exists
+  // 1. Generate hash for the entry
+  const contentHash = await generateTimeEntryHash({
+    description: entry.description || null,
+    start_time: entry.timeInterval?.start || null,
+    end_time: entry.timeInterval?.end || null,
+    project_id: entry.projectId || null,
+  });
+
+  // 2. Check if entry exists in database
   const { data: existing } = await supabase
     .from('time_entries')
-    .select('id, updated_at')
+    .select('id, content_hash')
     .eq('user_id', userId)
     .eq('clockify_entry_id', entry.id)
     .maybeSingle();
 
-  // Map project to goal
-  const goalId = entry.projectId ? projectToGoalMap.get(entry.projectId) : null;
-  const clockifyProjectId = entry.projectId ? projectIdMap.get(entry.projectId) : null;
+  // 3. If entry exists and hash matches → skip (no changes)
+  if (existing && existing.content_hash === contentHash) {
+    stats.skipped++;
+    return;
+  }
 
-  // Prepare data
+  // 4. Map project to goal
+  const goalId = entry.projectId ? projectToGoalMap.get(entry.projectId) : null;
+  const clockifyProjectDbId = entry.projectId ? projectIdMap.get(entry.projectId) : null;
+
+  // 5. Prepare entry data
   const timeEntryData = {
     user_id: userId,
     description: entry.description || null,
     start_time: entry.timeInterval.start,
     end_time: entry.timeInterval.end || null,
     clockify_entry_id: entry.id,
-    clockify_project_id: clockifyProjectId,
+    clockify_project_id: clockifyProjectDbId,
     is_billable: entry.billable || false,
     goal_id: goalId,
     source: 'clockify',
     sync_status: 'synced',
     last_synced_at: new Date().toISOString(),
+    content_hash: contentHash, // Store hash for future comparisons
   };
 
+  // 6. Insert or update
   if (!existing) {
-    // Insert new
+    // New entry → insert
     await supabase.from('time_entries').insert(timeEntryData);
     stats.imported++;
   } else {
-    // Update existing
+    // Entry exists but hash changed → update
     await supabase
       .from('time_entries')
       .update(timeEntryData)

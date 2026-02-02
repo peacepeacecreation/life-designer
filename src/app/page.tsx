@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Calendar, Target, Activity, BarChart3, FileText, Lightbulb, Settings } from 'lucide-react';
+import { Calendar, Target, Activity, BarChart3, FileText, Lightbulb, Settings, Clock, Workflow } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -43,6 +43,38 @@ export default function Home() {
                 </div>
                 <CardDescription className="text-base text-black/70 dark:text-white/70">
                   Керуйте своїми життєвими цілями та пріоритетами
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link href="/clockify">
+            <Card className="hover:shadow-lg transition-all cursor-pointer h-full bg-white dark:bg-card">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-950 rounded-lg">
+                    <Clock className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <CardTitle className="text-2xl text-black dark:text-white">Clockify</CardTitle>
+                </div>
+                <CardDescription className="text-base text-black/70 dark:text-white/70">
+                  Відстежуйте робочий час та аналізуйте продуктивність
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link href="/canvas">
+            <Card className="hover:shadow-lg transition-all cursor-pointer h-full bg-white dark:bg-card">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-indigo-100 dark:bg-indigo-950 rounded-lg">
+                    <Workflow className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <CardTitle className="text-2xl text-black dark:text-white">Canvas</CardTitle>
+                </div>
+                <CardDescription className="text-base text-black/70 dark:text-white/70">
+                  Візуалізуйте робочі процеси та промпти для AI
                 </CardDescription>
               </CardHeader>
             </Card>

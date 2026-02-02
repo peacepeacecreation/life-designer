@@ -87,7 +87,9 @@ export default function GoalTimeProgress({ goal }: GoalTimeProgressProps) {
           <span>Час на тиждень:</span>
         </div>
         <span className="font-semibold text-black dark:text-white">
-          {goal.timeAllocated} год
+          {progress.completed > 0
+            ? `${progress.completed}/${goal.timeAllocated} год`
+            : `${goal.timeAllocated} год`}
         </span>
       </div>
     </div>

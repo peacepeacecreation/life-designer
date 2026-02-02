@@ -22,8 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { GoalProgressList } from '@/components/stats/GoalProgressList';
 import { FinancialStats } from '@/components/stats/FinancialStats';
 import { FutureProfile } from '@/components/stats/FutureProfile';
-import { WeekSelector } from '@/components/stats/WeekSelector';
-import { WeekHistoryCard } from '@/components/stats/WeekHistoryCard';
+import WeekSnapshotHistory from '@/components/stats/WeekSnapshotHistory';
 
 // Реєстрація компонентів Chart.js
 ChartJS.register(
@@ -376,12 +375,7 @@ export default function StatsCharts() {
 
       {/* Таб: Історія */}
       <TabsContent value="history" className="space-y-6">
-        <WeekSelector
-          selectedWeekOffset={selectedWeekOffset}
-          onWeekChange={setSelectedWeekOffset}
-          weeksToShow={12}
-        />
-        <WeekHistoryCard weekOffset={selectedWeekOffset} goals={goals} />
+        <WeekSnapshotHistory />
       </TabsContent>
 
       {/* Таб: Фінанси */}

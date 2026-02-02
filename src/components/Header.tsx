@@ -1,12 +1,22 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Target, Calendar, BarChart3, Settings, LogIn, LogOut, User } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import AnimatedLinesLogo from '@/components/icons/AnimatedLinesLogo';
-import { useSession, signIn, signOut } from 'next-auth/react';
-import { Button } from '@/components/ui/button';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  Target,
+  Calendar,
+  BarChart3,
+  Settings,
+  LogIn,
+  LogOut,
+  User,
+  Clock,
+  Workflow,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import AnimatedLinesLogo from "@/components/icons/AnimatedLinesLogo";
+import { useSession, signIn, signOut } from "next-auth/react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,14 +24,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const navigation = [
-  { name: 'Календар', href: '/calendar', icon: Calendar },
-  { name: 'Цілі', href: '/goals', icon: Target },
-  { name: 'Статистика', href: '/stats', icon: BarChart3 },
-  { name: 'Налаштування', href: '/settings', icon: Settings },
+  { name: "Календар", href: "/calendar", icon: Calendar },
+  { name: "Цілі", href: "/goals", icon: Target },
+  { name: "Статистика", href: "/stats", icon: BarChart3 },
+  { name: "Canvas", href: "/canvas", icon: Workflow },
+  { name: "Налаштування", href: "/settings", icon: Settings },
 ];
 
 export default function Header() {
@@ -29,11 +40,11 @@ export default function Header() {
   const { data: session, status } = useSession();
 
   const getUserInitials = (name?: string | null) => {
-    if (!name) return 'U';
+    if (!name) return "U";
     return name
-      .split(' ')
+      .split(" ")
       .map((n) => n[0])
-      .join('')
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
@@ -63,10 +74,10 @@ export default function Header() {
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      'flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                      "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                       isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground",
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -77,9 +88,9 @@ export default function Header() {
             </nav>
 
             {/* Auth Section */}
-            {status === 'loading' ? (
+            {status === "loading" ? (
               <div className="h-9 w-9 rounded-full bg-muted animate-pulse" />
-            ) : status === 'authenticated' && session?.user ? (
+            ) : status === "authenticated" && session?.user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -88,8 +99,8 @@ export default function Header() {
                   >
                     <Avatar className="h-9 w-9">
                       <AvatarImage
-                        src={session.user.image || ''}
-                        alt={session.user.name || 'User'}
+                        src={session.user.image || ""}
+                        alt={session.user.name || "User"}
                       />
                       <AvatarFallback className="bg-primary text-primary-foreground">
                         {getUserInitials(session.user.name)}
@@ -110,6 +121,12 @@ export default function Header() {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
+                    <Link href="/clockify" className="cursor-pointer">
+                      <Clock className="mr-2 h-4 w-4" />
+                      Clockify
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link href="/settings" className="cursor-pointer">
                       <Settings className="mr-2 h-4 w-4" />
                       Налаштування
@@ -127,7 +144,7 @@ export default function Header() {
               </DropdownMenu>
             ) : (
               <Button
-                onClick={() => signIn('google')}
+                onClick={() => signIn("google")}
                 variant="default"
                 size="sm"
               >

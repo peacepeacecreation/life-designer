@@ -121,15 +121,47 @@ function PromptBlockNode({ data }: NodeProps<PromptBlockData>) {
   return (
     <div className="bg-card border-2 border-border rounded-lg shadow-lg min-w-[300px] max-w-[500px]">
       {/* Handles для з'єднання з усіх сторін */}
-      <Handle type="target" position={Position.Top} className="!bg-primary" />
-      <Handle type="target" position={Position.Left} className="!bg-primary" />
-      <Handle type="target" position={Position.Bottom} className="!bg-primary" />
-      <Handle type="target" position={Position.Right} className="!bg-primary" />
+      <Handle
+        type="target"
+        position={Position.Top}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
+      />
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
+      />
+      <Handle
+        type="target"
+        position={Position.Bottom}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
+      />
+      <Handle
+        type="target"
+        position={Position.Right}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
+      />
 
-      <Handle type="source" position={Position.Top} className="!bg-primary" />
-      <Handle type="source" position={Position.Left} className="!bg-primary" />
-      <Handle type="source" position={Position.Bottom} className="!bg-primary" />
-      <Handle type="source" position={Position.Right} className="!bg-primary" />
+      <Handle
+        type="source"
+        position={Position.Top}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
+      />
+      <Handle
+        type="source"
+        position={Position.Left}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
+      />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
+      />
 
       {/* Header */}
       <div className="bg-muted px-3 py-1.5 rounded-t-lg border-b border-border flex items-center gap-2">

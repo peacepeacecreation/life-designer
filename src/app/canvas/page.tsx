@@ -119,6 +119,11 @@ function CanvasFlow() {
         onConnectEnd={onConnectEnd}
         nodeTypes={nodeTypes}
         fitView
+        defaultEdgeOptions={{
+          animated: true,
+          style: { stroke: 'hsl(var(--primary))', strokeWidth: 2 },
+        }}
+        connectionLineStyle={{ stroke: 'hsl(var(--primary))', strokeWidth: 2 }}
       >
         <Panel position="top-left" className="bg-card border border-border rounded-lg p-4 shadow-lg">
           <h1 className="text-xl font-bold mb-2">Робочий Canvas</h1>
