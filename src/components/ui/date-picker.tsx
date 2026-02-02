@@ -21,26 +21,31 @@ interface DatePickerProps {
 }
 
 export function DatePicker({ date, onSelect, placeholder = "Оберіть дату" }: DatePickerProps) {
+  const [open, setOpen] = React.useState(false)
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant={"outline"}
           className={cn(
-            "w-full justify-start text-left font-normal",
+            "nodrag w-full justify-start text-left font-normal text-sm h-9",
             !date && "text-muted-foreground"
           )}
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
+          <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
           {date ? format(date, "d MMMM yyyy", { locale: uk }) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="nodrag w-auto p-0" align="start" sideOffset={4}>
         <Calendar
           mode="single"
           selected={date}
-          onSelect={onSelect}
-          defaultMonth={date}
+          onSelect={(newDate) => {
+            onSelect?.(newDate)
+            setOpen(false)
+          }}
+          defaultMonth={date || new Date()}
           locale={uk}
           initialFocus
         />

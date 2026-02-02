@@ -38,6 +38,7 @@ function CanvasFlow() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [isLoading, setIsLoading] = useState(true)
+  const [isConnecting, setIsConnecting] = useState(false)
   const { screenToFlowPosition } = useReactFlow()
   const connectingNodeId = useRef<string | null>(null)
   const connectingHandleId = useRef<string | null>(null)
@@ -78,6 +79,19 @@ function CanvasFlow() {
     }
   }, [nodes, edges, isLoading])
 
+  // Update all nodes with isConnecting state
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          isConnecting,
+        },
+      }))
+    )
+  }, [isConnecting, setNodes])
+
   const handleManualSave = useCallback(() => {
     if (autosaveRef.current) {
       autosaveRef.current.saveNow(nodes, edges)
@@ -115,10 +129,13 @@ function CanvasFlow() {
     console.log('onConnectStart:', { nodeId, handleId, handleType })
     connectingNodeId.current = nodeId
     connectingHandleId.current = handleId
+    setIsConnecting(true)
   }, [])
 
   const onConnectEnd = useCallback(
     (event: any) => {
+      setIsConnecting(false)
+
       if (!connectingNodeId.current) return
 
       const targetIsPane = event.target.classList.contains('react-flow__pane')
@@ -160,7 +177,7 @@ function CanvasFlow() {
               source: connectingNodeId.current!,
               target: newNode.id,
               sourceHandle: connectingHandleId.current,
-              targetHandle: 'target-left',
+              targetHandle: 'target-top',
               style: { stroke: '#000000', strokeWidth: 2 },
               animated: true,
             },
@@ -249,6 +266,7 @@ function CanvasFlow() {
         defaultEdgeOptions={{
           animated: true,
           style: { stroke: '#000000', strokeWidth: 2 },
+          interactionWidth: 50,
         }}
         connectionLineStyle={{ stroke: '#000000', strokeWidth: 2 }}
       >

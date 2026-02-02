@@ -4,14 +4,12 @@ import { BaseEdge, EdgeProps, getSmoothStepPath } from 'reactflow'
 
 export default function CustomEdge(props: EdgeProps) {
   const {
-    id,
     sourceX,
     sourceY,
     targetX,
     targetY,
     sourcePosition,
     targetPosition,
-    style = {},
   } = props
 
   const [edgePath] = getSmoothStepPath({
@@ -25,13 +23,13 @@ export default function CustomEdge(props: EdgeProps) {
 
   return (
     <BaseEdge
-      id={id}
       path={edgePath}
+      interactionWidth={50}
       style={{
         stroke: '#000000',
         strokeWidth: 2,
-        ...style,
       }}
+      {...props}
     />
   )
 }

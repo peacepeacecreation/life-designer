@@ -27,24 +27,34 @@ interface PromptBlockData {
   goal_title?: string
   scheduled_date?: string
   scheduled_time?: string
+  color?: string
+  priority?: string
+  isConnecting?: boolean
 }
 
 // Auto-resizing textarea component
 function AutoResizeTextarea({
   value,
   onChange,
-  placeholder
+  placeholder,
+  rows = 2
 }: {
   value: string
   onChange: (value: string) => void
   placeholder?: string
+  rows?: number
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'
+      // Якщо пусто - використовуємо rows prop, якщо є контент - автоматично
+      if (!value.trim()) {
+        textareaRef.current.style.height = 'auto'
+      } else {
+        textareaRef.current.style.height = 'auto'
+        textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'
+      }
     }
   }, [value])
 
@@ -54,8 +64,8 @@ function AutoResizeTextarea({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="nodrag w-full px-2 py-1.5 text-sm border border-border rounded bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-      rows={1}
+      className="nodrag w-full px-2 text-sm bg-transparent resize-none overflow-hidden focus:outline-none transition-all"
+      rows={rows}
     />
   )
 }
@@ -71,14 +81,22 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
     data.scheduled_date ? new Date(data.scheduled_date) : undefined
   )
   const [scheduledTime, setScheduledTime] = useState<string | undefined>(data.scheduled_time)
+  const [blockColor, setBlockColor] = useState<string | undefined>(data.color || '#000000')
+  const [blockTitle, setBlockTitle] = useState<string>(data.title || 'Новий блок')
+  const [priority, setPriority] = useState<string>(data.priority || 'P0')
   const [popoverOpen, setPopoverOpen] = useState(false)
   const updateNodeInternals = useUpdateNodeInternals()
   const { setNodes, setEdges } = useReactFlow()
 
-  // Оновлюємо внутрішні дані про handles після монтування
+  // Динамічний z-index: коли тягнемо лінію - target в пріоритеті, інакше - source
+  const isConnecting = data.isConnecting || false
+  const sourceZIndex = isConnecting ? 10 : 100
+  const targetZIndex = isConnecting ? 100 : 10
+
+  // Оновлюємо внутрішні дані про handles після монтування та при зміні промптів
   useEffect(() => {
     updateNodeInternals(id)
-  }, [id, updateNodeInternals])
+  }, [id, updateNodeInternals, prompts])
 
   // Синхронізуємо зміни prompts з node data в ReactFlow
   useEffect(() => {
@@ -89,17 +107,20 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
               ...node,
               data: {
                 ...node.data,
+                title: blockTitle,
                 prompts,
                 goal_id: selectedGoal,
                 goal_title: goalTitle,
                 scheduled_date: scheduledDate?.toISOString(),
                 scheduled_time: scheduledTime,
+                color: blockColor,
+                priority,
               },
             }
           : node
       )
     )
-  }, [prompts, selectedGoal, goalTitle, scheduledDate, scheduledTime, id, setNodes])
+  }, [blockTitle, priority, prompts, selectedGoal, goalTitle, scheduledDate, scheduledTime, blockColor, id, setNodes])
 
   useEffect(() => {
     if (popoverOpen && goals.length === 0) {
@@ -169,80 +190,67 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
     <>
       <NodeResizer
         minWidth={220}
-        minHeight={100}
         lineStyle={{ border: 'none' }}
         handleStyle={{
-          width: '20px',
-          height: '20px',
+          width: '40px',
+          height: '40px',
           opacity: 0,
+          zIndex: 10,
+        }}
+        shouldResize={(event, params) => {
+          // Дозволяємо resize тільки по ширині (лівий і правий handles)
+          return params.direction[0] !== 0 && params.direction[1] === 0
         }}
       />
-      <div className="bg-card border-2 border-border rounded-lg shadow-lg min-w-[220px] max-w-[500px] w-full h-full flex flex-col">
-        {/* Target handles - рендерити першими (будуть знизу, z-index менший) */}
-      <Handle
-        type="target"
-        position={Position.Top}
-        id="target-top"
-        className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg"
-        style={{ top: -14, transformOrigin: 'center', zIndex: 1 }}
-      />
-      <Handle
-        type="target"
-        position={Position.Bottom}
-        id="target-bottom"
-        className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg"
-        style={{ bottom: -14, transformOrigin: 'center', zIndex: 1 }}
-      />
-      <Handle
-        type="target"
-        position={Position.Left}
-        id="target-left"
-        className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg"
-        style={{ left: -14, transformOrigin: 'center', zIndex: 1 }}
-      />
-      <Handle
-        type="target"
-        position={Position.Right}
-        id="target-right"
-        className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg"
-        style={{ right: -14, transformOrigin: 'center', zIndex: 1 }}
-      />
 
-      {/* Source handles - рендерити другими (будуть зверху, z-index більший) */}
-      <Handle
-        type="source"
-        position={Position.Top}
-        id="source-top"
-        className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg !cursor-crosshair"
-        style={{ top: -14, transformOrigin: 'center', zIndex: 2 }}
-      />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="source-bottom"
-        className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg !cursor-crosshair"
-        style={{ bottom: -14, transformOrigin: 'center', zIndex: 2 }}
-      />
-      <Handle
-        type="source"
-        position={Position.Left}
-        id="source-left"
-        className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg !cursor-crosshair"
-        style={{ left: -14, transformOrigin: 'center', zIndex: 2 }}
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="source-right"
-        className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg !cursor-crosshair"
-        style={{ right: -14, transformOrigin: 'center', zIndex: 2 }}
-      />
+      {/* Невидимий wrapper з padding для handles */}
+      <div className="relative px-10" style={{ minWidth: '220px', maxWidth: '500px', overflow: 'visible' }}>
+        {/* Верхні/нижні handles для всього блоку */}
+        <Handle
+          type="target"
+          position={Position.Top}
+          id="target-top"
+          className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg"
+          style={{ top: -14, transformOrigin: 'center', zIndex: targetZIndex }}
+        />
+        <Handle
+          type="target"
+          position={Position.Bottom}
+          id="target-bottom"
+          className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg"
+          style={{ bottom: -14, transformOrigin: 'center', zIndex: targetZIndex }}
+        />
+        <Handle
+          type="source"
+          position={Position.Top}
+          id="source-top"
+          className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg !cursor-crosshair"
+          style={{ top: -14, transformOrigin: 'center', zIndex: sourceZIndex }}
+        />
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          id="source-bottom"
+          className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg !cursor-crosshair"
+          style={{ bottom: -14, transformOrigin: 'center', zIndex: sourceZIndex }}
+        />
+
+        {/* Білий блок з контентом */}
+        <div
+          className="bg-white border-2 rounded-lg shadow-lg flex flex-col"
+          style={{ borderColor: blockColor, overflow: 'visible' }}
+        >
 
       {/* Header */}
-      <div className="bg-muted px-3 py-1.5 rounded-t-lg border-b border-border flex items-center gap-2">
+      <div
+        className="px-3 py-1.5 rounded-t-lg border-b border-border flex items-center gap-2"
+        style={{
+          backgroundColor: blockColor?.toLowerCase() === '#000000' ? 'white' : `${blockColor}40`
+        }}
+      >
         <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
         <div className="flex-1 cursor-move">
-          <h3 className="font-semibold text-sm">{data.title}</h3>
+          <h3 className="font-semibold text-sm">{blockTitle}</h3>
           {goalTitle && (
             <p className="text-xs text-muted-foreground">🎯 {goalTitle}</p>
           )}
@@ -264,6 +272,34 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
           <PopoverContent side="right" align="start" className="nodrag w-80">
             <div className="space-y-4">
               <h4 className="font-semibold text-sm">Налаштування блоку</h4>
+
+              {/* Назва блоку */}
+              <div className="space-y-2">
+                <label className="text-xs text-muted-foreground flex items-center gap-1">
+                  ✏️ Назва блоку:
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={blockTitle}
+                    onChange={(e) => setBlockTitle(e.target.value)}
+                    placeholder="Назва блоку"
+                    className="flex-1 px-2 py-1.5 text-sm border border-border rounded bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                  <select
+                    value={priority}
+                    onChange={(e) => setPriority(e.target.value)}
+                    className="px-2 py-1.5 text-sm border border-border rounded bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="P0">P0</option>
+                    <option value="P1">P1</option>
+                    <option value="P2">P2</option>
+                    <option value="P3">P3</option>
+                    <option value="P4">P4</option>
+                    <option value="P5">P5</option>
+                  </select>
+                </div>
+              </div>
 
               {/* Дата */}
               <div className="space-y-2">
@@ -340,6 +376,28 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
                 )}
               </div>
 
+              {/* Колір блоку */}
+              <div className="space-y-2">
+                <label className="text-xs text-muted-foreground flex items-center gap-1">
+                  🎨 Колір блоку:
+                </label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="color"
+                    value={blockColor}
+                    onChange={(e) => setBlockColor(e.target.value)}
+                    className="h-9 w-16 rounded border border-border cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={blockColor}
+                    onChange={(e) => setBlockColor(e.target.value)}
+                    placeholder="#000000"
+                    className="flex-1 px-2 py-1.5 text-sm border border-border rounded bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
+              </div>
+
               {/* Видалення блоку */}
               <div className="pt-2 border-t border-border">
                 <button
@@ -356,20 +414,50 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
       </div>
 
       {/* Prompts list */}
-      <div className="p-1.5 space-y-1.5 flex-1 overflow-y-auto min-h-0">
-        {prompts.map((prompt) => (
+      <div className="flex-1 min-h-0 divide-y divide-border">
+        {prompts.map((prompt, index) => (
           <div
             key={prompt.id}
-            className="flex items-start gap-1.5"
+            className="flex items-start gap-1.5 py-2 first:pt-1.5 last:pb-1.5 relative"
           >
             <div className="flex-1">
+              {/* Handles для кожного промпта окремо */}
+              <Handle
+                type="source"
+                position={Position.Left}
+                id={`source-left-${prompt.id}`}
+                className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg !cursor-crosshair"
+                style={{ left: -16, top: '50%', transform: 'translateY(-50%)', transformOrigin: 'center', zIndex: sourceZIndex }}
+              />
+              <Handle
+                type="target"
+                position={Position.Left}
+                id={`target-left-${prompt.id}`}
+                className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg"
+                style={{ left: -16, top: '50%', transform: 'translateY(-50%)', transformOrigin: 'center', zIndex: targetZIndex }}
+              />
+              <Handle
+                type="source"
+                position={Position.Right}
+                id={`source-right-${prompt.id}`}
+                className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg !cursor-crosshair"
+                style={{ right: -16, top: '50%', transform: 'translateY(-50%)', transformOrigin: 'center', zIndex: sourceZIndex }}
+              />
+              <Handle
+                type="target"
+                position={Position.Right}
+                id={`target-right-${prompt.id}`}
+                className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg"
+                style={{ right: -16, top: '50%', transform: 'translateY(-50%)', transformOrigin: 'center', zIndex: targetZIndex }}
+              />
+
               <AutoResizeTextarea
                 value={prompt.content}
                 onChange={(newContent) => updatePrompt(prompt.id, newContent)}
                 placeholder="Напишіть промпт..."
               />
             </div>
-            <div className="flex flex-col gap-1">
+            {/* <div className="flex flex-col gap-1">
               <button
                 onClick={() => copyToClipboard(prompt.content)}
                 className="p-1 hover:bg-primary/10 bg-background border border-border rounded transition-colors"
@@ -384,25 +472,25 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
               >
                 <Trash2 className="h-3.5 w-3.5 text-destructive" />
               </button>
-            </div>
+            </div> */}
           </div>
         ))}
 
         {/* Add new prompt form - завжди показувати */}
         <div className="space-y-1.5">
-          <textarea
-            value={newPromptText}
-            onChange={(e) => setNewPromptText(e.target.value)}
-            onKeyDown={(e) => {
-              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-                e.preventDefault()
-                addPrompt()
-              }
-            }}
-            placeholder="Напишіть промпт... (Cmd+Enter для додавання)"
-            className="nodrag w-full px-2 py-1.5 text-sm border border-border rounded bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-            rows={prompts.length === 0 ? 3 : 2}
-          />
+          <div onKeyDown={(e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+              e.preventDefault()
+              addPrompt()
+            }
+          }}>
+            <AutoResizeTextarea
+              value={newPromptText}
+              onChange={setNewPromptText}
+              placeholder="Напишіть промпт... (Cmd+Enter для додавання)"
+              rows={1}
+            />
+          </div>
           {newPromptText.trim() && (
             <div className="flex gap-1.5">
               <button
@@ -421,7 +509,8 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
           )}
         </div>
       </div>
-    </div>
+      </div> {/* Закриття білого блоку */}
+    </div> {/* Закриття wrapper */}
     </>
   )
 }
