@@ -195,7 +195,7 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
           width: '40px',
           height: '40px',
           opacity: 0,
-          zIndex: 10,
+          zIndex: 1000,
         }}
         shouldResize={(event, params) => {
           // Дозволяємо resize тільки по ширині (лівий і правий handles)
@@ -250,7 +250,12 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
       >
         <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
         <div className="flex-1 cursor-move">
-          <h3 className="font-semibold text-sm">{blockTitle}</h3>
+          <div className="flex items-center gap-2">
+            <span className="px-1.5 py-0.5 text-xs font-semibold bg-primary text-primary-foreground rounded border-2 border-black">
+              {priority}
+            </span>
+            <h3 className="font-semibold text-sm">{blockTitle}</h3>
+          </div>
           {goalTitle && (
             <p className="text-xs text-muted-foreground">🎯 {goalTitle}</p>
           )}
