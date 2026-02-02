@@ -1,9 +1,13 @@
 'use client'
 
 import { memo, useState, useRef, useEffect } from 'react'
-import { Handle, Position, NodeProps, useUpdateNodeInternals, useReactFlow } from 'reactflow'
-import { Copy, Trash2, Plus, GripVertical, Settings, X } from 'lucide-react'
+import { Handle, Position, NodeProps, useUpdateNodeInternals, useReactFlow, NodeResizer } from 'reactflow'
+import { Copy, Trash2, Plus, GripVertical, Settings, Clock, Target, Calendar as CalendarIcon } from 'lucide-react'
 import { generatePromptId } from '@/lib/canvas/utils'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { DatePicker } from '@/components/ui/date-picker'
+import { format } from 'date-fns'
+import { uk } from 'date-fns/locale'
 
 interface PromptItem {
   id: string
@@ -21,6 +25,8 @@ interface PromptBlockData {
   prompts: PromptItem[]
   goal_id?: string
   goal_title?: string
+  scheduled_date?: string
+  scheduled_time?: string
 }
 
 // Auto-resizing textarea component
@@ -58,12 +64,16 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
   const [prompts, setPrompts] = useState<PromptItem[]>(data.prompts || [])
   const [newPromptText, setNewPromptText] = useState('')
   const [isEditing, setIsEditing] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
   const [goals, setGoals] = useState<Goal[]>([])
   const [selectedGoal, setSelectedGoal] = useState<string | undefined>(data.goal_id)
   const [goalTitle, setGoalTitle] = useState<string | undefined>(data.goal_title)
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>(
+    data.scheduled_date ? new Date(data.scheduled_date) : undefined
+  )
+  const [scheduledTime, setScheduledTime] = useState<string | undefined>(data.scheduled_time)
+  const [popoverOpen, setPopoverOpen] = useState(false)
   const updateNodeInternals = useUpdateNodeInternals()
-  const { setNodes } = useReactFlow()
+  const { setNodes, setEdges } = useReactFlow()
 
   // Оновлюємо внутрішні дані про handles після монтування
   useEffect(() => {
@@ -82,15 +92,17 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
                 prompts,
                 goal_id: selectedGoal,
                 goal_title: goalTitle,
+                scheduled_date: scheduledDate?.toISOString(),
+                scheduled_time: scheduledTime,
               },
             }
           : node
       )
     )
-  }, [prompts, selectedGoal, goalTitle, id, setNodes])
+  }, [prompts, selectedGoal, goalTitle, scheduledDate, scheduledTime, id, setNodes])
 
   useEffect(() => {
-    if (showSettings && goals.length === 0) {
+    if (popoverOpen && goals.length === 0) {
       fetch('/api/canvas/goals')
         .then((res) => res.json())
         .then((data) => {
@@ -100,7 +112,7 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
         })
         .catch((err) => console.error('Error loading goals:', err))
     }
-  }, [showSettings, goals.length])
+  }, [popoverOpen, goals.length])
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -134,45 +146,66 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
     const goal = goals.find((g) => g.id === goalId)
     setSelectedGoal(goalId)
     setGoalTitle(goal?.title)
-    setShowSettings(false)
   }
 
   const handleRemoveGoal = () => {
     setSelectedGoal(undefined)
     setGoalTitle(undefined)
-    setShowSettings(false)
+  }
+
+  const handleDeleteBlock = () => {
+    if (confirm('Видалити цей блок?')) {
+      // Видаляємо ноду
+      setNodes((nodes) => nodes.filter((node) => node.id !== id))
+      // Видаляємо всі з'єднання пов'язані з цією нодою
+      setEdges((edges) =>
+        edges.filter((edge) => edge.source !== id && edge.target !== id)
+      )
+      setPopoverOpen(false)
+    }
   }
 
   return (
-    <div className="bg-card border-2 border-border rounded-lg shadow-lg min-w-[300px] max-w-[500px]">
-      {/* Target handles - рендерити першими (будуть знизу, z-index менший) */}
+    <>
+      <NodeResizer
+        minWidth={220}
+        minHeight={100}
+        lineStyle={{ border: 'none' }}
+        handleStyle={{
+          width: '20px',
+          height: '20px',
+          opacity: 0,
+        }}
+      />
+      <div className="bg-card border-2 border-border rounded-lg shadow-lg min-w-[220px] max-w-[500px] w-full h-full flex flex-col">
+        {/* Target handles - рендерити першими (будуть знизу, z-index менший) */}
       <Handle
         type="target"
         position={Position.Top}
         id="target-top"
-        className="!w-3.5 !h-3.5 !bg-primary !border-2 !border-background !transition-transform !shadow-lg"
-        style={{ top: -7, transformOrigin: 'center', zIndex: 1 }}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg"
+        style={{ top: -14, transformOrigin: 'center', zIndex: 1 }}
       />
       <Handle
         type="target"
         position={Position.Bottom}
         id="target-bottom"
-        className="!w-3.5 !h-3.5 !bg-primary !border-2 !border-background !transition-transform !shadow-lg"
-        style={{ bottom: -7, transformOrigin: 'center', zIndex: 1 }}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg"
+        style={{ bottom: -14, transformOrigin: 'center', zIndex: 1 }}
       />
       <Handle
         type="target"
         position={Position.Left}
         id="target-left"
-        className="!w-3.5 !h-3.5 !bg-primary !border-2 !border-background !transition-transform !shadow-lg"
-        style={{ left: -7, transformOrigin: 'center', zIndex: 1 }}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg"
+        style={{ left: -14, transformOrigin: 'center', zIndex: 1 }}
       />
       <Handle
         type="target"
         position={Position.Right}
         id="target-right"
-        className="!w-3.5 !h-3.5 !bg-primary !border-2 !border-background !transition-transform !shadow-lg"
-        style={{ right: -7, transformOrigin: 'center', zIndex: 1 }}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg"
+        style={{ right: -14, transformOrigin: 'center', zIndex: 1 }}
       />
 
       {/* Source handles - рендерити другими (будуть зверху, z-index більший) */}
@@ -180,29 +213,29 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
         type="source"
         position={Position.Top}
         id="source-top"
-        className="!w-3.5 !h-3.5 !bg-primary !border-2 !border-background hover:!scale-125 !transition-transform !shadow-lg !cursor-crosshair"
-        style={{ top: -7, transformOrigin: 'center', zIndex: 2 }}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg !cursor-crosshair"
+        style={{ top: -14, transformOrigin: 'center', zIndex: 2 }}
       />
       <Handle
         type="source"
         position={Position.Bottom}
         id="source-bottom"
-        className="!w-3.5 !h-3.5 !bg-primary !border-2 !border-background hover:!scale-125 !transition-transform !shadow-lg !cursor-crosshair"
-        style={{ bottom: -7, transformOrigin: 'center', zIndex: 2 }}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg !cursor-crosshair"
+        style={{ bottom: -14, transformOrigin: 'center', zIndex: 2 }}
       />
       <Handle
         type="source"
         position={Position.Left}
         id="source-left"
-        className="!w-3.5 !h-3.5 !bg-primary !border-2 !border-background hover:!scale-125 !transition-transform !shadow-lg !cursor-crosshair"
-        style={{ left: -7, transformOrigin: 'center', zIndex: 2 }}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg !cursor-crosshair"
+        style={{ left: -14, transformOrigin: 'center', zIndex: 2 }}
       />
       <Handle
         type="source"
         position={Position.Right}
         id="source-right"
-        className="!w-3.5 !h-3.5 !bg-primary !border-2 !border-background hover:!scale-125 !transition-transform !shadow-lg !cursor-crosshair"
-        style={{ right: -7, transformOrigin: 'center', zIndex: 2 }}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-black !transition-transform !shadow-lg !cursor-crosshair"
+        style={{ right: -14, transformOrigin: 'center', zIndex: 2 }}
       />
 
       {/* Header */}
@@ -213,67 +246,117 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
           {goalTitle && (
             <p className="text-xs text-muted-foreground">🎯 {goalTitle}</p>
           )}
+          {(scheduledDate || scheduledTime) && (
+            <p className="text-xs text-muted-foreground">
+              📅 {scheduledDate ? format(scheduledDate, 'd MMM', { locale: uk }) : ''}{scheduledTime ? ` о ${scheduledTime}` : ''}
+            </p>
+          )}
         </div>
-        <button
-          onClick={() => setShowSettings(!showSettings)}
-          className="nodrag p-1 hover:bg-background rounded transition-colors"
-          title="Налаштування"
-        >
-          <Settings className="h-3.5 w-3.5 text-muted-foreground" />
-        </button>
-      </div>
-
-      {/* Settings Menu */}
-      {showSettings && (
-        <div className="nodrag bg-background border-b border-border p-3 space-y-2">
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="text-sm font-semibold">Налаштування блоку</h4>
+        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+          <PopoverTrigger asChild>
             <button
-              onClick={() => setShowSettings(false)}
-              className="p-1 hover:bg-muted rounded"
+              className="nodrag p-1 hover:bg-background rounded transition-colors"
+              title="Налаштування"
             >
-              <X className="h-3.5 w-3.5" />
+              <Settings className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
-          </div>
+          </PopoverTrigger>
+          <PopoverContent side="right" align="start" className="nodrag w-80">
+            <div className="space-y-4">
+              <h4 className="font-semibold text-sm">Налаштування блоку</h4>
 
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">
-              Ціль:
-            </label>
-            {selectedGoal ? (
-              <div className="flex items-center gap-2">
-                <span className="text-sm flex-1">🎯 {goalTitle}</span>
+              {/* Дата */}
+              <div className="space-y-2">
+                <label className="text-xs text-muted-foreground flex items-center gap-1">
+                  <CalendarIcon className="h-3 w-3" />
+                  Дата:
+                </label>
+                <DatePicker
+                  date={scheduledDate}
+                  onSelect={setScheduledDate}
+                  placeholder="Оберіть дату"
+                />
+                {scheduledDate && (
+                  <button
+                    onClick={() => setScheduledDate(undefined)}
+                    className="text-xs text-destructive hover:underline"
+                  >
+                    Видалити дату
+                  </button>
+                )}
+              </div>
+
+              {/* Час */}
+              <div className="space-y-2">
+                <label className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Час:
+                </label>
+                <input
+                  type="time"
+                  value={scheduledTime || ''}
+                  onChange={(e) => setScheduledTime(e.target.value)}
+                  className="w-full px-2 py-1.5 text-sm border border-border rounded bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+                {scheduledTime && (
+                  <button
+                    onClick={() => setScheduledTime(undefined)}
+                    className="text-xs text-destructive hover:underline"
+                  >
+                    Видалити час
+                  </button>
+                )}
+              </div>
+
+              {/* Ціль */}
+              <div className="space-y-2">
+                <label className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Target className="h-3 w-3" />
+                  Ціль:
+                </label>
+                {selectedGoal ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm flex-1">🎯 {goalTitle}</span>
+                    <button
+                      onClick={handleRemoveGoal}
+                      className="text-xs text-destructive hover:underline"
+                    >
+                      Видалити
+                    </button>
+                  </div>
+                ) : (
+                  <select
+                    value={selectedGoal || ''}
+                    onChange={(e) => handleGoalSelect(e.target.value)}
+                    className="w-full px-2 py-1.5 text-sm border border-border rounded bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="">Виберіть ціль...</option>
+                    {goals.map((goal) => (
+                      <option key={goal.id} value={goal.id}>
+                        {goal.title} ({goal.category})
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              {/* Видалення блоку */}
+              <div className="pt-2 border-t border-border">
                 <button
-                  onClick={handleRemoveGoal}
-                  className="text-xs text-destructive hover:underline"
+                  onClick={handleDeleteBlock}
+                  className="w-full px-3 py-2 bg-destructive/10 text-destructive rounded-md hover:bg-destructive/20 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
                 >
-                  Видалити
+                  <Trash2 className="h-4 w-4" />
+                  Видалити блок
                 </button>
               </div>
-            ) : (
-              <select
-                value={selectedGoal || ''}
-                onChange={(e) => handleGoalSelect(e.target.value)}
-                className="w-full px-2 py-1.5 text-sm border border-border rounded bg-background"
-              >
-                <option value="">Виберіть ціль...</option>
-                {goals.map((goal) => (
-                  <option key={goal.id} value={goal.id}>
-                    {goal.title} ({goal.category})
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-        </div>
-      )}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
 
       {/* Prompts list */}
-      <div className="p-1.5 space-y-1.5 max-h-[400px] overflow-y-auto">
-        {prompts.length === 0 && !isEditing && (
-          <p className="text-sm text-muted-foreground italic">Додайте перший промпт</p>
-        )}
-
+      <div className="p-1.5 space-y-1.5 flex-1 overflow-y-auto min-h-0">
         {prompts.map((prompt) => (
           <div
             key={prompt.id}
@@ -305,14 +388,22 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
           </div>
         ))}
 
-        {/* Add new prompt form */}
-        {isEditing ? (
-          <div className="space-y-1.5">
-            <AutoResizeTextarea
-              value={newPromptText}
-              onChange={setNewPromptText}
-              placeholder="Напишіть промпт... (Cmd+Enter для додавання)"
-            />
+        {/* Add new prompt form - завжди показувати */}
+        <div className="space-y-1.5">
+          <textarea
+            value={newPromptText}
+            onChange={(e) => setNewPromptText(e.target.value)}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                e.preventDefault()
+                addPrompt()
+              }
+            }}
+            placeholder="Напишіть промпт... (Cmd+Enter для додавання)"
+            className="nodrag w-full px-2 py-1.5 text-sm border border-border rounded bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+            rows={prompts.length === 0 ? 3 : 2}
+          />
+          {newPromptText.trim() && (
             <div className="flex gap-1.5">
               <button
                 onClick={addPrompt}
@@ -321,27 +412,17 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
                 Додати
               </button>
               <button
-                onClick={() => {
-                  setIsEditing(false)
-                  setNewPromptText('')
-                }}
+                onClick={() => setNewPromptText('')}
                 className="px-2.5 py-1.5 bg-muted text-xs rounded hover:bg-muted/80"
               >
-                Скасувати
+                Очистити
               </button>
             </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="w-full p-1.5 text-sm text-muted-foreground border border-dashed border-border rounded hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-1.5"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Додати промпт
-          </button>
-        )}
+          )}
+        </div>
       </div>
     </div>
+    </>
   )
 }
 

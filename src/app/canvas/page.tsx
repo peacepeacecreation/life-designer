@@ -122,8 +122,22 @@ function CanvasFlow() {
       if (!connectingNodeId.current) return
 
       const targetIsPane = event.target.classList.contains('react-flow__pane')
+      const targetIsHandle = event.target.classList.contains('react-flow__handle')
 
-      if (targetIsPane) {
+      // Перевіряємо чи клік на node (шукаємо батьківський елемент з класом react-flow__node)
+      let targetElement = event.target
+      let targetIsNode = false
+      while (targetElement && targetElement !== document.body) {
+        if (targetElement.classList?.contains('react-flow__node')) {
+          targetIsNode = true
+          break
+        }
+        targetElement = targetElement.parentElement
+      }
+
+      // Створюємо новий блок ТІЛЬКИ якщо клік був на пустому місці (pane)
+      // Не створюємо, якщо клік був на handle або node (значить з'єднання вже створено)
+      if (targetIsPane && !targetIsHandle && !targetIsNode) {
         const position = screenToFlowPosition({
           x: event.clientX,
           y: event.clientY,
