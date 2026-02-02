@@ -120,47 +120,68 @@ function PromptBlockNode({ data }: NodeProps<PromptBlockData>) {
 
   return (
     <div className="bg-card border-2 border-border rounded-lg shadow-lg min-w-[300px] max-w-[500px]">
-      {/* Handles для з'єднання з усіх сторін */}
+      {/* Handles для з'єднання - зверху */}
       <Handle
         type="target"
         position={Position.Top}
-        className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
+        id="target-top"
+        className="!w-5 !h-5 !bg-foreground !border-[3px] !border-background hover:!scale-150 transition-transform !shadow-lg"
+        style={{ top: -10 }}
       />
       <Handle
-        type="target"
-        position={Position.Left}
-        className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
-      />
-      <Handle
-        type="target"
-        position={Position.Bottom}
-        className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
-      />
-      <Handle
-        type="target"
-        position={Position.Right}
-        className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
+        type="source"
+        position={Position.Top}
+        id="source-top"
+        className="!w-5 !h-5 !bg-foreground !border-[3px] !border-background hover:!scale-150 transition-transform !shadow-lg"
+        style={{ top: -10 }}
       />
 
+      {/* Handles - знизу */}
       <Handle
-        type="source"
-        position={Position.Top}
-        className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
-      />
-      <Handle
-        type="source"
-        position={Position.Left}
-        className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
+        type="target"
+        position={Position.Bottom}
+        id="target-bottom"
+        className="!w-5 !h-5 !bg-foreground !border-[3px] !border-background hover:!scale-150 transition-transform !shadow-lg"
+        style={{ bottom: -10 }}
       />
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
+        id="source-bottom"
+        className="!w-5 !h-5 !bg-foreground !border-[3px] !border-background hover:!scale-150 transition-transform !shadow-lg"
+        style={{ bottom: -10 }}
+      />
+
+      {/* Handles - зліва */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="target-left"
+        className="!w-5 !h-5 !bg-foreground !border-[3px] !border-background hover:!scale-150 transition-transform !shadow-lg"
+        style={{ left: -10 }}
+      />
+      <Handle
+        type="source"
+        position={Position.Left}
+        id="source-left"
+        className="!w-5 !h-5 !bg-foreground !border-[3px] !border-background hover:!scale-150 transition-transform !shadow-lg"
+        style={{ left: -10 }}
+      />
+
+      {/* Handles - справа */}
+      <Handle
+        type="target"
+        position={Position.Right}
+        id="target-right"
+        className="!w-5 !h-5 !bg-foreground !border-[3px] !border-background hover:!scale-150 transition-transform !shadow-lg"
+        style={{ right: -10 }}
       />
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
+        id="source-right"
+        className="!w-5 !h-5 !bg-foreground !border-[3px] !border-background hover:!scale-150 transition-transform !shadow-lg"
+        style={{ right: -10 }}
       />
 
       {/* Header */}
