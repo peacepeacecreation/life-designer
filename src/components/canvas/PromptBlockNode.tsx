@@ -1,8 +1,9 @@
 'use client'
 
 import { memo, useState, useRef, useEffect } from 'react'
-import { Handle, Position, NodeProps } from 'reactflow'
+import { Handle, Position, NodeProps, useUpdateNodeInternals, useReactFlow } from 'reactflow'
 import { Copy, Trash2, Plus, GripVertical, Settings, X } from 'lucide-react'
+import { generatePromptId } from '@/lib/canvas/utils'
 
 interface PromptItem {
   id: string
@@ -53,7 +54,7 @@ function AutoResizeTextarea({
   )
 }
 
-function PromptBlockNode({ data }: NodeProps<PromptBlockData>) {
+function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
   const [prompts, setPrompts] = useState<PromptItem[]>(data.prompts || [])
   const [newPromptText, setNewPromptText] = useState('')
   const [isEditing, setIsEditing] = useState(false)
@@ -61,6 +62,32 @@ function PromptBlockNode({ data }: NodeProps<PromptBlockData>) {
   const [goals, setGoals] = useState<Goal[]>([])
   const [selectedGoal, setSelectedGoal] = useState<string | undefined>(data.goal_id)
   const [goalTitle, setGoalTitle] = useState<string | undefined>(data.goal_title)
+  const updateNodeInternals = useUpdateNodeInternals()
+  const { setNodes } = useReactFlow()
+
+  // Оновлюємо внутрішні дані про handles після монтування
+  useEffect(() => {
+    updateNodeInternals(id)
+  }, [id, updateNodeInternals])
+
+  // Синхронізуємо зміни prompts з node data в ReactFlow
+  useEffect(() => {
+    setNodes((nodes) =>
+      nodes.map((node) =>
+        node.id === id
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                prompts,
+                goal_id: selectedGoal,
+                goal_title: goalTitle,
+              },
+            }
+          : node
+      )
+    )
+  }, [prompts, selectedGoal, goalTitle, id, setNodes])
 
   useEffect(() => {
     if (showSettings && goals.length === 0) {
@@ -86,7 +113,7 @@ function PromptBlockNode({ data }: NodeProps<PromptBlockData>) {
   const addPrompt = () => {
     if (newPromptText.trim()) {
       const newPrompt: PromptItem = {
-        id: `p${Date.now()}`,
+        id: generatePromptId(),
         content: newPromptText.trim(),
       }
       setPrompts([...prompts, newPrompt])
@@ -108,80 +135,74 @@ function PromptBlockNode({ data }: NodeProps<PromptBlockData>) {
     setSelectedGoal(goalId)
     setGoalTitle(goal?.title)
     setShowSettings(false)
-    // TODO: Save to database when we implement persistence
   }
 
   const handleRemoveGoal = () => {
     setSelectedGoal(undefined)
     setGoalTitle(undefined)
     setShowSettings(false)
-    // TODO: Update database
   }
 
   return (
     <div className="bg-card border-2 border-border rounded-lg shadow-lg min-w-[300px] max-w-[500px]">
-      {/* Handles для з'єднання - зверху */}
+      {/* Target handles - рендерити першими (будуть знизу, z-index менший) */}
       <Handle
         type="target"
         position={Position.Top}
         id="target-top"
-        className="!w-5 !h-5 !bg-foreground !border-[3px] !border-background hover:!scale-150 transition-transform !shadow-lg"
-        style={{ top: -10 }}
+        className="!w-3.5 !h-3.5 !bg-primary !border-2 !border-background !transition-transform !shadow-lg"
+        style={{ top: -7, transformOrigin: 'center', zIndex: 1 }}
       />
-      <Handle
-        type="source"
-        position={Position.Top}
-        id="source-top"
-        className="!w-5 !h-5 !bg-foreground !border-[3px] !border-background hover:!scale-150 transition-transform !shadow-lg"
-        style={{ top: -10 }}
-      />
-
-      {/* Handles - знизу */}
       <Handle
         type="target"
         position={Position.Bottom}
         id="target-bottom"
-        className="!w-5 !h-5 !bg-foreground !border-[3px] !border-background hover:!scale-150 transition-transform !shadow-lg"
-        style={{ bottom: -10 }}
+        className="!w-3.5 !h-3.5 !bg-primary !border-2 !border-background !transition-transform !shadow-lg"
+        style={{ bottom: -7, transformOrigin: 'center', zIndex: 1 }}
+      />
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="target-left"
+        className="!w-3.5 !h-3.5 !bg-primary !border-2 !border-background !transition-transform !shadow-lg"
+        style={{ left: -7, transformOrigin: 'center', zIndex: 1 }}
+      />
+      <Handle
+        type="target"
+        position={Position.Right}
+        id="target-right"
+        className="!w-3.5 !h-3.5 !bg-primary !border-2 !border-background !transition-transform !shadow-lg"
+        style={{ right: -7, transformOrigin: 'center', zIndex: 1 }}
+      />
+
+      {/* Source handles - рендерити другими (будуть зверху, z-index більший) */}
+      <Handle
+        type="source"
+        position={Position.Top}
+        id="source-top"
+        className="!w-3.5 !h-3.5 !bg-primary !border-2 !border-background hover:!scale-125 !transition-transform !shadow-lg !cursor-crosshair"
+        style={{ top: -7, transformOrigin: 'center', zIndex: 2 }}
       />
       <Handle
         type="source"
         position={Position.Bottom}
         id="source-bottom"
-        className="!w-5 !h-5 !bg-foreground !border-[3px] !border-background hover:!scale-150 transition-transform !shadow-lg"
-        style={{ bottom: -10 }}
-      />
-
-      {/* Handles - зліва */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        id="target-left"
-        className="!w-5 !h-5 !bg-foreground !border-[3px] !border-background hover:!scale-150 transition-transform !shadow-lg"
-        style={{ left: -10 }}
+        className="!w-3.5 !h-3.5 !bg-primary !border-2 !border-background hover:!scale-125 !transition-transform !shadow-lg !cursor-crosshair"
+        style={{ bottom: -7, transformOrigin: 'center', zIndex: 2 }}
       />
       <Handle
         type="source"
         position={Position.Left}
         id="source-left"
-        className="!w-5 !h-5 !bg-foreground !border-[3px] !border-background hover:!scale-150 transition-transform !shadow-lg"
-        style={{ left: -10 }}
-      />
-
-      {/* Handles - справа */}
-      <Handle
-        type="target"
-        position={Position.Right}
-        id="target-right"
-        className="!w-5 !h-5 !bg-foreground !border-[3px] !border-background hover:!scale-150 transition-transform !shadow-lg"
-        style={{ right: -10 }}
+        className="!w-3.5 !h-3.5 !bg-primary !border-2 !border-background hover:!scale-125 !transition-transform !shadow-lg !cursor-crosshair"
+        style={{ left: -7, transformOrigin: 'center', zIndex: 2 }}
       />
       <Handle
         type="source"
         position={Position.Right}
         id="source-right"
-        className="!w-5 !h-5 !bg-foreground !border-[3px] !border-background hover:!scale-150 transition-transform !shadow-lg"
-        style={{ right: -10 }}
+        className="!w-3.5 !h-3.5 !bg-primary !border-2 !border-background hover:!scale-125 !transition-transform !shadow-lg !cursor-crosshair"
+        style={{ right: -7, transformOrigin: 'center', zIndex: 2 }}
       />
 
       {/* Header */}

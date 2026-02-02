@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PROJECT_REF="gxzzkcthcdtmkdwfdrhv"
-SQL_FILE="supabase/migrations/014_update_clockify_projects_connection_id.sql"
+SQL_FILE="supabase/migrations/015_add_canvas_autosave.sql"
 
 echo "🚀 Supabase Database Migration Script"
 echo "════════════════════════════════════════════════════════════"
@@ -59,10 +59,11 @@ echo ""
 if [ "$HTTP_CODE" = "201" ] || [ "$HTTP_CODE" = "200" ]; then
   echo "✅ Migration executed successfully!"
   echo ""
-  echo "Updated clockify_projects with connection_id:"
-  echo "  • Set connection_id for existing projects"
-  echo "  • Based on user_id and workspace_id"
-  echo "  • Enables proper project-goal mapping in sync"
+  echo "Created canvas_workspaces table:"
+  echo "  • Table for canvas autosave data"
+  echo "  • JSONB columns for nodes and edges"
+  echo "  • RLS policies for user isolation"
+  echo "  • Auto-update triggers for timestamps"
   echo ""
 else
   echo "❌ Migration failed"

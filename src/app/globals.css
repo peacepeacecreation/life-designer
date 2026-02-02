@@ -396,21 +396,19 @@ body {
   background-size: 8.49px 8.49px;
 }
 
-/* React Flow Canvas Handles - більші кружечки для з'єднання */
+/* React Flow Canvas Styles */
+.react-flow__edge path,
+.react-flow__edge-path {
+  stroke: #000000 !important;
+  stroke-width: 2 !important;
+}
+
+.react-flow__connectionline,
+.react-flow__connectionline path {
+  stroke: #000000 !important;
+  stroke-width: 2 !important;
+}
+
 .react-flow__handle {
-  width: 16px !important;
-  height: 16px !important;
-  border: 3px solid var(--primary) !important;
-  background: white !important;
-}
-
-.dark .react-flow__handle {
-  background: var(--background) !important;
-}
-
-.react-flow__handle:hover {
-  width: 18px !important;
-  height: 18px !important;
-  border-width: 4px !important;
-  transform: scale(1.1);
+  transform-origin: center !important;
 }
