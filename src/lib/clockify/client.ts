@@ -234,6 +234,38 @@ export class ClockifyClient {
     );
   }
 
+  /**
+   * Create a new project in workspace
+   *
+   * @param workspaceId - Workspace ID
+   * @param project - Project data
+   * @returns Created project
+   */
+  async createProject(
+    workspaceId: string,
+    project: {
+      name: string;
+      color?: string; // Hex color (e.g., '#FF5722')
+      isPublic?: boolean;
+      billable?: boolean;
+      clientId?: string;
+    }
+  ): Promise<ClockifyProjectAPI> {
+    return this.request<ClockifyProjectAPI>(
+      `/workspaces/${workspaceId}/projects`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          name: project.name,
+          color: project.color || '#0B83D9', // Default blue
+          isPublic: project.isPublic ?? true,
+          billable: project.billable ?? false,
+          clientId: project.clientId || null,
+        }),
+      }
+    );
+  }
+
   // ============================================================================
   // TAG ENDPOINTS
   // ============================================================================
@@ -291,6 +323,22 @@ export class ClockifyClient {
     }`;
 
     return this.request<ClockifyTimeEntry[]>(endpoint);
+  }
+
+  /**
+   * Get a specific time entry by ID
+   *
+   * @param workspaceId - Workspace ID
+   * @param timeEntryId - Time entry ID
+   * @returns Time entry
+   */
+  async getTimeEntry(
+    workspaceId: string,
+    timeEntryId: string
+  ): Promise<ClockifyTimeEntry> {
+    return this.request<ClockifyTimeEntry>(
+      `/workspaces/${workspaceId}/time-entries/${timeEntryId}`
+    );
   }
 
   /**
