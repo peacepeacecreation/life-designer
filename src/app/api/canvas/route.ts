@@ -32,21 +32,64 @@ export async function GET() {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Отримати всі canvas користувача
-    const { data: canvases, error } = await supabase
+    // Отримати власні canvas користувача
+    const { data: ownCanvases, error: ownError } = await supabase
       .from('canvas_workspaces')
-      .select('id, title, created_at, updated_at, last_modified_at')
+      .select('id, title, created_at, updated_at, last_modified_at, user_id')
       .eq('user_id', (userData as any).id)
       .order('last_modified_at', { ascending: false })
 
-    if (error) {
-      console.error('Error fetching canvases:', error)
+    if (ownError) {
+      console.error('Error fetching own canvases:', ownError)
       return NextResponse.json({ error: 'Failed to fetch canvases' }, { status: 500 })
     }
 
+    // Отримати shared canvas
+    const { data: sharedCanvases, error: sharedError } = await supabase
+      .from('canvas_shares')
+      .select(`
+        canvas_id,
+        permission_level,
+        canvas_workspaces!inner (
+          id,
+          title,
+          created_at,
+          updated_at,
+          last_modified_at,
+          user_id
+        )
+      `)
+      .eq('shared_with_email', session.user.email)
+
+    if (sharedError) {
+      console.error('Error fetching shared canvases:', sharedError)
+    }
+
+    // Combine and format results
+    const allCanvases = [
+      ...(ownCanvases || []).map(c => ({
+        id: c.id,
+        title: c.title,
+        created_at: c.created_at,
+        updated_at: c.updated_at,
+        last_modified_at: c.last_modified_at,
+        is_owner: true,
+        permission: 'edit' as const,
+      })),
+      ...(sharedCanvases || []).map((s: any) => ({
+        id: s.canvas_workspaces.id,
+        title: s.canvas_workspaces.title,
+        created_at: s.canvas_workspaces.created_at,
+        updated_at: s.canvas_workspaces.updated_at,
+        last_modified_at: s.canvas_workspaces.last_modified_at,
+        is_owner: false,
+        permission: s.permission_level,
+      })),
+    ].sort((a, b) => new Date(b.last_modified_at).getTime() - new Date(a.last_modified_at).getTime())
+
     return NextResponse.json({
       success: true,
-      canvases: canvases || [],
+      canvases: allCanvases,
     })
   } catch (error) {
     console.error('Canvas GET error:', error)

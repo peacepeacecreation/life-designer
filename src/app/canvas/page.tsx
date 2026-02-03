@@ -22,10 +22,11 @@ import PromptBlockNode from '@/components/canvas/PromptBlockNode'
 import GoalBlockNode from '@/components/canvas/GoalBlockNode'
 import CustomEdge from '@/components/canvas/CustomEdge'
 import CanvasSelector from '@/components/canvas/CanvasSelector'
-import { Plus, Save, Cloud, AlertCircle, Loader2, Target, Download, Copy, FileJson } from 'lucide-react'
+import { Plus, Save, Cloud, AlertCircle, Loader2, Target, Download, Copy, FileJson, Share2 } from 'lucide-react'
 import { createAutosave, SaveStatus } from '@/lib/canvas/autosave'
 import { generateNodeId } from '@/lib/canvas/utils'
 import { exportCanvasToMarkdown, downloadMarkdown, exportCanvasToJSON, downloadJSON } from '@/lib/canvas/markdown-exporter'
+import ShareCanvasDialog from '@/components/canvas/ShareCanvasDialog'
 import {
   Dialog,
   DialogContent,
@@ -63,6 +64,7 @@ function CanvasFlow() {
   const [currentCanvasId, setCurrentCanvasId] = useState<string | undefined>(undefined)
   const [canvasTitle, setCanvasTitle] = useState('Робочий Canvas')
   const [copySuccess, setCopySuccess] = useState(false)
+  const [showShareDialog, setShowShareDialog] = useState(false)
   const { screenToFlowPosition } = useReactFlow()
   const connectingNodeId = useRef<string | null>(null)
   const connectingHandleId = useRef<string | null>(null)
@@ -555,14 +557,25 @@ function CanvasFlow() {
 
         {/* Canvas Selector зверху справа */}
         <Panel position="top-right" className="m-2">
-          <CanvasSelector
-            currentCanvasId={currentCanvasId}
-            currentCanvasTitle={canvasTitle}
-            onCanvasChange={handleCanvasChange}
-            onCanvasCreate={handleCanvasCreate}
-            onCanvasRename={handleCanvasRename}
-            onCanvasDelete={handleCanvasDelete}
-          />
+          <div className="flex items-center gap-2">
+            <CanvasSelector
+              currentCanvasId={currentCanvasId}
+              currentCanvasTitle={canvasTitle}
+              onCanvasChange={handleCanvasChange}
+              onCanvasCreate={handleCanvasCreate}
+              onCanvasRename={handleCanvasRename}
+              onCanvasDelete={handleCanvasDelete}
+            />
+            {currentCanvasId && (
+              <button
+                onClick={() => setShowShareDialog(true)}
+                className="p-2 bg-card border border-border rounded-md hover:bg-accent transition-colors"
+                title="Поділитися Canvas"
+              >
+                <Share2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </Panel>
 
         {/* Панель кнопок знизу */}
@@ -711,6 +724,16 @@ function CanvasFlow() {
             )}
           </div>
         </>
+      )}
+
+      {/* Share Canvas Dialog */}
+      {currentCanvasId && (
+        <ShareCanvasDialog
+          open={showShareDialog}
+          onOpenChange={setShowShareDialog}
+          canvasId={currentCanvasId}
+          canvasTitle={canvasTitle}
+        />
       )}
     </div>
   )
