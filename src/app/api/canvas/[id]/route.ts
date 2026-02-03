@@ -72,7 +72,7 @@ export async function GET(
     return NextResponse.json({
       success: true,
       canvas: {
-        ...canvas,
+        ...(canvas as any),
         permission,
         is_owner: isOwner,
       },

@@ -192,7 +192,9 @@ export default function CanvasSelector({
                       >
                         <span>{canvas.title}</span>
                         {canvas.permission === 'view' && (
-                          <Eye className="h-3 w-3 text-muted-foreground" title="Тільки перегляд" />
+                          <span title="Тільки перегляд">
+                            <Eye className="h-3 w-3 text-muted-foreground" />
+                          </span>
                         )}
                         {canvas.id === currentCanvasId && (
                           <span className="ml-auto text-xs text-primary">●</span>

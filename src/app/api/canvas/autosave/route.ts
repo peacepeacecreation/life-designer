@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
           .eq('shared_with_email', session.user.email)
           .single();
 
-        if (!share || share.permission_level !== 'edit') {
+        if (!share || (share as any).permission_level !== 'edit') {
           return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
         }
       }

@@ -74,6 +74,7 @@ function CanvasFlow() {
   const connectingHandleId = useRef<string | null>(null)
   const autosaveRef = useRef<ReturnType<typeof createAutosave> | null>(null)
   const nodesRef = useRef<Node[]>(nodes)
+  const previousPositionsRef = useRef<Map<string, { x: number; y: number }>>(new Map())
 
   const memoizedEdgeTypes = useMemo(() => edgeTypes, [])
 
@@ -361,6 +362,82 @@ function CanvasFlow() {
     [setEdges]
   )
 
+  // Переміщення залежних блоків при Shift+Drag
+  const onNodeDrag = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      // Перевіряємо чи натиснутий Shift
+      if (!event.shiftKey) {
+        return
+      }
+
+      // Отримуємо попередню позицію ноди
+      const previousPosition = previousPositionsRef.current.get(node.id)
+      if (!previousPosition) {
+        // Зберігаємо початкову позицію
+        previousPositionsRef.current.set(node.id, { x: node.position.x, y: node.position.y })
+        return
+      }
+
+      // Обчислюємо дельту переміщення
+      const deltaX = node.position.x - previousPosition.x
+      const deltaY = node.position.y - previousPosition.y
+
+      // Знаходимо всі залежні (дочірні) ноди - ті до яких йдуть edges від поточної ноди
+      const childNodeIds = edges
+        .filter((edge) => edge.source === node.id)
+        .map((edge) => edge.target)
+
+      // Рекурсивна функція для знаходження всіх нащадків
+      const getAllDescendants = (nodeId: string, visited = new Set<string>()): string[] => {
+        if (visited.has(nodeId)) return []
+        visited.add(nodeId)
+
+        const directChildren = edges
+          .filter((edge) => edge.source === nodeId)
+          .map((edge) => edge.target)
+
+        const allDescendants = [...directChildren]
+        directChildren.forEach((childId) => {
+          allDescendants.push(...getAllDescendants(childId, visited))
+        })
+
+        return allDescendants
+      }
+
+      const allDescendantIds = getAllDescendants(node.id)
+
+      // Оновлюємо позиції всіх залежних нод
+      if (allDescendantIds.length > 0) {
+        setNodes((nds) =>
+          nds.map((n) => {
+            if (allDescendantIds.includes(n.id)) {
+              const newPosition = {
+                x: n.position.x + deltaX,
+                y: n.position.y + deltaY,
+              }
+              // Оновлюємо попередню позицію для залежної ноди
+              previousPositionsRef.current.set(n.id, newPosition)
+              return {
+                ...n,
+                position: newPosition,
+              }
+            }
+            return n
+          })
+        )
+      }
+
+      // Оновлюємо попередню позицію для поточної ноди
+      previousPositionsRef.current.set(node.id, { x: node.position.x, y: node.position.y })
+    },
+    [edges, setNodes]
+  )
+
+  // Очищаємо позиції після завершення перетягування
+  const onNodeDragStop = useCallback(() => {
+    previousPositionsRef.current.clear()
+  }, [])
+
   const onConnectStart = useCallback((_: any, { nodeId, handleId, handleType }: any) => {
     console.log('onConnectStart:', { nodeId, handleId, handleType })
     connectingNodeId.current = nodeId
@@ -529,6 +606,8 @@ function CanvasFlow() {
         onConnect={canvasPermission === 'edit' ? onConnect : undefined}
         onConnectStart={canvasPermission === 'edit' ? onConnectStart : undefined}
         onConnectEnd={canvasPermission === 'edit' ? onConnectEnd : undefined}
+        onNodeDrag={canvasPermission === 'edit' ? onNodeDrag : undefined}
+        onNodeDragStop={canvasPermission === 'edit' ? onNodeDragStop : undefined}
         onPaneContextMenu={canvasPermission === 'edit' ? onPaneContextMenu : undefined}
         nodeTypes={nodeTypes}
         edgeTypes={memoizedEdgeTypes}
