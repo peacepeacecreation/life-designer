@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState, useRef, useMemo, useEffect } from 'react'
+import { useCallback, useState, useRef, useMemo, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import ReactFlow, {
   Node,
@@ -657,7 +657,9 @@ function CanvasFlow() {
 export default function CanvasPage() {
   return (
     <ReactFlowProvider>
-      <CanvasFlow />
+      <Suspense fallback={<div className="flex items-center justify-center h-screen"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
+        <CanvasFlow />
+      </Suspense>
     </ReactFlowProvider>
   )
 }
