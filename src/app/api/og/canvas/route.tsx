@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       throw new Error('Database unavailable')
     }
 
-    const { data: canvas } = await supabase
+    const { data: canvas } = await (supabase as any)
       .from('canvas_workspaces')
       .select('title, screenshot_url')
       .eq('id', canvasId)
