@@ -59,9 +59,10 @@ export async function POST(request: NextRequest) {
     if (!isDirectShare) {
       const supabase = getServerClient()
       if (supabase) {
+        // @ts-expect-error - screenshot_url field exists in database but types need regeneration
         const { error: updateError } = await supabase
           .from('canvas_workspaces')
-          .update({ screenshot_url: publicUrl } as any)
+          .update({ screenshot_url: publicUrl })
           .eq('id', canvasId)
 
         if (updateError) {
