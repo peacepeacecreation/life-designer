@@ -43,7 +43,7 @@ export async function GET(
       .from('canvas_workspaces')
       .select('id, title, nodes, edges, created_at, updated_at, last_modified_at')
       .eq('id', id)
-      .eq('user_id', userData.id)
+      .eq('user_id', (userData as any).id)
       .single()
 
     if (error) {
@@ -107,7 +107,7 @@ export async function PUT(
       .from('canvas_workspaces')
       .update({ title })
       .eq('id', id)
-      .eq('user_id', userData.id)
+      .eq('user_id', (userData as any).id)
       .select('id, title, updated_at')
       .single()
 
@@ -166,7 +166,7 @@ export async function DELETE(
       .from('canvas_workspaces')
       .delete()
       .eq('id', id)
-      .eq('user_id', userData.id)
+      .eq('user_id', (userData as any).id)
 
     if (error) {
       console.error('Error deleting canvas:', error)
