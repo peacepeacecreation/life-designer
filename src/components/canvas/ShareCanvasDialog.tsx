@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Share2, Copy, Check, X, Eye, Edit } from 'lucide-react'
+import { Share2, Copy, Check, X, Eye, Edit, Camera } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { generateCanvasPreview } from '@/lib/canvas/screenshot'
 
 interface Share {
   id: string
@@ -36,11 +37,14 @@ export default function ShareCanvasDialog({
   const [shares, setShares] = useState<Share[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [generatingScreenshot, setGeneratingScreenshot] = useState(false)
+  const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null)
 
-  // Load shares when dialog opens
+  // Load shares and generate screenshot when dialog opens
   useEffect(() => {
     if (open) {
       loadShares()
+      generateScreenshot()
     }
   }, [open, canvasId])
 
@@ -53,6 +57,19 @@ export default function ShareCanvasDialog({
       }
     } catch (error) {
       console.error('Error loading shares:', error)
+    }
+  }
+
+  const generateScreenshot = async () => {
+    setGeneratingScreenshot(true)
+    try {
+      const url = await generateCanvasPreview(canvasId)
+      setScreenshotUrl(url)
+    } catch (error) {
+      console.error('Error generating screenshot:', error)
+      // Don't show error to user - screenshot is optional
+    } finally {
+      setGeneratingScreenshot(false)
     }
   }
 
@@ -122,6 +139,20 @@ export default function ShareCanvasDialog({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Screenshot Preview Status */}
+          {generatingScreenshot && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-2 rounded-md">
+              <Camera className="h-4 w-4 animate-pulse" />
+              <span>Генерується preview для посилання...</span>
+            </div>
+          )}
+          {screenshotUrl && !generatingScreenshot && (
+            <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-950 px-3 py-2 rounded-md">
+              <Check className="h-4 w-4" />
+              <span>Preview готовий - посилання матиме картинку при публікації</span>
+            </div>
+          )}
+
           {/* Copy Link Section */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Посилання на Canvas</label>

@@ -1,7 +1,7 @@
 /**
  * Canvas Screenshot Generator
  *
- * Captures React Flow canvas as image and uploads to Supabase Storage
+ * Captures React Flow canvas as image and uploads to Vercel Blob Storage
  */
 
 import { toPng } from 'html-to-image'
@@ -46,7 +46,7 @@ export async function captureCanvasScreenshot(elementId: string = 'react-flow-wr
 }
 
 /**
- * Upload screenshot to Supabase Storage
+ * Upload screenshot to Vercel Blob Storage
  * @param canvasId - Canvas ID for filename
  * @param dataUrl - Base64 image data
  * @returns Public URL of uploaded image
