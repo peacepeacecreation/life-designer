@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -136,6 +137,9 @@ export default function ShareCanvasDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Поділитися Canvas: {canvasTitle}</DialogTitle>
+          <DialogDescription>
+            Надайте доступ іншим користувачам або скопіюйте посилання для спільного доступу
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
