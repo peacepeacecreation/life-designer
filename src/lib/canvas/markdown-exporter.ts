@@ -9,6 +9,7 @@ import { Node, Edge } from 'reactflow'
 interface PromptItem {
   id: string
   content: string
+  completed?: boolean
 }
 
 interface PromptBlockData {
@@ -127,8 +128,9 @@ function nodeToMarkdown(nodeWithChildren: NodeWithChildren, level: number = 0): 
 
     if (data.prompts && data.prompts.length > 0) {
       markdown += '**Список задач:**\n\n'
-      data.prompts.forEach((prompt, index) => {
-        markdown += `${index + 1}. ${prompt.content}\n`
+      data.prompts.forEach((prompt) => {
+        const checkbox = prompt.completed ? '[x]' : '[ ]'
+        markdown += `- ${checkbox} ${prompt.content}\n`
       })
       markdown += '\n'
     }
