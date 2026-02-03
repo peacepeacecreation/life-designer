@@ -240,7 +240,7 @@ export async function POST(request: NextRequest) {
       // Create user if doesn't exist
       const newUserResult: any = await (supabase as any)
         .from('users')
-        .insert({ email: session.user.email })
+        .insert({ email: session.user.email } as any)
         .select('id')
         .single();
 

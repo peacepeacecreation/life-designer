@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
     } else {
       const newUserResult: any = await (supabase as any)
         .from('users')
-        .insert({ email: session.user.email })
+        .insert({ email: session.user.email } as any)
         .select('id')
         .single();
 

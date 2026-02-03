@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
         console.log('[Admin Users API] Creating admin user:', currentUserEmail);
         const insertResult: any = await supabase
           .from('users')
-          .insert({ email: currentUserEmail })
+          .insert({ email: currentUserEmail } as any)
           .select()
           .single();
 
