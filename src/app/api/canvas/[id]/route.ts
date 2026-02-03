@@ -52,7 +52,7 @@ export async function GET(
 
     // Check access (owner or shared)
     const isOwner = (canvas as any).user_id === (userData as any).id
-    let permission = 'edit'
+    let permission: string = 'edit'
 
     if (!isOwner) {
       const { data: share } = await supabase
@@ -66,7 +66,7 @@ export async function GET(
         return NextResponse.json({ error: 'Access denied' }, { status: 403 })
       }
 
-      permission = share.permission_level
+      permission = (share as any).permission_level
     }
 
     return NextResponse.json({
