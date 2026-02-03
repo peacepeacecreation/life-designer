@@ -11,11 +11,13 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Plus, Target, Download } from 'lucide-react';
 import { useGoals } from '@/contexts/GoalsContext';
+import { useConfirm } from '@/hooks/use-confirm';
 
 export default function GoalsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const { goals } = useGoals();
+  const confirm = useConfirm();
 
   const handleExport = async () => {
     try {
@@ -46,7 +48,12 @@ export default function GoalsPage() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Export error:', error);
-      alert('Помилка при експорті даних');
+      await confirm({
+        title: 'Помилка експорту',
+        description: 'Виникла помилка при експорті даних. Спробуйте ще раз.',
+        confirmText: 'Зрозуміло',
+        cancelText: '',
+      });
     } finally {
       setIsExporting(false);
     }
