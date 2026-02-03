@@ -22,11 +22,12 @@ import PromptBlockNode from '@/components/canvas/PromptBlockNode'
 import GoalBlockNode from '@/components/canvas/GoalBlockNode'
 import CustomEdge from '@/components/canvas/CustomEdge'
 import CanvasSelector from '@/components/canvas/CanvasSelector'
-import { Plus, Save, Cloud, AlertCircle, Loader2, Target, Download, Copy, FileJson, Share2 } from 'lucide-react'
+import { Plus, Save, Cloud, AlertCircle, Loader2, Target, Download, Copy, FileJson, Share2, Camera } from 'lucide-react'
 import { createAutosave, SaveStatus } from '@/lib/canvas/autosave'
 import { generateNodeId } from '@/lib/canvas/utils'
 import { exportCanvasToMarkdown, downloadMarkdown, exportCanvasToJSON, downloadJSON } from '@/lib/canvas/markdown-exporter'
 import ShareCanvasDialog from '@/components/canvas/ShareCanvasDialog'
+import { generateCanvasPreview } from '@/lib/canvas/screenshot'
 import {
   Dialog,
   DialogContent,
@@ -65,6 +66,7 @@ function CanvasFlow() {
   const [canvasTitle, setCanvasTitle] = useState('Робочий Canvas')
   const [copySuccess, setCopySuccess] = useState(false)
   const [showShareDialog, setShowShareDialog] = useState(false)
+  const [generatingScreenshot, setGeneratingScreenshot] = useState(false)
   const { screenToFlowPosition } = useReactFlow()
   const connectingNodeId = useRef<string | null>(null)
   const connectingHandleId = useRef<string | null>(null)
@@ -277,6 +279,21 @@ function CanvasFlow() {
       console.error('Failed to copy JSON:', error)
     }
   }, [nodes, edges, canvasTitle, currentCanvasId])
+
+  const handleGenerateScreenshot = useCallback(async () => {
+    if (!currentCanvasId) return
+
+    setGeneratingScreenshot(true)
+    try {
+      await generateCanvasPreview(currentCanvasId)
+      alert('Screenshot згенеровано! Тепер посилання матиме превью.')
+    } catch (error) {
+      console.error('Failed to generate screenshot:', error)
+      alert('Помилка при генерації screenshot')
+    } finally {
+      setGeneratingScreenshot(false)
+    }
+  }, [currentCanvasId])
 
   const handleClearCanvas = useCallback(async () => {
     const confirmed = await confirm({
@@ -551,6 +568,19 @@ function CanvasFlow() {
               title="Завантажити JSON"
             >
               <Download className="h-4 w-4" />
+            </button>
+            <div className="w-px h-4 bg-white/20 mx-1" />
+            <button
+              onClick={handleGenerateScreenshot}
+              disabled={generatingScreenshot || !currentCanvasId}
+              className="p-1 hover:bg-white/10 rounded transition-colors disabled:opacity-50"
+              title="Згенерувати превью для посилання"
+            >
+              {generatingScreenshot ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Camera className="h-4 w-4" />
+              )}
             </button>
           </div>
         </Panel>

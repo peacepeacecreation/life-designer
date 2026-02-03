@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ChevronDown, Plus, Edit2, Trash2 } from 'lucide-react'
+import { ChevronDown, Plus, Edit2, Trash2, Users, Eye } from 'lucide-react'
 import { useConfirm } from '@/hooks/use-confirm'
 import {
   DropdownMenu,
@@ -25,6 +25,8 @@ interface Canvas {
   created_at: string
   updated_at: string
   last_modified_at: string
+  is_owner?: boolean
+  permission?: 'view' | 'edit'
 }
 
 interface CanvasSelectorProps {
@@ -114,11 +116,6 @@ export default function CanvasSelector({
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-64">
-          <div className="px-2 py-1.5 text-xs text-muted-foreground">
-            Мої Canvas
-          </div>
-          <DropdownMenuSeparator />
-
           {isLoading ? (
             <div className="px-2 py-2 text-xs text-muted-foreground">
               Завантаження...
@@ -128,44 +125,84 @@ export default function CanvasSelector({
               Немає canvas
             </div>
           ) : (
-            canvases.map((canvas) => (
-              <div
-                key={canvas.id}
-                className="group flex items-center justify-between px-2 py-1.5 hover:bg-accent rounded-sm"
-              >
-                <button
-                  onClick={() => onCanvasChange(canvas.id)}
-                  className="flex-1 text-left text-sm"
-                >
-                  {canvas.title}
-                  {canvas.id === currentCanvasId && (
-                    <span className="ml-2 text-xs text-primary">●</span>
-                  )}
-                </button>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleRename(canvas)
-                    }}
-                    className="p-1 hover:bg-background rounded"
-                    title="Перейменувати"
-                  >
-                    <Edit2 className="h-3 w-3" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDelete(canvas)
-                    }}
-                    className="p-1 hover:bg-destructive/10 text-destructive rounded"
-                    title="Видалити"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
-                </div>
-              </div>
-            ))
+            <>
+              {/* Мої Canvas */}
+              {canvases.filter(c => c.is_owner !== false).length > 0 && (
+                <>
+                  <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                    Мої Canvas
+                  </div>
+                  {canvases.filter(c => c.is_owner !== false).map((canvas) => (
+                    <div
+                      key={canvas.id}
+                      className="group flex items-center justify-between px-2 py-1.5 hover:bg-accent rounded-sm"
+                    >
+                      <button
+                        onClick={() => onCanvasChange(canvas.id)}
+                        className="flex-1 text-left text-sm"
+                      >
+                        {canvas.title}
+                        {canvas.id === currentCanvasId && (
+                          <span className="ml-2 text-xs text-primary">●</span>
+                        )}
+                      </button>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRename(canvas)
+                          }}
+                          className="p-1 hover:bg-background rounded"
+                          title="Перейменувати"
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDelete(canvas)
+                          }}
+                          className="p-1 hover:bg-destructive/10 text-destructive rounded"
+                          title="Видалити"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {/* Shared Canvas */}
+              {canvases.filter(c => c.is_owner === false).length > 0 && (
+                <>
+                  <DropdownMenuSeparator />
+                  <div className="px-2 py-1.5 text-xs text-muted-foreground flex items-center gap-1">
+                    <Users className="h-3 w-3" />
+                    Поділилися зі мною
+                  </div>
+                  {canvases.filter(c => c.is_owner === false).map((canvas) => (
+                    <div
+                      key={canvas.id}
+                      className="group flex items-center justify-between px-2 py-1.5 hover:bg-accent rounded-sm"
+                    >
+                      <button
+                        onClick={() => onCanvasChange(canvas.id)}
+                        className="flex-1 text-left text-sm flex items-center gap-2"
+                      >
+                        <span>{canvas.title}</span>
+                        {canvas.permission === 'view' && (
+                          <Eye className="h-3 w-3 text-muted-foreground" title="Тільки перегляд" />
+                        )}
+                        {canvas.id === currentCanvasId && (
+                          <span className="ml-auto text-xs text-primary">●</span>
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </>
+              )}
+            </>
           )}
 
           <DropdownMenuSeparator />
