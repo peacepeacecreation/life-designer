@@ -67,7 +67,7 @@ export async function GET() {
 
     // Combine and format results
     const allCanvases = [
-      ...(ownCanvases || []).map(c => ({
+      ...(ownCanvases || []).map((c: any) => ({
         id: c.id,
         title: c.title,
         created_at: c.created_at,
