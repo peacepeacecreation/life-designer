@@ -143,21 +143,15 @@ export default function ShareCanvasDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Screenshot Preview Status */}
+          {/* Loading overlay */}
           {generatingScreenshot && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-2 rounded-md">
-              <Camera className="h-4 w-4 animate-pulse" />
-              <span>Генерується preview для посилання...</span>
-            </div>
-          )}
-          {screenshotUrl && !generatingScreenshot && (
-            <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-950 px-3 py-2 rounded-md">
-              <Check className="h-4 w-4" />
-              <span>Preview готовий - посилання матиме картинку при публікації</span>
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           )}
 
           {/* Copy Link Section */}
+          {!generatingScreenshot && (
           <div className="space-y-2">
             <label className="text-sm font-medium">Посилання на Canvas</label>
             <div className="flex gap-2">
@@ -171,6 +165,7 @@ export default function ShareCanvasDialog({
                 onClick={copyLink}
                 variant="outline"
                 size="sm"
+                disabled={generatingScreenshot}
                 className="flex items-center gap-2"
               >
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -187,14 +182,16 @@ export default function ShareCanvasDialog({
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleShare()}
+                onKeyDown={(e) => e.key === 'Enter' && !generatingScreenshot && handleShare()}
                 placeholder="email@example.com"
-                className="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20"
+                disabled={generatingScreenshot}
+                className="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
               />
               <select
                 value={permission}
                 onChange={(e) => setPermission(e.target.value as 'view' | 'edit')}
-                className="px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20"
+                disabled={generatingScreenshot}
+                className="px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option value="view">Перегляд</option>
                 <option value="edit">Редагування</option>
@@ -202,7 +199,7 @@ export default function ShareCanvasDialog({
             </div>
             <Button
               onClick={handleShare}
-              disabled={isLoading || !email.trim()}
+              disabled={isLoading || !email.trim() || generatingScreenshot}
               className="w-full"
             >
               <Share2 className="h-4 w-4 mr-2" />

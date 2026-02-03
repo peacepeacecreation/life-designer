@@ -52,12 +52,12 @@ export async function GET(request: NextRequest) {
       .maybeSingle()
 
     // If canvas has screenshot URL, redirect to it
-    if (canvas && (canvas as any).screenshot_url) {
-      return Response.redirect((canvas as any).screenshot_url)
+    if (canvas?.screenshot_url) {
+      return Response.redirect(canvas.screenshot_url)
     }
 
     // Generate OG image with canvas title
-    const title = canvas ? (canvas as any).title : 'Canvas'
+    const title = canvas?.title || 'Canvas'
 
     return new ImageResponse(
       (

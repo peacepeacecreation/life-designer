@@ -25,9 +25,11 @@ export async function POST(request: NextRequest) {
 
     const file = formData.get('file') as File
     const canvasId = formData.get('canvasId') as string
+    const folder = (formData.get('folder') as string) || 'canvas-screenshots'
 
     console.log('File:', file ? `${file.name} (${file.size} bytes)` : 'null')
     console.log('Canvas ID:', canvasId)
+    console.log('Folder:', folder)
 
     if (!file || !canvasId) {
       console.error('Missing file or canvasId:', { file: !!file, canvasId })
@@ -35,31 +37,36 @@ export async function POST(request: NextRequest) {
     }
 
     // Upload to Vercel Blob Storage
-    // addRandomSuffix: false ensures the same filename is used and old screenshot is replaced
-    const filename = `canvas-screenshots/canvas-${canvasId}.png`
+    // For direct shares, use timestamp in filename; for OG previews, use fixed filename
+    const isDirectShare = folder === 'canvas-shares'
+    const filename = isDirectShare
+      ? `${folder}/${file.name}` // Use original filename which includes timestamp
+      : `${folder}/canvas-${canvasId}.png` // Fixed filename for OG preview
+
     console.log('Uploading to Vercel Blob:', filename)
 
     const blob = await put(filename, file, {
       access: 'public',
       contentType: 'image/png',
       addRandomSuffix: false, // Use same filename
-      allowOverwrite: true, // Replace existing screenshot instead of creating new one
+      allowOverwrite: !isDirectShare, // Only overwrite for OG previews, not for direct shares
     })
 
     console.log('Upload successful:', blob.url)
     const publicUrl = blob.url
 
-    // Update canvas metadata with screenshot URL
-    const supabase = getServerClient()
-    if (supabase) {
-      const { error: updateError } = await supabase
-        .from('canvas_workspaces')
-        // @ts-expect-error - Supabase types issue
-        .update({ screenshot_url: publicUrl } as any)
-        .eq('id', canvasId)
+    // Update canvas metadata with screenshot URL (only for OG previews)
+    if (!isDirectShare) {
+      const supabase = getServerClient()
+      if (supabase) {
+        const { error: updateError } = await supabase
+          .from('canvas_workspaces')
+          .update({ screenshot_url: publicUrl })
+          .eq('id', canvasId)
 
-      if (updateError) {
-        console.error('Error updating canvas metadata:', updateError)
+        if (updateError) {
+          console.error('Error updating canvas metadata:', updateError)
+        }
       }
     }
 

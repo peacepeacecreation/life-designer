@@ -281,6 +281,7 @@ export interface Database {
           nodes: Json
           edges: Json
           title: string
+          screenshot_url: string | null
           last_modified_at: string
           created_at: string
           updated_at: string
@@ -291,6 +292,7 @@ export interface Database {
           nodes?: Json
           edges?: Json
           title?: string
+          screenshot_url?: string | null
           last_modified_at?: string
           created_at?: string
           updated_at?: string
@@ -301,6 +303,7 @@ export interface Database {
           nodes?: Json
           edges?: Json
           title?: string
+          screenshot_url?: string | null
           last_modified_at?: string
           created_at?: string
           updated_at?: string
