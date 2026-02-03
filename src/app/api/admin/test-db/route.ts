@@ -57,7 +57,7 @@ export async function GET() {
 
       const insertResult: any = await supabase
         .from('users')
-        .insert({ email: currentUserEmail })
+        .insert({ email: currentUserEmail } as any)
         .select()
         .single();
 
