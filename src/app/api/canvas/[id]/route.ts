@@ -105,7 +105,8 @@ export async function PUT(
     // Оновити canvas
     const { data: updatedCanvas, error } = await supabase
       .from('canvas_workspaces')
-      .update({ title })
+      // @ts-expect-error - Supabase types issue
+      .update({ title } as any)
       .eq('id', id)
       .eq('user_id', (userData as any).id)
       .select('id, title, updated_at')

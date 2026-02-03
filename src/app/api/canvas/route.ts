@@ -36,7 +36,7 @@ export async function GET() {
     const { data: canvases, error } = await supabase
       .from('canvas_workspaces')
       .select('id, title, created_at, updated_at, last_modified_at')
-      .eq('user_id', userData.id)
+      .eq('user_id', (userData as any).id)
       .order('last_modified_at', { ascending: false })
 
     if (error) {
@@ -91,11 +91,11 @@ export async function POST(request: Request) {
     const { data: newCanvas, error } = await supabase
       .from('canvas_workspaces')
       .insert({
-        user_id: userData.id,
+        user_id: (userData as any).id,
         title,
         nodes: [],
         edges: [],
-      })
+      } as any)
       .select('id, title, created_at, updated_at')
       .single()
 

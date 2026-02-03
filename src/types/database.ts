@@ -274,6 +274,38 @@ export interface Database {
           updated_at?: string
         }
       }
+      canvas_workspaces: {
+        Row: {
+          id: string
+          user_id: string
+          nodes: Json
+          edges: Json
+          title: string
+          last_modified_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          nodes?: Json
+          edges?: Json
+          title?: string
+          last_modified_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          nodes?: Json
+          edges?: Json
+          title?: string
+          last_modified_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
