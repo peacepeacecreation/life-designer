@@ -63,13 +63,29 @@ export async function POST(request: NextRequest) {
       // 6a. Якщо canvasId надано - оновити цей canvas
       const { data: existingCanvas, error: checkError } = await supabase
         .from('canvas_workspaces')
-        .select('id')
+        .select('id, user_id')
         .eq('id', canvasId)
-        .eq('user_id', userId)
         .single();
 
       if (checkError || !existingCanvas) {
         return NextResponse.json({ error: 'Canvas not found' }, { status: 404 });
+      }
+
+      // Check if user has edit permission
+      const isOwner = (existingCanvas as any).user_id === userId;
+
+      if (!isOwner) {
+        // Check if canvas is shared with edit permission
+        const { data: share } = await supabase
+          .from('canvas_shares')
+          .select('permission_level')
+          .eq('canvas_id', canvasId)
+          .eq('shared_with_email', session.user.email)
+          .single();
+
+        if (!share || share.permission_level !== 'edit') {
+          return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
+        }
       }
 
       finalCanvasId = canvasId;
@@ -201,12 +217,11 @@ export async function GET(request: NextRequest) {
     const userId = (userData as any).id;
 
     if (canvasId) {
-      // 5a. Завантажити конкретний canvas
+      // 5a. Завантажити конкретний canvas (власний або shared)
       const { data: canvas, error } = await supabase
         .from('canvas_workspaces')
         .select('*')
         .eq('id', canvasId)
-        .eq('user_id', userId)
         .maybeSingle();
 
       if (error || !canvas) {
@@ -216,6 +231,29 @@ export async function GET(request: NextRequest) {
           title: 'Робочий Canvas',
           exists: false,
         });
+      }
+
+      // Check if user has access (owner or shared)
+      const isOwner = (canvas as any).user_id === userId;
+
+      if (!isOwner) {
+        // Check if canvas is shared with this user
+        const { data: share } = await supabase
+          .from('canvas_shares')
+          .select('permission_level')
+          .eq('canvas_id', canvasId)
+          .eq('shared_with_email', session.user.email)
+          .maybeSingle();
+
+        if (!share) {
+          return NextResponse.json({
+            error: 'Access denied',
+            nodes: [],
+            edges: [],
+            title: 'Робочий Canvas',
+            exists: false,
+          }, { status: 403 });
+        }
       }
 
       return NextResponse.json({

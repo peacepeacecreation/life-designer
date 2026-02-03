@@ -38,12 +38,11 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Отримати canvas
+    // Отримати canvas (власний або shared)
     const { data: canvas, error } = await supabase
       .from('canvas_workspaces')
-      .select('id, title, nodes, edges, created_at, updated_at, last_modified_at')
+      .select('id, title, nodes, edges, created_at, updated_at, last_modified_at, user_id')
       .eq('id', id)
-      .eq('user_id', (userData as any).id)
       .single()
 
     if (error) {
@@ -51,9 +50,32 @@ export async function GET(
       return NextResponse.json({ error: 'Canvas not found' }, { status: 404 })
     }
 
+    // Check access (owner or shared)
+    const isOwner = (canvas as any).user_id === (userData as any).id
+    let permission = 'edit'
+
+    if (!isOwner) {
+      const { data: share } = await supabase
+        .from('canvas_shares')
+        .select('permission_level')
+        .eq('canvas_id', id)
+        .eq('shared_with_email', session.user.email)
+        .maybeSingle()
+
+      if (!share) {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+      }
+
+      permission = share.permission_level
+    }
+
     return NextResponse.json({
       success: true,
-      canvas,
+      canvas: {
+        ...canvas,
+        permission,
+        is_owner: isOwner,
+      },
     })
   } catch (error) {
     console.error('Canvas GET error:', error)
