@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       if (supabase) {
         const { error: updateError } = await supabase
           .from('canvas_workspaces')
-          .update({ screenshot_url: publicUrl })
+          .update({ screenshot_url: publicUrl } as any)
           .eq('id', canvasId)
 
         if (updateError) {
