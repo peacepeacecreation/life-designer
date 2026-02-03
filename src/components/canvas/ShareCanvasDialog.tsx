@@ -73,7 +73,9 @@ export default function ShareCanvasDialog({
         loadShares()
       } else {
         const data = await response.json()
-        alert(data.error || 'Failed to share canvas')
+        console.error('Share error:', data)
+        const errorMsg = data.details ? `${data.error}: ${data.details}` : data.error
+        alert(errorMsg || 'Failed to share canvas')
       }
     } catch (error) {
       console.error('Error sharing canvas:', error)

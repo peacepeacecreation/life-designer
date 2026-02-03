@@ -148,7 +148,12 @@ export async function POST(
 
     if (shareError) {
       console.error('Error creating share:', shareError)
-      return NextResponse.json({ error: 'Failed to share canvas' }, { status: 500 })
+      console.error('Share data:', { canvas_id: id, email: email.toLowerCase(), userId: (userData as any).id, permission })
+      return NextResponse.json({
+        error: 'Failed to share canvas',
+        details: shareError.message,
+        code: shareError.code
+      }, { status: 500 })
     }
 
     return NextResponse.json({
