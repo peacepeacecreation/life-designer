@@ -26,7 +26,7 @@ export async function captureCanvasScreenshot(elementId: string = 'react-flow-wr
       backgroundColor: '#ffffff',
       // Skip elements that might cause issues
       filter: (node) => {
-        // Skip handles during screenshot
+        // Skip handles, controls, and panels during screenshot
         if (node.classList && (
           node.classList.contains('react-flow__handle') ||
           node.classList.contains('react-flow__controls') ||
@@ -34,8 +34,25 @@ export async function captureCanvasScreenshot(elementId: string = 'react-flow-wr
         )) {
           return false
         }
+
+        // Skip cross-origin images (favicons, external images) to avoid CORS errors
+        if (node instanceof HTMLImageElement) {
+          try {
+            const url = new URL(node.src, window.location.href)
+            // Skip external images (different origin)
+            if (url.origin !== window.location.origin) {
+              return false
+            }
+          } catch {
+            // If URL parsing fails, skip this image
+            return false
+          }
+        }
+
         return true
-      }
+      },
+      skipFonts: false,
+      cacheBust: false,
     })
 
     return dataUrl
