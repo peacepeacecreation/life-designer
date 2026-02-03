@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Share2, Copy, Check, X, Eye, Edit, Camera } from 'lucide-react'
+import { Share2, Copy, Check, X, Eye, Edit, Loader2 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -152,93 +152,93 @@ export default function ShareCanvasDialog({
 
           {/* Copy Link Section */}
           {!generatingScreenshot && (
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Посилання на Canvas</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                readOnly
-                value={`${window.location.origin}/canvas?id=${canvasId}`}
-                className="flex-1 px-3 py-2 text-sm border border-border rounded-md bg-muted"
-              />
-              <Button
-                onClick={copyLink}
-                variant="outline"
-                size="sm"
-                disabled={generatingScreenshot}
-                className="flex items-center gap-2"
-              >
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                {copied ? 'Скопійовано' : 'Копіювати'}
-              </Button>
-            </div>
-          </div>
-
-          {/* Add User Section */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Надати доступ користувачу</label>
-            <div className="flex gap-2">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !generatingScreenshot && handleShare()}
-                placeholder="email@example.com"
-                disabled={generatingScreenshot}
-                className="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
-              />
-              <select
-                value={permission}
-                onChange={(e) => setPermission(e.target.value as 'view' | 'edit')}
-                disabled={generatingScreenshot}
-                className="px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <option value="view">Перегляд</option>
-                <option value="edit">Редагування</option>
-              </select>
-            </div>
-            <Button
-              onClick={handleShare}
-              disabled={isLoading || !email.trim() || generatingScreenshot}
-              className="w-full"
-            >
-              <Share2 className="h-4 w-4 mr-2" />
-              Надати доступ
-            </Button>
-          </div>
-
-          {/* Shares List */}
-          {shares.length > 0 && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Користувачі з доступом</label>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {shares.map((share) => (
-                  <div
-                    key={share.id}
-                    className="flex items-center justify-between p-2 border border-border rounded-md"
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Посилання на Canvas</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${window.location.origin}/canvas?id=${canvasId}`}
+                    className="flex-1 px-3 py-2 text-sm border border-border rounded-md bg-muted"
+                  />
+                  <Button
+                    onClick={copyLink}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
                   >
-                    <div className="flex items-center gap-2 flex-1">
-                      {share.permission_level === 'view' ? (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Edit className="h-4 w-4 text-primary" />
-                      )}
-                      <span className="text-sm">{share.shared_with_email}</span>
-                      <span className="text-xs text-muted-foreground">
-                        ({share.permission_level === 'view' ? 'Перегляд' : 'Редагування'})
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => handleRemoveShare(share.shared_with_email)}
-                      className="p-1 hover:bg-destructive/10 rounded text-destructive"
-                      title="Видалити доступ"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {copied ? 'Скопійовано' : 'Копіювати'}
+                  </Button>
+                </div>
               </div>
-            </div>
+
+              {/* Add User Section */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Надати доступ користувачу</label>
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleShare()}
+                    placeholder="email@example.com"
+                    className="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                  <select
+                    value={permission}
+                    onChange={(e) => setPermission(e.target.value as 'view' | 'edit')}
+                    className="px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="view">Перегляд</option>
+                    <option value="edit">Редагування</option>
+                  </select>
+                </div>
+                <Button
+                  onClick={handleShare}
+                  disabled={isLoading || !email.trim()}
+                  className="w-full"
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Надати доступ
+                </Button>
+              </div>
+
+              {/* Shares List */}
+              {shares.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Користувачі з доступом</label>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {shares.map((share) => (
+                      <div
+                        key={share.id}
+                        className="flex items-center justify-between p-2 border border-border rounded-md"
+                      >
+                        <div className="flex items-center gap-2 flex-1">
+                          {share.permission_level === 'view' ? (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Edit className="h-4 w-4 text-primary" />
+                          )}
+                          <span className="text-sm">{share.shared_with_email}</span>
+                          <span className="text-xs text-muted-foreground">
+                            ({share.permission_level === 'view' ? 'Перегляд' : 'Редагування'})
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveShare(share.shared_with_email)}
+                          className="p-1 hover:bg-destructive/10 rounded text-destructive"
+                          title="Видалити доступ"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
