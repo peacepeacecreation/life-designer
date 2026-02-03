@@ -1,6 +1,7 @@
 'use client'
 
 import { memo, useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Handle, Position, NodeProps, useUpdateNodeInternals, useReactFlow, NodeResizer } from 'reactflow'
 import { Copy, Trash2, Plus, GripVertical, Settings, Clock, Target, Calendar as CalendarIcon } from 'lucide-react'
 import { generatePromptId } from '@/lib/canvas/utils'
@@ -12,6 +13,7 @@ import { uk } from 'date-fns/locale'
 interface PromptItem {
   id: string
   content: string
+  completed?: boolean
 }
 
 interface Goal {
@@ -30,6 +32,8 @@ interface PromptBlockData {
   color?: string
   priority?: string
   isConnecting?: boolean
+  onCopyNode?: () => void
+  lastEditedPromptText?: string
 }
 
 // Auto-resizing textarea component
@@ -37,7 +41,7 @@ function AutoResizeTextarea({
   value,
   onChange,
   placeholder,
-  rows = 2
+  rows = 1
 }: {
   value: string
   onChange: (value: string) => void
@@ -84,7 +88,9 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
   const [blockColor, setBlockColor] = useState<string | undefined>(data.color || '#000000')
   const [blockTitle, setBlockTitle] = useState<string>(data.title || 'Новий блок')
   const [priority, setPriority] = useState<string>(data.priority || 'P0')
+  const [lastEditedPromptText, setLastEditedPromptText] = useState<string | undefined>(data.lastEditedPromptText)
   const [popoverOpen, setPopoverOpen] = useState(false)
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const updateNodeInternals = useUpdateNodeInternals()
   const { setNodes, setEdges } = useReactFlow()
 
@@ -92,6 +98,12 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
   const isConnecting = data.isConnecting || false
   const sourceZIndex = isConnecting ? 10 : 100
   const targetZIndex = isConnecting ? 100 : 10
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setContextMenu({ x: e.clientX, y: e.clientY })
+  }
 
   // Оновлюємо внутрішні дані про handles після монтування та при зміні промптів
   useEffect(() => {
@@ -115,12 +127,13 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
                 scheduled_time: scheduledTime,
                 color: blockColor,
                 priority,
+                lastEditedPromptText,
               },
             }
           : node
       )
     )
-  }, [blockTitle, priority, prompts, selectedGoal, goalTitle, scheduledDate, scheduledTime, blockColor, id, setNodes])
+  }, [blockTitle, priority, prompts, selectedGoal, goalTitle, scheduledDate, scheduledTime, blockColor, lastEditedPromptText, id, setNodes])
 
   useEffect(() => {
     if (popoverOpen && goals.length === 0) {
@@ -150,6 +163,8 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
         content: newPromptText.trim(),
       }
       setPrompts([...prompts, newPrompt])
+      // Зберігаємо останній редагований текст
+      setLastEditedPromptText(newPromptText.trim())
       setNewPromptText('')
       setIsEditing(false)
     }
@@ -161,6 +176,14 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
 
   const updatePrompt = (id: string, newContent: string) => {
     setPrompts(prompts.map((p) => (p.id === id ? { ...p, content: newContent } : p)))
+    // Зберігаємо останній редагований текст
+    if (newContent.trim()) {
+      setLastEditedPromptText(newContent.trim())
+    }
+  }
+
+  const toggleComplete = (id: string) => {
+    setPrompts(prompts.map((p) => (p.id === id ? { ...p, completed: !p.completed } : p)))
   }
 
   const handleGoalSelect = (goalId: string) => {
@@ -176,12 +199,8 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
 
   const handleDeleteBlock = () => {
     if (confirm('Видалити цей блок?')) {
-      // Видаляємо ноду
+      // Видаляємо тільки ноду, з'єднання залишаються
       setNodes((nodes) => nodes.filter((node) => node.id !== id))
-      // Видаляємо всі з'єднання пов'язані з цією нодою
-      setEdges((edges) =>
-        edges.filter((edge) => edge.source !== id && edge.target !== id)
-      )
       setPopoverOpen(false)
     }
   }
@@ -190,12 +209,14 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
     <>
       <NodeResizer
         minWidth={220}
+        maxWidth={800}
         lineStyle={{ border: 'none' }}
         handleStyle={{
-          width: '40px',
-          height: '40px',
+          width: '6px',
+          height: '100%',
           opacity: 0,
           zIndex: 1000,
+          cursor: 'ew-resize',
         }}
         shouldResize={(event, params) => {
           // Дозволяємо resize тільки по ширині (лівий і правий handles)
@@ -203,8 +224,8 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
         }}
       />
 
-      {/* Невидимий wrapper з padding для handles */}
-      <div className="relative px-10" style={{ minWidth: '220px', maxWidth: '500px', overflow: 'visible' }}>
+      {/* Wrapper для handles */}
+      <div className="relative" style={{ minWidth: '220px', maxWidth: '500px', overflow: 'visible' }}>
         {/* Верхні/нижні handles для всього блоку */}
         <Handle
           type="target"
@@ -239,6 +260,7 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
         <div
           className="bg-white border-2 rounded-lg shadow-lg flex flex-col"
           style={{ borderColor: blockColor, overflow: 'visible' }}
+          onContextMenu={handleContextMenu}
         >
 
       {/* Header */}
@@ -423,8 +445,35 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
         {prompts.map((prompt, index) => (
           <div
             key={prompt.id}
-            className="flex items-start gap-1.5 py-2 first:pt-1.5 last:pb-1.5 relative"
+            className="flex items-start gap-1.5 py-2 first:pt-1.5 last:pb-1.5 relative px-2"
           >
+            {/* Чекбокс */}
+            <button
+              onClick={() => toggleComplete(prompt.id)}
+              className={`nodrag mt-1 flex-shrink-0 w-5 h-5 rounded-full border-2 transition-all ${
+                prompt.completed
+                  ? 'bg-primary border-primary'
+                  : 'bg-white border-border hover:border-primary'
+              }`}
+              title={prompt.completed ? 'Позначити як не виконане' : 'Позначити як виконане'}
+            >
+              {prompt.completed && (
+                <svg
+                  className="w-full h-full text-primary-foreground"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={3}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              )}
+            </button>
+
             <div className="flex-1">
               {/* Handles для кожного промпта окремо */}
               <Handle
@@ -456,11 +505,13 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
                 style={{ right: -16, top: '50%', transform: 'translateY(-50%)', transformOrigin: 'center', zIndex: targetZIndex }}
               />
 
-              <AutoResizeTextarea
-                value={prompt.content}
-                onChange={(newContent) => updatePrompt(prompt.id, newContent)}
-                placeholder="Напишіть промпт..."
-              />
+              <div className={prompt.completed ? 'line-through opacity-60' : ''}>
+                <AutoResizeTextarea
+                  value={prompt.content}
+                  onChange={(newContent) => updatePrompt(prompt.id, newContent)}
+                  placeholder="Напишіть промпт..."
+                />
+              </div>
             </div>
             {/* <div className="flex flex-col gap-1">
               <button
@@ -516,6 +567,44 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
       </div>
       </div> {/* Закриття білого блоку */}
     </div> {/* Закриття wrapper */}
+
+    {/* Контекстне меню через Portal */}
+    {contextMenu && typeof document !== 'undefined' && createPortal(
+      <>
+        <div
+          className="fixed inset-0 z-[9999]"
+          onClick={() => setContextMenu(null)}
+          onContextMenu={(e) => {
+            e.preventDefault()
+            setContextMenu(null)
+          }}
+        />
+        <div
+          className="fixed z-[10000] bg-white border-2 border-black rounded-md shadow-lg py-1 min-w-[150px]"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+        >
+          <button
+            onClick={() => {
+              data.onCopyNode?.()
+              setContextMenu(null)
+            }}
+            className="w-full px-3 py-1.5 text-left text-xs hover:bg-accent transition-colors"
+          >
+            Копіювати блок
+          </button>
+          <button
+            onClick={() => {
+              setContextMenu(null)
+              handleDeleteBlock()
+            }}
+            className="w-full px-3 py-1.5 text-left text-xs hover:bg-destructive/10 text-destructive transition-colors border-t border-border"
+          >
+            Видалити блок
+          </button>
+        </div>
+      </>,
+      document.body
+    )}
     </>
   )
 }

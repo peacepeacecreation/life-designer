@@ -14,6 +14,7 @@ export interface PromptBlockData {
   prompts: PromptItem[]
   goal_id?: string
   goal_title?: string
+  lastEditedPromptText?: string
 }
 
 export type CanvasNode = Node<PromptBlockData>

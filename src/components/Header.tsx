@@ -12,6 +12,7 @@ import {
   User,
   Clock,
   Workflow,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AnimatedLinesLogo from "@/components/icons/AnimatedLinesLogo";
@@ -26,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useEffect, useState } from "react";
 
 const navigation = [
   { name: "Календар", href: "/calendar", icon: Calendar },
@@ -38,6 +40,19 @@ const navigation = [
 export default function Header() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check admin access when session is available
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetch('/api/admin/check-access')
+        .then(res => res.json())
+        .then(data => setIsAdmin(data.hasAccess))
+        .catch(() => setIsAdmin(false));
+    } else {
+      setIsAdmin(false);
+    }
+  }, [status]);
 
   const getUserInitials = (name?: string | null) => {
     if (!name) return "U";
@@ -120,6 +135,17 @@ export default function Header() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin" className="cursor-pointer">
+                          <Shield className="mr-2 h-4 w-4" />
+                          Адмін панель
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
                   <DropdownMenuItem asChild>
                     <Link href="/clockify" className="cursor-pointer">
                       <Clock className="mr-2 h-4 w-4" />

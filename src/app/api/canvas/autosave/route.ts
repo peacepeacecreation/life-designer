@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     // 2. Parse request body
     const body = await request.json();
-    const { nodes, edges, title } = body;
+    const { canvasId, nodes, edges, title } = body;
 
     // 3. Validate required fields
     if (!Array.isArray(nodes) || !Array.isArray(edges)) {
@@ -44,73 +44,107 @@ export async function POST(request: NextRequest) {
     }
 
     // 5. Get user ID from email
-    const userResult: any = await supabase
+    const { data: userData, error: userError } = await supabase
       .from('users')
       .select('id')
       .eq('email', session.user.email)
       .single();
 
-    if (userResult.error || !userResult.data) {
+    if (userError || !userData) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const userId = userResult.data.id;
+    const userId = userData.id;
 
-    // 6. Check if canvas already exists for this user
-    const existingResult: any = await supabase
-      .from('canvas_workspaces')
-      .select('id')
-      .eq('user_id', userId)
-      .single();
-
-    let canvasId: string;
+    let finalCanvasId: string;
     let action: 'created' | 'updated';
 
-    if (existingResult.data) {
-      // UPDATE existing canvas
-      canvasId = existingResult.data.id;
-      const updateResult: any = await (supabase as any)
+    if (canvasId) {
+      // 6a. Якщо canvasId надано - оновити цей canvas
+      const { data: existingCanvas, error: checkError } = await supabase
+        .from('canvas_workspaces')
+        .select('id')
+        .eq('id', canvasId)
+        .eq('user_id', userId)
+        .single();
+
+      if (checkError || !existingCanvas) {
+        return NextResponse.json({ error: 'Canvas not found' }, { status: 404 });
+      }
+
+      finalCanvasId = canvasId;
+
+      // Оновити canvas
+      const { error: updateError } = await supabase
         .from('canvas_workspaces')
         .update({
           nodes,
           edges,
           ...(title && { title }),
         })
-        .eq('id', canvasId)
-        .select('id')
-        .single();
+        .eq('id', finalCanvasId);
 
-      if (updateResult.error) {
-        console.error('Error updating canvas:', updateResult.error);
-        throw updateResult.error;
+      if (updateError) {
+        console.error('Error updating canvas:', updateError);
+        throw updateError;
       }
 
       action = 'updated';
     } else {
-      // INSERT new canvas
-      const insertResult: any = await (supabase as any)
+      // 6b. Якщо canvasId НЕ надано - знайти останній canvas або створити новий
+      const { data: lastCanvas } = await supabase
         .from('canvas_workspaces')
-        .insert({
-          user_id: userId,
-          nodes,
-          edges,
-          title: title || 'Робочий Canvas',
-        })
         .select('id')
-        .single();
+        .eq('user_id', userId)
+        .order('last_modified_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (insertResult.error) {
-        console.error('Error creating canvas:', insertResult.error);
-        throw insertResult.error;
+      if (lastCanvas) {
+        // Оновити останній canvas
+        finalCanvasId = lastCanvas.id;
+
+        const { error: updateError } = await supabase
+          .from('canvas_workspaces')
+          .update({
+            nodes,
+            edges,
+            ...(title && { title }),
+          })
+          .eq('id', finalCanvasId);
+
+        if (updateError) {
+          console.error('Error updating canvas:', updateError);
+          throw updateError;
+        }
+
+        action = 'updated';
+      } else {
+        // Створити новий canvas
+        const { data: newCanvas, error: insertError } = await supabase
+          .from('canvas_workspaces')
+          .insert({
+            user_id: userId,
+            nodes,
+            edges,
+            title: title || 'Робочий Canvas',
+          })
+          .select('id')
+          .single();
+
+        if (insertError || !newCanvas) {
+          console.error('Error creating canvas:', insertError);
+          throw insertError;
+        }
+
+        finalCanvasId = newCanvas.id;
+        action = 'created';
       }
-
-      canvasId = insertResult.data.id;
-      action = 'created';
     }
 
     return NextResponse.json({
       success: true,
-      canvasId,
+      canvasId: finalCanvasId,
       action,
     });
 
@@ -135,20 +169,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 2. Get Supabase client
+    // 2. Get canvasId from query params (optional)
+    const { searchParams } = new URL(request.url);
+    const canvasId = searchParams.get('canvasId');
+
+    // 3. Get Supabase client
     const supabase = getServerClient();
     if (!supabase) {
       return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
     }
 
-    // 3. Get user ID from email
-    const userResult: any = await supabase
+    // 4. Get user ID from email
+    const { data: userData, error: userError } = await supabase
       .from('users')
       .select('id')
       .eq('email', session.user.email)
       .single();
 
-    if (userResult.error || !userResult.data) {
+    if (userError || !userData) {
       // New user - return empty canvas
       return NextResponse.json({
         nodes: [],
@@ -158,36 +196,62 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const userId = userResult.data.id;
+    const userId = userData.id;
 
-    // 4. Fetch canvas workspace
-    const canvasResult: any = await supabase
-      .from('canvas_workspaces')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
+    if (canvasId) {
+      // 5a. Завантажити конкретний canvas
+      const { data: canvas, error } = await supabase
+        .from('canvas_workspaces')
+        .select('*')
+        .eq('id', canvasId)
+        .eq('user_id', userId)
+        .maybeSingle();
 
-    if (canvasResult.error || !canvasResult.data) {
-      // Canvas doesn't exist yet - return empty
+      if (error || !canvas) {
+        return NextResponse.json({
+          nodes: [],
+          edges: [],
+          title: 'Робочий Canvas',
+          exists: false,
+        });
+      }
+
       return NextResponse.json({
-        nodes: [],
-        edges: [],
-        title: 'Робочий Canvas',
-        exists: false,
+        nodes: canvas.nodes || [],
+        edges: canvas.edges || [],
+        title: canvas.title || 'Робочий Canvas',
+        canvasId: canvas.id,
+        lastModified: canvas.last_modified_at,
+        exists: true,
+      });
+    } else {
+      // 5b. Завантажити останній змінений canvas
+      const { data: canvas } = await supabase
+        .from('canvas_workspaces')
+        .select('*')
+        .eq('user_id', userId)
+        .order('last_modified_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!canvas) {
+        return NextResponse.json({
+          nodes: [],
+          edges: [],
+          title: 'Робочий Canvas',
+          exists: false,
+        });
+      }
+
+      return NextResponse.json({
+        nodes: canvas.nodes || [],
+        edges: canvas.edges || [],
+        title: canvas.title || 'Робочий Canvas',
+        canvasId: canvas.id,
+        lastModified: canvas.last_modified_at,
+        exists: true,
       });
     }
-
-    const canvas = canvasResult.data;
-
-    return NextResponse.json({
-      nodes: canvas.nodes || [],
-      edges: canvas.edges || [],
-      title: canvas.title || 'Робочий Canvas',
-      canvasId: canvas.id,
-      lastModified: canvas.last_modified_at,
-      exists: true,
-    });
-
   } catch (error: any) {
     console.error('Error in GET /api/canvas/autosave:', error);
     return NextResponse.json(

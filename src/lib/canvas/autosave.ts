@@ -8,12 +8,14 @@ import { Node, Edge } from 'reactflow';
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 export interface AutosaveOptions {
+  canvasId?: string;
   debounceMs?: number;
   onStatusChange?: (status: SaveStatus) => void;
   onError?: (error: Error) => void;
 }
 
 export interface CanvasData {
+  canvasId?: string;
   nodes: Node[];
   edges: Edge[];
   title?: string;
@@ -39,11 +41,13 @@ export interface AutosaveResponse {
  */
 export function createAutosave(options: AutosaveOptions = {}) {
   const {
+    canvasId,
     debounceMs = 3000,
     onStatusChange,
     onError,
   } = options;
 
+  let currentCanvasId = canvasId;
   let debounceTimer: NodeJS.Timeout | null = null;
   let saveInProgress = false;
   let pendingSave = false;
@@ -72,12 +76,17 @@ export function createAutosave(options: AutosaveOptions = {}) {
     setStatus('saving');
 
     try {
+      const dataWithCanvasId = {
+        ...data,
+        canvasId: currentCanvasId,
+      };
+
       const response = await fetch('/api/canvas/autosave', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(dataWithCanvasId),
       });
 
       if (!response.ok) {
@@ -157,9 +166,14 @@ export function createAutosave(options: AutosaveOptions = {}) {
   /**
    * Loads the saved canvas data
    */
-  async function load(): Promise<LoadCanvasResponse> {
+  async function load(loadCanvasId?: string): Promise<LoadCanvasResponse> {
     try {
-      const response = await fetch('/api/canvas/autosave', {
+      const canvasIdToLoad = loadCanvasId || currentCanvasId;
+      const url = canvasIdToLoad
+        ? `/api/canvas/autosave?canvasId=${canvasIdToLoad}`
+        : '/api/canvas/autosave';
+
+      const response = await fetch(url, {
         method: 'GET',
       });
 
@@ -193,6 +207,20 @@ export function createAutosave(options: AutosaveOptions = {}) {
   }
 
   /**
+   * Updates the canvas ID (useful when switching canvases)
+   */
+  function setCanvasId(newCanvasId: string | undefined) {
+    currentCanvasId = newCanvasId;
+  }
+
+  /**
+   * Gets the current canvas ID
+   */
+  function getCanvasId(): string | undefined {
+    return currentCanvasId;
+  }
+
+  /**
    * Cleanup function
    */
   function destroy() {
@@ -207,6 +235,8 @@ export function createAutosave(options: AutosaveOptions = {}) {
     saveNow,
     load,
     getStatus,
+    setCanvasId,
+    getCanvasId,
     destroy,
   };
 }
