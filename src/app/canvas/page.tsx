@@ -22,10 +22,10 @@ import PromptBlockNode from '@/components/canvas/PromptBlockNode'
 import GoalBlockNode from '@/components/canvas/GoalBlockNode'
 import CustomEdge from '@/components/canvas/CustomEdge'
 import CanvasSelector from '@/components/canvas/CanvasSelector'
-import { Plus, Save, Cloud, AlertCircle, Loader2, Target, Download, Copy } from 'lucide-react'
+import { Plus, Save, Cloud, AlertCircle, Loader2, Target, Download, Copy, FileJson } from 'lucide-react'
 import { createAutosave, SaveStatus } from '@/lib/canvas/autosave'
 import { generateNodeId } from '@/lib/canvas/utils'
-import { exportCanvasToMarkdown, downloadMarkdown } from '@/lib/canvas/markdown-exporter'
+import { exportCanvasToMarkdown, downloadMarkdown, exportCanvasToJSON, downloadJSON } from '@/lib/canvas/markdown-exporter'
 import {
   Dialog,
   DialogContent,
@@ -258,6 +258,23 @@ function CanvasFlow() {
       console.error('Failed to copy markdown:', error)
     }
   }, [nodes, edges, canvasTitle])
+
+  const handleExportJSON = useCallback(() => {
+    const json = exportCanvasToJSON(nodes, edges, canvasTitle, currentCanvasId)
+    const filename = `${canvasTitle.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.json`
+    downloadJSON(json, filename)
+  }, [nodes, edges, canvasTitle, currentCanvasId])
+
+  const handleCopyJSON = useCallback(async () => {
+    const json = exportCanvasToJSON(nodes, edges, canvasTitle, currentCanvasId)
+    try {
+      await navigator.clipboard.writeText(json)
+      setCopySuccess(true)
+      setTimeout(() => setCopySuccess(false), 2000)
+    } catch (error) {
+      console.error('Failed to copy JSON:', error)
+    }
+  }, [nodes, edges, canvasTitle, currentCanvasId])
 
   const handleClearCanvas = useCallback(async () => {
     const confirmed = await confirm({
@@ -515,6 +532,21 @@ function CanvasFlow() {
               onClick={handleExportMarkdown}
               className="p-1 hover:bg-white/10 rounded transition-colors"
               title="Завантажити Markdown"
+            >
+              <Download className="h-4 w-4" />
+            </button>
+            <div className="w-px h-4 bg-white/20 mx-1" />
+            <button
+              onClick={handleCopyJSON}
+              className="p-1 hover:bg-white/10 rounded transition-colors relative"
+              title="Копіювати JSON"
+            >
+              <FileJson className={`h-4 w-4 ${copySuccess ? 'text-green-400' : ''}`} />
+            </button>
+            <button
+              onClick={handleExportJSON}
+              className="p-1 hover:bg-white/10 rounded transition-colors"
+              title="Завантажити JSON"
             >
               <Download className="h-4 w-4" />
             </button>

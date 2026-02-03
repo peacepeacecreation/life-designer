@@ -197,3 +197,45 @@ export function downloadMarkdown(content: string, filename: string = 'canvas.md'
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
 }
+
+/**
+ * Export canvas to JSON format
+ */
+export function exportCanvasToJSON(
+  nodes: Node[],
+  edges: Edge[],
+  canvasTitle: string = 'Canvas',
+  canvasId?: string
+): string {
+  const exportData = {
+    version: '1.0',
+    canvasTitle,
+    canvasId,
+    exportedAt: new Date().toISOString(),
+    nodes,
+    edges,
+    stats: {
+      totalBlocks: nodes.length,
+      goals: nodes.filter(n => n.type === 'goalBlock').length,
+      tasks: nodes.filter(n => n.type === 'promptBlock').length,
+      connections: edges.length,
+    }
+  }
+
+  return JSON.stringify(exportData, null, 2)
+}
+
+/**
+ * Download JSON as file
+ */
+export function downloadJSON(content: string, filename: string = 'canvas.json') {
+  const blob = new Blob([content], { type: 'application/json;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
