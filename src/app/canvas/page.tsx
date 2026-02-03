@@ -67,6 +67,8 @@ function CanvasFlow() {
   const [copySuccess, setCopySuccess] = useState(false)
   const [showShareDialog, setShowShareDialog] = useState(false)
   const [generatingScreenshot, setGeneratingScreenshot] = useState(false)
+  const [canvasPermission, setCanvasPermission] = useState<'view' | 'edit'>('edit')
+  const [isOwner, setIsOwner] = useState(true)
   const { screenToFlowPosition } = useReactFlow()
   const connectingNodeId = useRef<string | null>(null)
   const connectingHandleId = useRef<string | null>(null)
@@ -110,8 +112,16 @@ function CanvasFlow() {
         setCanvasTitle(data.title)
         setCurrentCanvasId(data.canvasId)
 
-        // Зберегти останній відкритий canvas
+        // Check canvas details for permission
         if (data.canvasId) {
+          const canvasResponse = await fetch(`/api/canvas/${data.canvasId}`)
+          if (canvasResponse.ok) {
+            const canvasData = await canvasResponse.json()
+            setCanvasPermission(canvasData.canvas.permission || 'edit')
+            setIsOwner(canvasData.canvas.is_owner !== false)
+          }
+
+          // Зберегти останній відкритий canvas
           localStorage.setItem('lastCanvasId', data.canvasId)
         }
       } else {
@@ -514,15 +524,18 @@ function CanvasFlow() {
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onConnectStart={onConnectStart}
-        onConnectEnd={onConnectEnd}
-        onPaneContextMenu={onPaneContextMenu}
+        onNodesChange={canvasPermission === 'edit' ? onNodesChange : undefined}
+        onEdgesChange={canvasPermission === 'edit' ? onEdgesChange : undefined}
+        onConnect={canvasPermission === 'edit' ? onConnect : undefined}
+        onConnectStart={canvasPermission === 'edit' ? onConnectStart : undefined}
+        onConnectEnd={canvasPermission === 'edit' ? onConnectEnd : undefined}
+        onPaneContextMenu={canvasPermission === 'edit' ? onPaneContextMenu : undefined}
         nodeTypes={nodeTypes}
         edgeTypes={memoizedEdgeTypes}
         fitView
+        nodesDraggable={canvasPermission === 'edit'}
+        nodesConnectable={canvasPermission === 'edit'}
+        elementsSelectable={canvasPermission === 'edit'}
         defaultEdgeOptions={{
           animated: true,
           style: { stroke: '#000000', strokeWidth: 2 },
@@ -530,6 +543,13 @@ function CanvasFlow() {
         }}
         connectionLineStyle={{ stroke: '#000000', strokeWidth: 2 }}
       >
+        {/* View-only banner */}
+        {canvasPermission === 'view' && (
+          <Panel position="top-center" className="bg-amber-500/90 backdrop-blur-sm px-4 py-2 rounded text-white text-sm font-medium">
+            👁️ Режим перегляду - редагування заборонено
+          </Panel>
+        )}
+
         {/* Інформаційна панель зверху зліва - як в TradingView */}
         <Panel position="top-left" className="bg-black/80 backdrop-blur-sm px-3 py-1.5 rounded text-white text-xs font-mono flex items-center gap-3">
           <div className="flex items-center gap-3">
@@ -609,38 +629,40 @@ function CanvasFlow() {
         </Panel>
 
         {/* Панель кнопок знизу */}
-        <Panel position="bottom-center" className="bg-card/95 backdrop-blur-sm border border-border rounded-lg shadow-lg">
-          <div className="flex gap-2 p-3">
-            <Button
-              onClick={openGoalDialog}
-              variant="default"
-              size="default"
-              className="flex items-center gap-2"
-            >
-              <Target className="h-4 w-4" />
-              Створити ціль
-            </Button>
-            <Button
-              onClick={addNewBlock}
-              variant="secondary"
-              size="default"
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Новий блок
-            </Button>
-            <Button
-              onClick={handleManualSave}
-              variant="outline"
-              size="default"
-              className="flex items-center gap-2"
-              disabled={saveStatus === 'saving'}
-            >
-              <Save className="h-4 w-4" />
-              Зберегти
-            </Button>
-          </div>
-        </Panel>
+        {canvasPermission === 'edit' && (
+          <Panel position="bottom-center" className="bg-card/95 backdrop-blur-sm border border-border rounded-lg shadow-lg">
+            <div className="flex gap-2 p-3">
+              <Button
+                onClick={openGoalDialog}
+                variant="default"
+                size="default"
+                className="flex items-center gap-2"
+              >
+                <Target className="h-4 w-4" />
+                Створити ціль
+              </Button>
+              <Button
+                onClick={addNewBlock}
+                variant="secondary"
+                size="default"
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Новий блок
+              </Button>
+              <Button
+                onClick={handleManualSave}
+                variant="outline"
+                size="default"
+                className="flex items-center gap-2"
+                disabled={saveStatus === 'saving'}
+              >
+                <Save className="h-4 w-4" />
+                Зберегти
+              </Button>
+            </div>
+          </Panel>
+        )}
         <Controls />
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
       </ReactFlow>
