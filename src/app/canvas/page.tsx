@@ -22,7 +22,7 @@ import PromptBlockNode from '@/components/canvas/PromptBlockNode'
 import GoalBlockNode from '@/components/canvas/GoalBlockNode'
 import CustomEdge from '@/components/canvas/CustomEdge'
 import CanvasSelector from '@/components/canvas/CanvasSelector'
-import { Plus, Save, Cloud, AlertCircle, Loader2, Target, Download } from 'lucide-react'
+import { Plus, Save, Cloud, AlertCircle, Loader2, Target, Download, Copy } from 'lucide-react'
 import { createAutosave, SaveStatus } from '@/lib/canvas/autosave'
 import { generateNodeId } from '@/lib/canvas/utils'
 import { exportCanvasToMarkdown, downloadMarkdown } from '@/lib/canvas/markdown-exporter'
@@ -62,6 +62,7 @@ function CanvasFlow() {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const [currentCanvasId, setCurrentCanvasId] = useState<string | undefined>(undefined)
   const [canvasTitle, setCanvasTitle] = useState('Робочий Canvas')
+  const [copySuccess, setCopySuccess] = useState(false)
   const { screenToFlowPosition } = useReactFlow()
   const connectingNodeId = useRef<string | null>(null)
   const connectingHandleId = useRef<string | null>(null)
@@ -245,6 +246,17 @@ function CanvasFlow() {
     const markdown = exportCanvasToMarkdown(nodes, edges, canvasTitle)
     const filename = `${canvasTitle.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.md`
     downloadMarkdown(markdown, filename)
+  }, [nodes, edges, canvasTitle])
+
+  const handleCopyMarkdown = useCallback(async () => {
+    const markdown = exportCanvasToMarkdown(nodes, edges, canvasTitle)
+    try {
+      await navigator.clipboard.writeText(markdown)
+      setCopySuccess(true)
+      setTimeout(() => setCopySuccess(false), 2000)
+    } catch (error) {
+      console.error('Failed to copy markdown:', error)
+    }
   }, [nodes, edges, canvasTitle])
 
   const handleClearCanvas = useCallback(async () => {
@@ -491,13 +503,22 @@ function CanvasFlow() {
               <SaveStatusIndicator />
             </span>
           </div>
-          <button
-            onClick={handleExportMarkdown}
-            className="ml-2 p-1 hover:bg-white/10 rounded transition-colors"
-            title="Експортувати в Markdown"
-          >
-            <Download className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-1 ml-2">
+            <button
+              onClick={handleCopyMarkdown}
+              className="p-1 hover:bg-white/10 rounded transition-colors relative"
+              title="Копіювати Markdown"
+            >
+              <Copy className={`h-4 w-4 ${copySuccess ? 'text-green-400' : ''}`} />
+            </button>
+            <button
+              onClick={handleExportMarkdown}
+              className="p-1 hover:bg-white/10 rounded transition-colors"
+              title="Завантажити Markdown"
+            >
+              <Download className="h-4 w-4" />
+            </button>
+          </div>
         </Panel>
 
         {/* Canvas Selector зверху справа */}
