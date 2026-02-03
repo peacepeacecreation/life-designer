@@ -16,6 +16,10 @@ interface PromptBlockData {
   prompts: PromptItem[]
   goal_id?: string
   goal_title?: string
+  priority?: string
+  scheduled_date?: string
+  scheduled_time?: string
+  color?: string
 }
 
 interface GoalBlockData {
@@ -100,8 +104,29 @@ function nodeToMarkdown(nodeWithChildren: NodeWithChildren, level: number = 0): 
 
     markdown += `${heading} ${taskType}: ${data.title}\n\n`
 
+    // Add metadata
+    const metadata: string[] = []
+
+    if (data.priority && data.priority !== 'P0') {
+      markdown += `**Пріоритет:** ${data.priority}\n\n`
+    }
+
+    if (data.scheduled_date) {
+      const date = new Date(data.scheduled_date)
+      const formattedDate = date.toLocaleDateString('uk-UA')
+      markdown += `**Заплановано:** ${formattedDate}`
+      if (data.scheduled_time) {
+        markdown += ` о ${data.scheduled_time}`
+      }
+      markdown += '\n\n'
+    }
+
+    if (data.color && data.color !== '#000000') {
+      markdown += `**Колір:** ${data.color}\n\n`
+    }
+
     if (data.prompts && data.prompts.length > 0) {
-      markdown += '**Промпти:**\n\n'
+      markdown += '**Список задач:**\n\n'
       data.prompts.forEach((prompt, index) => {
         markdown += `${index + 1}. ${prompt.content}\n`
       })

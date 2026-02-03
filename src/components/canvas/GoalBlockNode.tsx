@@ -7,6 +7,7 @@ import { generatePromptId } from '@/lib/canvas/utils'
 import { Settings, Trash2 } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { getIconById, isPredefinedIcon } from '@/lib/goalIcons'
+import { useConfirm } from '@/hooks/use-confirm'
 
 interface PromptItem {
   id: string
@@ -69,6 +70,7 @@ function GoalBlockNode({ data, id }: NodeProps<GoalBlockData>) {
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const { setNodes, setEdges, getNodes, getEdges } = useReactFlow()
+  const confirm = useConfirm()
 
   // Динамічний z-index: коли тягнемо лінію - target в пріоритеті, інакше - source
   const isConnecting = data.isConnecting || false
@@ -117,8 +119,15 @@ function GoalBlockNode({ data, id }: NodeProps<GoalBlockData>) {
     setPrompts(prompts.map((p) => (p.id === id ? { ...p, completed: !p.completed } : p)))
   }
 
-  const handleDeleteBlock = () => {
-    if (confirm('Видалити цей блок цілі та всі залежні від нього звичайні блоки?')) {
+  const handleDeleteBlock = async () => {
+    const confirmed = await confirm({
+      title: 'Видалити блок цілі',
+      description: 'Це видалить блок цілі та всі залежні від нього звичайні блоки. Продовжити?',
+      confirmText: 'Видалити',
+      variant: 'destructive',
+    })
+
+    if (confirmed) {
       // Отримуємо поточний стан ПЕРЕД будь-якими змінами
       const currentNodes = getNodes()
       const currentEdges = getEdges()

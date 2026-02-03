@@ -2,6 +2,7 @@
 
 import { useCallback, useState, useRef, useMemo, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useConfirm } from '@/hooks/use-confirm'
 import ReactFlow, {
   Node,
   Edge,
@@ -49,6 +50,7 @@ const initialEdges: Edge[] = []
 function CanvasFlow() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const confirm = useConfirm()
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
@@ -245,15 +247,22 @@ function CanvasFlow() {
     downloadMarkdown(markdown, filename)
   }, [nodes, edges, canvasTitle])
 
-  const handleClearCanvas = useCallback(() => {
-    if (confirm('Видалити всі блоки та з\'єднання?')) {
+  const handleClearCanvas = useCallback(async () => {
+    const confirmed = await confirm({
+      title: 'Очистити canvas',
+      description: 'Видалити всі блоки та з\'єднання?',
+      confirmText: 'Видалити',
+      variant: 'destructive',
+    })
+
+    if (confirmed) {
       setNodes([])
       setEdges([])
       if (autosaveRef.current) {
         autosaveRef.current.saveNow([], [])
       }
     }
-  }, [setNodes, setEdges])
+  }, [confirm, setNodes, setEdges])
 
   const handlePasteNode = useCallback((position: { x: number; y: number }) => {
     if (copiedNode) {

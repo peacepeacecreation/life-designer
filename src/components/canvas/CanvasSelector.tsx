@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { ChevronDown, Plus, Edit2, Trash2 } from 'lucide-react'
+import { useConfirm } from '@/hooks/use-confirm'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +49,7 @@ export default function CanvasSelector({
   const [showRenameDialog, setShowRenameDialog] = useState(false)
   const [renameCanvasId, setRenameCanvasId] = useState<string>('')
   const [renameValue, setRenameValue] = useState('')
+  const confirm = useConfirm()
 
   // Завантажити список canvas
   const loadCanvases = async () => {
@@ -84,7 +86,14 @@ export default function CanvasSelector({
   }
 
   const handleDelete = async (canvas: Canvas) => {
-    if (confirm(`Видалити canvas "${canvas.title}"?`)) {
+    const confirmed = await confirm({
+      title: 'Видалити canvas',
+      description: `Ви впевнені, що хочете видалити canvas "${canvas.title}"?`,
+      confirmText: 'Видалити',
+      variant: 'destructive',
+    })
+
+    if (confirmed) {
       await onCanvasDelete(canvas.id)
       loadCanvases()
     }

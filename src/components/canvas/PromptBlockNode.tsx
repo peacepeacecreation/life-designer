@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { DatePicker } from '@/components/ui/date-picker'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
+import { useConfirm } from '@/hooks/use-confirm'
 
 interface PromptItem {
   id: string
@@ -93,6 +94,7 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const updateNodeInternals = useUpdateNodeInternals()
   const { setNodes, setEdges } = useReactFlow()
+  const confirm = useConfirm()
 
   // Динамічний z-index: коли тягнемо лінію - target в пріоритеті, інакше - source
   const isConnecting = data.isConnecting || false
@@ -197,8 +199,15 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
     setGoalTitle(undefined)
   }
 
-  const handleDeleteBlock = () => {
-    if (confirm('Видалити цей блок?')) {
+  const handleDeleteBlock = async () => {
+    const confirmed = await confirm({
+      title: 'Видалити блок',
+      description: 'Ви впевнені, що хочете видалити цей блок?',
+      confirmText: 'Видалити',
+      variant: 'destructive',
+    })
+
+    if (confirmed) {
       // Видаляємо тільки ноду, з'єднання залишаються
       setNodes((nodes) => nodes.filter((node) => node.id !== id))
       setPopoverOpen(false)
