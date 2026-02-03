@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { getServerClient } from '@/lib/supabase/pool'
 
 type Props = {
   searchParams: Promise<{ id?: string }>
@@ -15,11 +16,30 @@ export async function generateCanvasMetadata({ searchParams }: Props): Promise<M
 
   const url = canvasId ? `${baseUrl}/canvas?id=${canvasId}` : `${baseUrl}/canvas`
 
+  // Fetch canvas title from database if canvasId exists
+  let canvasTitle = 'Canvas'
+  if (canvasId) {
+    const supabase = getServerClient()
+    if (supabase) {
+      const { data } = await (supabase as any)
+        .from('canvas_workspaces')
+        .select('title')
+        .eq('id', canvasId)
+        .maybeSingle()
+
+      if (data?.title) {
+        canvasTitle = data.title
+      }
+    }
+  }
+
+  const fullTitle = `${canvasTitle} | Life Designer`
+
   return {
-    title: 'Canvas | Life Designer',
+    title: fullTitle,
     description: 'План та дизайн вашого життя',
     openGraph: {
-      title: 'Canvas | Life Designer',
+      title: canvasTitle,
       description: 'План та дизайн вашого життя',
       url,
       siteName: 'Life Designer',
@@ -36,7 +56,7 @@ export async function generateCanvasMetadata({ searchParams }: Props): Promise<M
     },
     twitter: {
       card: 'summary_large_image',
-      title: 'Canvas | Life Designer',
+      title: canvasTitle,
       description: 'План та дизайн вашого життя',
       images: [ogImageUrl],
     },

@@ -477,16 +477,33 @@ function CanvasFlow() {
           y: event.clientY,
         })
 
-        // Знайти source node і отримати останній редагований промпт
+        // Знайти source node
         const sourceNode = nodesRef.current.find(n => n.id === connectingNodeId.current)
-        const lastPromptText = sourceNode?.data?.lastEditedPromptText
 
         // Використати текст промпта як назву (максимум 21 символ)
         let newBlockTitle = 'Новий блок'
-        if (lastPromptText && lastPromptText.trim()) {
-          newBlockTitle = lastPromptText.length > 21
-            ? lastPromptText.substring(0, 21) + '...'
-            : lastPromptText
+
+        if (sourceNode) {
+          // Для звичайних блоків - останній редагований промпт
+          if (sourceNode.data?.lastEditedPromptText) {
+            const lastPromptText = sourceNode.data.lastEditedPromptText
+            newBlockTitle = lastPromptText.length > 21
+              ? lastPromptText.substring(0, 21) + '...'
+              : lastPromptText
+          }
+          // Для блоків цілей - знайти текст промпта за handleId
+          else if (sourceNode.data?.isGoalBlock && connectingHandleId.current && sourceNode.data?.prompts) {
+            // handleId має формат "source-left-{promptId}" або "source-right-{promptId}"
+            const handleId = connectingHandleId.current
+            const promptId = handleId.replace('source-left-', '').replace('source-right-', '')
+            const prompt = sourceNode.data.prompts.find((p: any) => p.id === promptId)
+
+            if (prompt?.content && prompt.content.trim()) {
+              newBlockTitle = prompt.content.length > 21
+                ? prompt.content.substring(0, 21) + '...'
+                : prompt.content
+            }
+          }
         }
 
         const newNode: Node = {

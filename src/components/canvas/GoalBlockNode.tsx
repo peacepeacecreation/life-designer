@@ -4,7 +4,7 @@ import { memo, useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Handle, Position, NodeProps, useReactFlow, Edge } from 'reactflow'
 import { generatePromptId } from '@/lib/canvas/utils'
-import { Settings, Trash2 } from 'lucide-react'
+import { Settings, Trash2, Copy } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { getIconById, isPredefinedIcon } from '@/lib/goalIcons'
 import { useConfirm } from '@/hooks/use-confirm'
@@ -69,6 +69,7 @@ function GoalBlockNode({ data, id }: NodeProps<GoalBlockData>) {
   const [newPromptText, setNewPromptText] = useState('')
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
+  const [promptContextMenu, setPromptContextMenu] = useState<{ x: number; y: number; promptId: string; promptContent: string } | null>(null)
   const { setNodes, setEdges, getNodes, getEdges } = useReactFlow()
   const confirm = useConfirm()
 
@@ -81,6 +82,20 @@ function GoalBlockNode({ data, id }: NodeProps<GoalBlockData>) {
     e.preventDefault()
     e.stopPropagation()
     setContextMenu({ x: e.clientX, y: e.clientY })
+  }
+
+  const handlePromptContextMenu = (e: React.MouseEvent, promptId: string, promptContent: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setPromptContextMenu({ x: e.clientX, y: e.clientY, promptId, promptContent })
+  }
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
   }
 
   // Синхронізуємо зміни prompts з node data
@@ -113,6 +128,19 @@ function GoalBlockNode({ data, id }: NodeProps<GoalBlockData>) {
 
   const updatePrompt = (id: string, newContent: string) => {
     setPrompts(prompts.map((p) => (p.id === id ? { ...p, content: newContent } : p)))
+  }
+
+  const deletePrompt = async (id: string) => {
+    const confirmed = await confirm({
+      title: 'Видалити завдання',
+      description: 'Ви впевнені, що хочете видалити це завдання?',
+      confirmText: 'Видалити',
+      variant: 'destructive',
+    })
+
+    if (confirmed) {
+      setPrompts(prompts.filter((p) => p.id !== id))
+    }
   }
 
   const toggleComplete = (id: string) => {
@@ -296,7 +324,10 @@ function GoalBlockNode({ data, id }: NodeProps<GoalBlockData>) {
                   style={{ right: -16, top: '50%', transform: 'translateY(-50%)', transformOrigin: 'center', zIndex: sourceZIndex }}
                 />
 
-                <div className={prompt.completed ? 'line-through opacity-60' : ''}>
+                <div
+                  className={prompt.completed ? 'line-through opacity-60' : ''}
+                  onContextMenu={(e) => handlePromptContextMenu(e, prompt.id, prompt.content)}
+                >
                   <AutoResizeTextarea
                     value={prompt.content}
                     onChange={(newContent) => updatePrompt(prompt.id, newContent)}
@@ -342,7 +373,7 @@ function GoalBlockNode({ data, id }: NodeProps<GoalBlockData>) {
         </div>
       </div>
 
-      {/* Контекстне меню через Portal */}
+      {/* Контекстне меню блоку через Portal */}
       {contextMenu && typeof document !== 'undefined' && createPortal(
         <>
           <div
@@ -374,6 +405,46 @@ function GoalBlockNode({ data, id }: NodeProps<GoalBlockData>) {
               className="w-full px-3 py-1.5 text-left text-xs hover:bg-destructive/10 text-destructive transition-colors border-t border-border"
             >
               Видалити блок цілі
+            </button>
+          </div>
+        </>,
+        document.body
+      )}
+
+      {/* Контекстне меню завдання через Portal */}
+      {promptContextMenu && typeof document !== 'undefined' && createPortal(
+        <>
+          <div
+            className="fixed inset-0 z-[9999]"
+            onClick={() => setPromptContextMenu(null)}
+            onContextMenu={(e) => {
+              e.preventDefault()
+              setPromptContextMenu(null)
+            }}
+          />
+          <div
+            className="fixed z-[10000] bg-white border-2 border-black rounded-md shadow-lg py-1 min-w-[150px]"
+            style={{ top: promptContextMenu.y, left: promptContextMenu.x }}
+          >
+            <button
+              onClick={async () => {
+                await copyToClipboard(promptContextMenu.promptContent)
+                setPromptContextMenu(null)
+              }}
+              className="w-full px-3 py-1.5 text-left text-xs hover:bg-accent transition-colors flex items-center gap-2"
+            >
+              <Copy className="h-3 w-3" />
+              Копіювати текст
+            </button>
+            <button
+              onClick={() => {
+                setPromptContextMenu(null)
+                deletePrompt(promptContextMenu.promptId)
+              }}
+              className="w-full px-3 py-1.5 text-left text-xs hover:bg-destructive/10 text-destructive transition-colors border-t border-border flex items-center gap-2"
+            >
+              <Trash2 className="h-3 w-3" />
+              Видалити пункт
             </button>
           </div>
         </>,

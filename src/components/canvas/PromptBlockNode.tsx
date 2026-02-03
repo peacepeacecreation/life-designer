@@ -92,6 +92,7 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
   const [lastEditedPromptText, setLastEditedPromptText] = useState<string | undefined>(data.lastEditedPromptText)
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
+  const [promptContextMenu, setPromptContextMenu] = useState<{ x: number; y: number; promptId: string; promptContent: string } | null>(null)
   const updateNodeInternals = useUpdateNodeInternals()
   const { setNodes, setEdges } = useReactFlow()
   const confirm = useConfirm()
@@ -105,6 +106,12 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
     e.preventDefault()
     e.stopPropagation()
     setContextMenu({ x: e.clientX, y: e.clientY })
+  }
+
+  const handlePromptContextMenu = (e: React.MouseEvent, promptId: string, promptContent: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setPromptContextMenu({ x: e.clientX, y: e.clientY, promptId, promptContent })
   }
 
   // Оновлюємо внутрішні дані про handles після монтування та при зміні промптів
@@ -172,8 +179,17 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
     }
   }
 
-  const deletePrompt = (id: string) => {
-    setPrompts(prompts.filter((p) => p.id !== id))
+  const deletePrompt = async (id: string) => {
+    const confirmed = await confirm({
+      title: 'Видалити промпт',
+      description: 'Ви впевнені, що хочете видалити цей промпт?',
+      confirmText: 'Видалити',
+      variant: 'destructive',
+    })
+
+    if (confirmed) {
+      setPrompts(prompts.filter((p) => p.id !== id))
+    }
   }
 
   const updatePrompt = (id: string, newContent: string) => {
@@ -514,7 +530,10 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
                 style={{ right: -16, top: '50%', transform: 'translateY(-50%)', transformOrigin: 'center', zIndex: targetZIndex }}
               />
 
-              <div className={prompt.completed ? 'line-through opacity-60' : ''}>
+              <div
+                className={prompt.completed ? 'line-through opacity-60' : ''}
+                onContextMenu={(e) => handlePromptContextMenu(e, prompt.id, prompt.content)}
+              >
                 <AutoResizeTextarea
                   value={prompt.content}
                   onChange={(newContent) => updatePrompt(prompt.id, newContent)}
@@ -577,7 +596,7 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
       </div> {/* Закриття білого блоку */}
     </div> {/* Закриття wrapper */}
 
-    {/* Контекстне меню через Portal */}
+    {/* Контекстне меню блоку через Portal */}
     {contextMenu && typeof document !== 'undefined' && createPortal(
       <>
         <div
@@ -609,6 +628,46 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
             className="w-full px-3 py-1.5 text-left text-xs hover:bg-destructive/10 text-destructive transition-colors border-t border-border"
           >
             Видалити блок
+          </button>
+        </div>
+      </>,
+      document.body
+    )}
+
+    {/* Контекстне меню промпта через Portal */}
+    {promptContextMenu && typeof document !== 'undefined' && createPortal(
+      <>
+        <div
+          className="fixed inset-0 z-[9999]"
+          onClick={() => setPromptContextMenu(null)}
+          onContextMenu={(e) => {
+            e.preventDefault()
+            setPromptContextMenu(null)
+          }}
+        />
+        <div
+          className="fixed z-[10000] bg-white border-2 border-black rounded-md shadow-lg py-1 min-w-[150px]"
+          style={{ top: promptContextMenu.y, left: promptContextMenu.x }}
+        >
+          <button
+            onClick={async () => {
+              await copyToClipboard(promptContextMenu.promptContent)
+              setPromptContextMenu(null)
+            }}
+            className="w-full px-3 py-1.5 text-left text-xs hover:bg-accent transition-colors flex items-center gap-2"
+          >
+            <Copy className="h-3 w-3" />
+            Копіювати текст
+          </button>
+          <button
+            onClick={() => {
+              setPromptContextMenu(null)
+              deletePrompt(promptContextMenu.promptId)
+            }}
+            className="w-full px-3 py-1.5 text-left text-xs hover:bg-destructive/10 text-destructive transition-colors border-t border-border flex items-center gap-2"
+          >
+            <Trash2 className="h-3 w-3" />
+            Видалити пункт
           </button>
         </div>
       </>,
