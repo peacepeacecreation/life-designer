@@ -20,6 +20,7 @@ interface PromptNoteEditorProps {
   nodeId: string
   promptId: string
   promptText: string
+  onNoteSaved?: () => void
 }
 
 export default function PromptNoteEditor({
@@ -29,6 +30,7 @@ export default function PromptNoteEditor({
   nodeId,
   promptId,
   promptText,
+  onNoteSaved,
 }: PromptNoteEditorProps) {
   const [initialContent, setInitialContent] = useState<PartialBlock[] | undefined>(undefined)
   const [isLoading, setIsLoading] = useState(true)
@@ -90,12 +92,16 @@ export default function PromptNoteEditor({
           content,
         }),
       })
+      // Notify parent that note was saved
+      if (onNoteSaved) {
+        onNoteSaved()
+      }
     } catch (error) {
       console.error('Error saving note:', error)
     } finally {
       setIsSaving(false)
     }
-  }, [canvasId, nodeId, promptId])
+  }, [canvasId, nodeId, promptId, onNoteSaved])
 
   // Auto-save on content change (debounced)
   useEffect(() => {

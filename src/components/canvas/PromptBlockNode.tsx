@@ -755,6 +755,10 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
         nodeId={id}
         promptId={selectedPromptForNote.id}
         promptText={selectedPromptForNote.content}
+        onNoteSaved={() => {
+          // Add prompt to notes set when saved
+          setPromptNotes(prev => new Set(prev).add(selectedPromptForNote.id))
+        }}
       />
     )}
     </>
