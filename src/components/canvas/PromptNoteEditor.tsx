@@ -17,7 +17,7 @@ import {
 } from '@blocknote/react'
 import '@blocknote/mantine/style.css'
 import { useToast } from '@/hooks/use-toast'
-import { AITableButton } from './AITableButton'
+import { AIFormatterSelect } from './AIFormatterSelect'
 import {
   Dialog,
   DialogContent,
@@ -448,8 +448,8 @@ export default function PromptNoteEditor({
 
                       <CreateLinkButton key="createLinkButton" />
 
-                      {/* Custom AI Table Button */}
-                      <AITableButton key="aiTableButton" />
+                      {/* Custom AI Formatter Select */}
+                      <AIFormatterSelect key="aiFormatterSelect" />
                     </FormattingToolbar>
                   )}
                 />
