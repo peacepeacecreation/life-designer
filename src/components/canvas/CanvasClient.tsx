@@ -22,10 +22,10 @@ import PromptBlockNode from '@/components/canvas/PromptBlockNode'
 import GoalBlockNode from '@/components/canvas/GoalBlockNode'
 import CustomEdge from '@/components/canvas/CustomEdge'
 import CanvasSelector from '@/components/canvas/CanvasSelector'
-import { Plus, Save, Cloud, AlertCircle, Loader2, Target, Download, Copy, FileJson, Share2, Camera } from 'lucide-react'
+import { Plus, Save, Cloud, AlertCircle, Loader2, Target, Download, Copy, FileJson, Share2, Camera, Upload } from 'lucide-react'
 import { createAutosave, SaveStatus } from '@/lib/canvas/autosave'
 import { generateNodeId } from '@/lib/canvas/utils'
-import { exportCanvasToMarkdown, downloadMarkdown, exportCanvasToJSON, downloadJSON } from '@/lib/canvas/markdown-exporter'
+import { exportCanvasToMarkdown, downloadMarkdown, exportCanvasToJSON, downloadJSON, importCanvasFromJSON } from '@/lib/canvas/markdown-exporter'
 import ShareCanvasDialog from '@/components/canvas/ShareCanvasDialog'
 import ScreenshotLinkDialog from '@/components/canvas/ScreenshotLinkDialog'
 import { generateCanvasPreview, generateShareableScreenshot } from '@/lib/canvas/screenshot'
@@ -72,6 +72,9 @@ function CanvasFlow() {
   const [generatingScreenshot, setGeneratingScreenshot] = useState(false)
   const [canvasPermission, setCanvasPermission] = useState<'view' | 'edit'>('edit')
   const [isOwner, setIsOwner] = useState(true)
+  const [showImportDialog, setShowImportDialog] = useState(false)
+  const [importJsonText, setImportJsonText] = useState('')
+  const [importError, setImportError] = useState<string | null>(null)
   const { screenToFlowPosition } = useReactFlow()
   const connectingNodeId = useRef<string | null>(null)
   const connectingHandleId = useRef<string | null>(null)
@@ -309,6 +312,41 @@ function CanvasFlow() {
       setGeneratingScreenshot(false)
     }
   }, [currentCanvasId, canvasTitle])
+
+  const handleImportJSON = useCallback(async () => {
+    setImportError(null)
+
+    const result = importCanvasFromJSON(importJsonText)
+
+    if (!result.success) {
+      setImportError(result.error || 'Невідома помилка')
+      return
+    }
+
+    // Confirm before replacing canvas
+    const confirmed = await confirm({
+      title: 'Імпортувати Canvas',
+      description: `Це замінить поточний canvas на імпортований (${result.nodes?.length} блоків, ${result.edges?.length} з'єднань). Продовжити?`,
+      confirmText: 'Імпортувати',
+      variant: 'default',
+    })
+
+    if (confirmed && result.nodes && result.edges) {
+      setNodes(result.nodes)
+      setEdges(result.edges)
+      if (result.canvasTitle) {
+        setCanvasTitle(result.canvasTitle)
+      }
+      setShowImportDialog(false)
+      setImportJsonText('')
+      setImportError(null)
+
+      // Auto-save imported canvas
+      if (autosaveRef.current) {
+        autosaveRef.current.saveNow(result.nodes, result.edges)
+      }
+    }
+  }, [importJsonText, confirm, setNodes, setEdges])
 
   const handleClearCanvas = useCallback(async () => {
     const confirmed = await confirm({
@@ -691,6 +729,14 @@ function CanvasFlow() {
             </button>
             <div className="w-px h-4 bg-white/20 mx-1" />
             <button
+              onClick={() => setShowImportDialog(true)}
+              className="p-1 hover:bg-white/10 rounded transition-colors"
+              title="Імпортувати JSON"
+            >
+              <Upload className="h-4 w-4" />
+            </button>
+            <div className="w-px h-4 bg-white/20 mx-1" />
+            <button
               onClick={handleGenerateScreenshot}
               disabled={generatingScreenshot || !currentCanvasId}
               className="p-1 hover:bg-white/10 rounded transition-colors disabled:opacity-50"
@@ -895,6 +941,52 @@ function CanvasFlow() {
         screenshotUrl={screenshotUrl}
         canvasTitle={canvasTitle}
       />
+
+      {/* Import JSON Dialog */}
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Імпортувати Canvas з JSON</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 flex flex-col gap-4 overflow-hidden">
+            <p className="text-sm text-muted-foreground">
+              Вставте JSON експортованого canvas нижче:
+            </p>
+            <textarea
+              value={importJsonText}
+              onChange={(e) => {
+                setImportJsonText(e.target.value)
+                setImportError(null)
+              }}
+              placeholder='{"version": "1.0", "nodes": [...], "edges": [...]}'
+              className="flex-1 min-h-[300px] px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 font-mono resize-none"
+            />
+            {importError && (
+              <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
+                ❌ {importError}
+              </div>
+            )}
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowImportDialog(false)
+                  setImportJsonText('')
+                  setImportError(null)
+                }}
+              >
+                Скасувати
+              </Button>
+              <Button
+                onClick={handleImportJSON}
+                disabled={!importJsonText.trim()}
+              >
+                Імпортувати
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

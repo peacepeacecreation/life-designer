@@ -239,3 +239,45 @@ export function downloadJSON(content: string, filename: string = 'canvas.json') 
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
 }
+
+/**
+ * Import canvas from JSON format
+ */
+export function importCanvasFromJSON(jsonContent: string): {
+  success: boolean
+  nodes?: Node[]
+  edges?: Edge[]
+  canvasTitle?: string
+  error?: string
+} {
+  try {
+    const data = JSON.parse(jsonContent)
+
+    // Validate structure
+    if (!data.nodes || !Array.isArray(data.nodes)) {
+      return {
+        success: false,
+        error: 'Невалідний JSON: відсутній масив nodes'
+      }
+    }
+
+    if (!data.edges || !Array.isArray(data.edges)) {
+      return {
+        success: false,
+        error: 'Невалідний JSON: відсутній масив edges'
+      }
+    }
+
+    return {
+      success: true,
+      nodes: data.nodes,
+      edges: data.edges,
+      canvasTitle: data.canvasTitle || 'Імпортований Canvas'
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Помилка парсингу JSON'
+    }
+  }
+}
