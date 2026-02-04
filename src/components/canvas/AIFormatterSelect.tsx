@@ -1,7 +1,7 @@
 'use client'
 
 import { useComponentsContext, useBlockNoteEditor } from '@blocknote/react'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, ChevronDown } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { useToast } from '@/hooks/use-toast'
 
@@ -173,30 +173,79 @@ export function AIFormatterSelect() {
   const buttonRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (showMenu && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect()
-      setMenuPosition({
-        top: rect.bottom + 4,
-        left: rect.left,
-      })
+    const updatePosition = () => {
+      if (buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect()
+        setMenuPosition({
+          top: rect.bottom + 4,
+          left: rect.left,
+        })
+      }
+    }
+
+    if (showMenu) {
+      updatePosition()
+      // Update on scroll/resize
+      window.addEventListener('scroll', updatePosition, true)
+      window.addEventListener('resize', updatePosition)
+
+      return () => {
+        window.removeEventListener('scroll', updatePosition, true)
+        window.removeEventListener('resize', updatePosition)
+      }
     }
   }, [showMenu])
 
   return (
     <>
       <div ref={buttonRef}>
-        <Components.Generic.Toolbar.Button
-          mainTooltip="AI Форматування"
+        <button
           onClick={() => setShowMenu(!showMenu)}
-          isDisabled={isProcessing}
+          disabled={isProcessing}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '6px 10px',
+            border: '1px solid #e5e7eb',
+            borderRadius: '6px',
+            backgroundColor: showMenu ? '#f3f4f6' : 'white',
+            cursor: isProcessing ? 'not-allowed' : 'pointer',
+            fontSize: '14px',
+            fontWeight: 500,
+            color: '#374151',
+            transition: 'all 0.15s',
+          }}
+          onMouseEnter={(e) => {
+            if (!isProcessing && !showMenu) {
+              e.currentTarget.style.backgroundColor = '#f9fafb'
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!showMenu) {
+              e.currentTarget.style.backgroundColor = 'white'
+            }
+          }}
         >
-          <div className="flex items-center gap-1">
-            <Sparkles
-              className={`h-4 w-4 ${isProcessing ? 'animate-spin' : ''}`}
-              style={{ color: 'rgb(147, 51, 234)' }}
-            />
-          </div>
-        </Components.Generic.Toolbar.Button>
+          <Sparkles
+            style={{
+              width: '16px',
+              height: '16px',
+              color: 'rgb(147, 51, 234)',
+            }}
+            className={isProcessing ? 'animate-spin' : ''}
+          />
+          <span>AI Formatter</span>
+          <ChevronDown
+            style={{
+              width: '14px',
+              height: '14px',
+              color: '#6b7280',
+              transition: 'transform 0.15s',
+              transform: showMenu ? 'rotate(180deg)' : 'rotate(0deg)',
+            }}
+          />
+        </button>
       </div>
       {showMenu && (
         <>
