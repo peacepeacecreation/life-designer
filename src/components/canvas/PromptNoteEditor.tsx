@@ -50,14 +50,23 @@ export default function PromptNoteEditor({
   })
 
   // AI completion function
-  const aiComplete = async (command: 'continue' | 'improve' | 'summarize' | 'expand') => {
+  const aiComplete = async (command: 'continue' | 'improve' | 'summarize' | 'expand' | 'fixtable') => {
     if (!editor || isAiProcessing) return
 
     setIsAiProcessing(true)
     try {
-      // Get current block text
-      const currentBlock = editor.getTextCursorPosition().block
-      const text = editor.blocksToMarkdownLossy([currentBlock])
+      // Get selected text or current block text
+      const selection = editor.getSelection()
+      let text = ''
+
+      if (selection && selection.blocks.length > 0) {
+        // Use selected blocks if available
+        text = editor.blocksToMarkdownLossy(selection.blocks)
+      } else {
+        // Fallback to current block
+        const currentBlock = editor.getTextCursorPosition().block
+        text = editor.blocksToMarkdownLossy([currentBlock])
+      }
 
       if (!text || text.trim().length === 0) {
         toast({
@@ -83,15 +92,40 @@ export default function PromptNoteEditor({
       const completion = data.completion || ''
 
       if (completion) {
-        // Insert completion after current block
-        editor.insertBlocks(
-          [{ type: 'paragraph', content: completion }],
-          currentBlock,
-          'after'
-        )
+        if (command === 'fixtable') {
+          // For tables, replace selected blocks with the improved version
+          if (selection && selection.blocks.length > 0) {
+            // Remove selected blocks
+            for (let i = selection.blocks.length - 1; i >= 0; i--) {
+              editor.removeBlocks([selection.blocks[i]])
+            }
+            // Insert improved table at the position of first selected block
+            const insertPoint = selection.blocks[0]
+            editor.insertBlocks(
+              [{ type: 'paragraph', content: completion }],
+              insertPoint,
+              'before'
+            )
+          } else {
+            // Replace current block
+            const currentBlock = editor.getTextCursorPosition().block
+            editor.updateBlock(currentBlock, {
+              type: 'paragraph',
+              content: completion,
+            })
+          }
+        } else {
+          // For other commands, insert after current block
+          const currentBlock = editor.getTextCursorPosition().block
+          editor.insertBlocks(
+            [{ type: 'paragraph', content: completion }],
+            currentBlock,
+            'after'
+          )
+        }
         toast({
           title: '✨ AI обробка завершена',
-          description: 'Текст успішно оброблено',
+          description: command === 'fixtable' ? 'Таблицю виправлено' : 'Текст успішно оброблено',
         })
       }
     } catch (error) {
@@ -319,6 +353,15 @@ export default function PromptNoteEditor({
                       >
                         <Sparkles className="h-4 w-4 text-purple-600" />
                         Розширити ідею
+                      </button>
+                      <div className="border-t my-1"></div>
+                      <button
+                        onClick={() => aiComplete('fixtable')}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+                        disabled={isAiProcessing}
+                      >
+                        <Sparkles className="h-4 w-4 text-purple-600" />
+                        Виправити таблицю
                       </button>
                     </div>
                   </div>
