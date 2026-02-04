@@ -3,9 +3,14 @@
 import { useEffect, useState, useCallback } from 'react'
 import { BlockNoteEditor, PartialBlock } from '@blocknote/core'
 import { BlockNoteView } from '@blocknote/mantine'
-import { useCreateBlockNote } from '@blocknote/react'
+import {
+  useCreateBlockNote,
+  FormattingToolbarController,
+  FormattingToolbar,
+} from '@blocknote/react'
 import '@blocknote/mantine/style.css'
 import { useToast } from '@/hooks/use-toast'
+import { AITableButton } from './AITableButton'
 import {
   Dialog,
   DialogContent,
@@ -388,7 +393,16 @@ export default function PromptNoteEditor({
               <BlockNoteView
                 editor={editor}
                 theme="light"
-              />
+                formattingToolbar={false}
+              >
+                <FormattingToolbarController
+                  formattingToolbar={() => (
+                    <FormattingToolbar>
+                      <AITableButton key="aiTableButton" />
+                    </FormattingToolbar>
+                  )}
+                />
+              </BlockNoteView>
             </div>
           ) : null}
         </div>
