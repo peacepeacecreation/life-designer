@@ -5,13 +5,14 @@ import { BlockNoteEditor, PartialBlock } from '@blocknote/core'
 import { BlockNoteView } from '@blocknote/mantine'
 import { useCreateBlockNote } from '@blocknote/react'
 import '@blocknote/mantine/style.css'
+import { useToast } from '@/hooks/use-toast'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Loader2, MoreVertical, Link as LinkIcon, Plus, X } from 'lucide-react'
+import { Loader2, MoreVertical, Link as LinkIcon, Plus, X, Sparkles } from 'lucide-react'
 
 interface PromptNoteEditorProps {
   open: boolean
@@ -39,10 +40,72 @@ export default function PromptNoteEditor({
   const [links, setLinks] = useState<string[]>([])
   const [newLink, setNewLink] = useState('')
 
+  const [isAiProcessing, setIsAiProcessing] = useState(false)
+  const [showAiMenu, setShowAiMenu] = useState(false)
+  const { toast } = useToast()
+
   // Create editor instance
   const editor = useCreateBlockNote({
     initialContent,
   })
+
+  // AI completion function
+  const aiComplete = async (command: 'continue' | 'improve' | 'summarize' | 'expand') => {
+    if (!editor || isAiProcessing) return
+
+    setIsAiProcessing(true)
+    try {
+      // Get current block text
+      const currentBlock = editor.getTextCursorPosition().block
+      const text = editor.blocksToMarkdownLossy([currentBlock])
+
+      if (!text || text.trim().length === 0) {
+        toast({
+          title: 'Немає тексту',
+          description: 'Напишіть текст для AI обробки',
+          variant: 'destructive',
+        })
+        setIsAiProcessing(false)
+        return
+      }
+
+      const response = await fetch('/api/ai/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: text, command }),
+      })
+
+      if (!response.ok) {
+        throw new Error('AI completion failed')
+      }
+
+      const data = await response.json()
+      const completion = data.completion || ''
+
+      if (completion) {
+        // Insert completion after current block
+        editor.insertBlocks(
+          [{ type: 'paragraph', content: completion }],
+          currentBlock,
+          'after'
+        )
+        toast({
+          title: '✨ AI обробка завершена',
+          description: 'Текст успішно оброблено',
+        })
+      }
+    } catch (error) {
+      console.error('AI completion error:', error)
+      toast({
+        title: 'Помилка AI обробки',
+        description: 'Не вдалося обробити текст. Спробуйте ще раз.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsAiProcessing(false)
+      setShowAiMenu(false)
+    }
+  }
 
   const loadNote = async () => {
     setIsLoading(true)
@@ -159,6 +222,21 @@ export default function PromptNoteEditor({
     }
   }, [open, editor, isLoading])
 
+  // Close AI menu on click outside
+  useEffect(() => {
+    if (!showAiMenu) return
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (!target.closest('.ai-menu-container')) {
+        setShowAiMenu(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showAiMenu])
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[1200px] w-full max-h-[90vh] h-[90vh] flex flex-col bg-white">
@@ -192,6 +270,60 @@ export default function PromptNoteEditor({
                   Збереження...
                 </span>
               )}
+              {isAiProcessing && (
+                <span className="text-xs text-purple-600 flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  AI обробка...
+                </span>
+              )}
+              <div className="relative ai-menu-container">
+                <button
+                  onClick={() => setShowAiMenu(!showAiMenu)}
+                  className="p-1.5 hover:bg-purple-100 rounded transition-colors flex items-center gap-1"
+                  title="AI Помічник"
+                  disabled={isAiProcessing}
+                >
+                  <Sparkles className="h-5 w-5 text-purple-600" />
+                </button>
+                {showAiMenu && (
+                  <div className="absolute right-0 top-full mt-1 bg-white border rounded-lg shadow-lg z-50 min-w-[200px]">
+                    <div className="py-1">
+                      <button
+                        onClick={() => aiComplete('continue')}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+                        disabled={isAiProcessing}
+                      >
+                        <Sparkles className="h-4 w-4 text-purple-600" />
+                        Продовжити текст
+                      </button>
+                      <button
+                        onClick={() => aiComplete('improve')}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+                        disabled={isAiProcessing}
+                      >
+                        <Sparkles className="h-4 w-4 text-purple-600" />
+                        Покращити текст
+                      </button>
+                      <button
+                        onClick={() => aiComplete('summarize')}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+                        disabled={isAiProcessing}
+                      >
+                        <Sparkles className="h-4 w-4 text-purple-600" />
+                        Підсумувати
+                      </button>
+                      <button
+                        onClick={() => aiComplete('expand')}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+                        disabled={isAiProcessing}
+                      >
+                        <Sparkles className="h-4 w-4 text-purple-600" />
+                        Розширити ідею
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
               <button
                 onClick={() => setShowMetadata(true)}
                 className="p-1.5 hover:bg-gray-100 rounded transition-colors"
