@@ -7,6 +7,13 @@ import {
   useCreateBlockNote,
   FormattingToolbarController,
   FormattingToolbar,
+  BasicTextStyleButton,
+  BlockTypeSelect,
+  ColorStyleButton,
+  CreateLinkButton,
+  NestBlockButton,
+  TextAlignButton,
+  UnnestBlockButton,
 } from '@blocknote/react'
 import '@blocknote/mantine/style.css'
 import { useToast } from '@/hooks/use-toast'
@@ -398,6 +405,50 @@ export default function PromptNoteEditor({
                 <FormattingToolbarController
                   formattingToolbar={() => (
                     <FormattingToolbar>
+                      <BlockTypeSelect key="blockTypeSelect" />
+
+                      <BasicTextStyleButton
+                        basicTextStyle="bold"
+                        key="boldStyleButton"
+                      />
+                      <BasicTextStyleButton
+                        basicTextStyle="italic"
+                        key="italicStyleButton"
+                      />
+                      <BasicTextStyleButton
+                        basicTextStyle="underline"
+                        key="underlineStyleButton"
+                      />
+                      <BasicTextStyleButton
+                        basicTextStyle="strike"
+                        key="strikeStyleButton"
+                      />
+                      <BasicTextStyleButton
+                        basicTextStyle="code"
+                        key="codeStyleButton"
+                      />
+
+                      <TextAlignButton
+                        textAlignment="left"
+                        key="textAlignLeftButton"
+                      />
+                      <TextAlignButton
+                        textAlignment="center"
+                        key="textAlignCenterButton"
+                      />
+                      <TextAlignButton
+                        textAlignment="right"
+                        key="textAlignRightButton"
+                      />
+
+                      <ColorStyleButton key="colorStyleButton" />
+
+                      <NestBlockButton key="nestBlockButton" />
+                      <UnnestBlockButton key="unnestBlockButton" />
+
+                      <CreateLinkButton key="createLinkButton" />
+
+                      {/* Custom AI Table Button */}
                       <AITableButton key="aiTableButton" />
                     </FormattingToolbar>
                   )}
