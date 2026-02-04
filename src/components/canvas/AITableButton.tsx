@@ -60,13 +60,27 @@ export function AITableButton() {
         },
       }
 
+      // Get the block before the selection to use as insertion point
+      const allBlocks = editor.document
+      const firstSelectedIndex = allBlocks.findIndex((b: any) => b.id === selection.blocks[0].id)
+
       // Remove selected blocks
       for (let i = selection.blocks.length - 1; i >= 0; i--) {
         editor.removeBlocks([selection.blocks[i]])
       }
 
-      // Insert table at the position of first selected block
-      editor.insertBlocks([tableBlock as any], selection.blocks[0], 'before')
+      // Get updated document and insert at the same index
+      const updatedBlocks = editor.document
+      if (firstSelectedIndex > 0 && updatedBlocks[firstSelectedIndex - 1]) {
+        // Insert after the block before the selection
+        editor.insertBlocks([tableBlock as any], updatedBlocks[firstSelectedIndex - 1], 'after')
+      } else if (updatedBlocks[0]) {
+        // Insert at the beginning
+        editor.insertBlocks([tableBlock as any], updatedBlocks[0], 'before')
+      } else {
+        // No blocks left, just insert
+        editor.insertBlocks([tableBlock as any])
+      }
 
       toast({
         title: '✨ Таблицю створено',
