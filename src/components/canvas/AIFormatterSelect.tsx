@@ -168,21 +168,44 @@ export function AIFormatterSelect() {
     }
   }
 
+  const [showMenu, setShowMenu] = useState(false)
+
   return (
-    <Components.Generic.Toolbar.Select
-      items={formatOptions.map((opt) => ({
-        ...opt,
-        onClick: () => handleFormat(opt.value as FormatType),
-      }))}
-      isDisabled={isProcessing}
-    >
-      <div className="flex items-center gap-1">
-        <Sparkles
-          className={`h-4 w-4 ${isProcessing ? 'animate-spin' : ''}`}
-          style={{ color: 'rgb(147, 51, 234)' }}
-        />
-        <span className="text-sm">AI Formatter</span>
-      </div>
-    </Components.Generic.Toolbar.Select>
+    <div className="relative" style={{ display: 'inline-block' }}>
+      <Components.Generic.Toolbar.Button
+        mainTooltip="AI Форматування"
+        onClick={() => setShowMenu(!showMenu)}
+        isDisabled={isProcessing}
+      >
+        <div className="flex items-center gap-1">
+          <Sparkles
+            className={`h-4 w-4 ${isProcessing ? 'animate-spin' : ''}`}
+            style={{ color: 'rgb(147, 51, 234)' }}
+          />
+        </div>
+      </Components.Generic.Toolbar.Button>
+      {showMenu && (
+        <div
+          className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg z-50 min-w-[180px]"
+          style={{ zIndex: 9999 }}
+        >
+          <div className="py-1">
+            {formatOptions.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => {
+                  handleFormat(opt.value as FormatType)
+                  setShowMenu(false)
+                }}
+                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+                disabled={isProcessing}
+              >
+                <span>{opt.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
