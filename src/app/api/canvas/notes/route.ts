@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { canvas_id, node_id, prompt_id, content } = body
+    const { canvas_id, node_id, prompt_id, content, links } = body
 
     if (!canvas_id || !node_id || !prompt_id) {
       return NextResponse.json(
@@ -118,6 +118,7 @@ export async function POST(request: NextRequest) {
         node_id,
         prompt_id,
         content: content || [],
+        links: links || [],
         user_id: userData.id,
       }, {
         onConflict: 'canvas_id,node_id,prompt_id'

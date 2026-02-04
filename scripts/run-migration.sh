@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PROJECT_REF="gxzzkcthcdtmkdwfdrhv"
-SQL_FILE="supabase/migrations/018_add_prompt_notes.sql"
+SQL_FILE="supabase/migrations/020_fix_prompt_notes_fk.sql"
 
 echo "🚀 Supabase Database Migration Script"
 echo "════════════════════════════════════════════════════════════"
@@ -59,12 +59,9 @@ echo ""
 if [ "$HTTP_CODE" = "201" ] || [ "$HTTP_CODE" = "200" ]; then
   echo "✅ Migration executed successfully!"
   echo ""
-  echo "Created prompt_notes table:"
-  echo "  • Table for storing BlockNote rich text notes"
-  echo "  • JSONB content column for editor state"
-  echo "  • Links to canvas_id, node_id, prompt_id"
-  echo "  • RLS policies for user isolation"
-  echo "  • Auto-update triggers for timestamps"
+  echo "Fixed prompt_notes foreign key:"
+  echo "  • Changed reference from auth.users to users table"
+  echo "  • Consistent with other tables (canvas_workspaces, etc.)"
   echo ""
 else
   echo "❌ Migration failed"
