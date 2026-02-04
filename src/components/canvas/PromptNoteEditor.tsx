@@ -122,7 +122,7 @@ export default function PromptNoteEditor({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-[95vw] w-[95vw] max-h-[95vh] h-[95vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span>📝 Нотатка</span>
@@ -139,16 +139,18 @@ export default function PromptNoteEditor({
           </p>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden border rounded-md">
+        <div className="flex-1 overflow-auto border rounded-md">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : (
-            <BlockNoteView
-              editor={editor}
-              theme="light"
-            />
+            <div className="p-8">
+              <BlockNoteView
+                editor={editor}
+                theme="light"
+              />
+            </div>
           )}
         </div>
 
