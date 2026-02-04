@@ -120,32 +120,40 @@ export default function PromptNoteEditor({
     }
   }, [editor, open, saveNote])
 
+  // Auto-focus editor when dialog opens
+  useEffect(() => {
+    if (open && editor && !isLoading) {
+      // Small delay to ensure dialog is fully rendered
+      setTimeout(() => {
+        editor.focus()
+      }, 100)
+    }
+  }, [open, editor, isLoading])
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] w-[95vw] max-h-[95vh] h-[95vh] flex flex-col">
+      <DialogContent className="max-w-[98vw] w-[98vw] max-h-[90vh] h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <span>📝 Нотатка</span>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-2xl font-bold uppercase">
+              {promptText}
+            </DialogTitle>
             {isSaving && (
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <Loader2 className="h-3 w-3 animate-spin" />
                 Збереження...
               </span>
             )}
-          </DialogTitle>
-          <p className="text-sm text-muted-foreground mt-1">
-            {promptText.substring(0, 60)}
-            {promptText.length > 60 ? '...' : ''}
-          </p>
+          </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-auto border rounded-md">
+        <div className="flex-1 overflow-auto">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : (
-            <div className="p-8">
+            <div className="px-12 py-6">
               <BlockNoteView
                 editor={editor}
                 theme="light"
@@ -154,7 +162,7 @@ export default function PromptNoteEditor({
           )}
         </div>
 
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs text-muted-foreground text-center pb-2">
           Зміни автоматично зберігаються
         </div>
       </DialogContent>
