@@ -1,23 +1,31 @@
 'use client'
 
 import { useComponentsContext, useBlockNoteEditor } from '@blocknote/react'
-import { Sparkles, ChevronDown } from 'lucide-react'
-import { useState, useRef, useEffect } from 'react'
+import { Sparkles } from 'lucide-react'
+import { useState } from 'react'
 import { useToast } from '@/hooks/use-toast'
 
 type FormatType = 'list' | 'checklist' | 'table' | 'custom'
+
+interface FormatOption {
+  name: string
+  value: FormatType
+  command: string
+  icon: typeof Sparkles
+}
 
 export function AIFormatterSelect() {
   const Components = useComponentsContext()!
   const editor = useBlockNoteEditor()
   const [isProcessing, setIsProcessing] = useState(false)
+  const [selectedFormat, setSelectedFormat] = useState<FormatType>('custom')
   const { toast } = useToast()
 
-  const formatOptions = [
-    { value: 'list', label: '📝 Список', command: 'formatlist' },
-    { value: 'checklist', label: '✅ Чек-лист', command: 'formatchecklist' },
-    { value: 'table', label: '📊 Таблиця', command: 'parsetable' },
-    { value: 'custom', label: '✨ Довільний', command: 'improve' },
+  const formatOptions: FormatOption[] = [
+    { name: '📝 Список', value: 'list', command: 'formatlist', icon: Sparkles },
+    { name: '✅ Чек-лист', value: 'checklist', command: 'formatchecklist', icon: Sparkles },
+    { name: '📊 Таблиця', value: 'table', command: 'parsetable', icon: Sparkles },
+    { name: '✨ Довільний', value: 'custom', command: 'improve', icon: Sparkles },
   ]
 
   const handleFormat = async (formatType: FormatType) => {
@@ -168,149 +176,29 @@ export function AIFormatterSelect() {
     }
   }
 
-  const [showMenu, setShowMenu] = useState(false)
-  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 })
-  const buttonRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const updatePosition = () => {
-      if (buttonRef.current) {
-        const rect = buttonRef.current.getBoundingClientRect()
-        setMenuPosition({
-          top: rect.bottom + 4,
-          left: rect.left,
-        })
-      }
-    }
-
-    if (showMenu) {
-      updatePosition()
-      // Update on scroll/resize
-      window.addEventListener('scroll', updatePosition, true)
-      window.addEventListener('resize', updatePosition)
-
-      return () => {
-        window.removeEventListener('scroll', updatePosition, true)
-        window.removeEventListener('resize', updatePosition)
-      }
-    }
-  }, [showMenu])
+  const currentOption = formatOptions.find((opt) => opt.value === selectedFormat) || formatOptions[3]
 
   return (
-    <>
-      <div ref={buttonRef}>
-        <button
-          onClick={() => setShowMenu(!showMenu)}
-          disabled={isProcessing}
+    <Components.FormattingToolbar.Select
+      items={formatOptions}
+      selectedItem={currentOption}
+      onItemClick={(item) => {
+        setSelectedFormat(item.value)
+        handleFormat(item.value)
+      }}
+      isDisabled={isProcessing}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <Sparkles
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '6px 10px',
-            border: '1px solid #e5e7eb',
-            borderRadius: '6px',
-            backgroundColor: showMenu ? '#f3f4f6' : 'white',
-            cursor: isProcessing ? 'not-allowed' : 'pointer',
-            fontSize: '14px',
-            fontWeight: 500,
-            color: '#374151',
-            transition: 'all 0.15s',
+            width: '14px',
+            height: '14px',
+            color: 'rgb(147, 51, 234)',
           }}
-          onMouseEnter={(e) => {
-            if (!isProcessing && !showMenu) {
-              e.currentTarget.style.backgroundColor = '#f9fafb'
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!showMenu) {
-              e.currentTarget.style.backgroundColor = 'white'
-            }
-          }}
-        >
-          <Sparkles
-            style={{
-              width: '16px',
-              height: '16px',
-              color: 'rgb(147, 51, 234)',
-            }}
-            className={isProcessing ? 'animate-spin' : ''}
-          />
-          <span>AI Formatter</span>
-          <ChevronDown
-            style={{
-              width: '14px',
-              height: '14px',
-              color: '#6b7280',
-              transition: 'transform 0.15s',
-              transform: showMenu ? 'rotate(180deg)' : 'rotate(0deg)',
-            }}
-          />
-        </button>
+          className={isProcessing ? 'animate-spin' : ''}
+        />
+        <span>{currentOption.name}</span>
       </div>
-      {showMenu && (
-        <>
-          {/* Backdrop to close menu */}
-          <div
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              zIndex: 999,
-            }}
-            onClick={() => setShowMenu(false)}
-          />
-          {/* Dropdown menu */}
-          <div
-            style={{
-              position: 'fixed',
-              top: `${menuPosition.top}px`,
-              left: `${menuPosition.left}px`,
-              zIndex: 1000,
-              backgroundColor: 'white',
-              border: '1px solid #e5e7eb',
-              borderRadius: '8px',
-              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-              minWidth: '180px',
-              padding: '4px 0',
-            }}
-          >
-            {formatOptions.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => {
-                  handleFormat(opt.value as FormatType)
-                  setShowMenu(false)
-                }}
-                disabled={isProcessing}
-                style={{
-                  width: '100%',
-                  padding: '8px 16px',
-                  textAlign: 'left',
-                  fontSize: '14px',
-                  border: 'none',
-                  background: 'transparent',
-                  cursor: isProcessing ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isProcessing) {
-                    e.currentTarget.style.backgroundColor = '#f3f4f6'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                }}
-              >
-                <span>{opt.label}</span>
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </>
+    </Components.FormattingToolbar.Select>
   )
 }
