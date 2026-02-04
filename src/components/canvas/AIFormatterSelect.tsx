@@ -2,7 +2,7 @@
 
 import { useComponentsContext, useBlockNoteEditor } from '@blocknote/react'
 import { Sparkles } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useToast } from '@/hooks/use-toast'
 
 type FormatType = 'list' | 'checklist' | 'table' | 'custom'
@@ -169,27 +169,64 @@ export function AIFormatterSelect() {
   }
 
   const [showMenu, setShowMenu] = useState(false)
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 })
+  const buttonRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (showMenu && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setMenuPosition({
+        top: rect.bottom + 4,
+        left: rect.left,
+      })
+    }
+  }, [showMenu])
 
   return (
-    <div className="relative" style={{ display: 'inline-block' }}>
-      <Components.Generic.Toolbar.Button
-        mainTooltip="AI Форматування"
-        onClick={() => setShowMenu(!showMenu)}
-        isDisabled={isProcessing}
-      >
-        <div className="flex items-center gap-1">
-          <Sparkles
-            className={`h-4 w-4 ${isProcessing ? 'animate-spin' : ''}`}
-            style={{ color: 'rgb(147, 51, 234)' }}
-          />
-        </div>
-      </Components.Generic.Toolbar.Button>
-      {showMenu && (
-        <div
-          className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg z-50 min-w-[180px]"
-          style={{ zIndex: 9999 }}
+    <>
+      <div ref={buttonRef}>
+        <Components.Generic.Toolbar.Button
+          mainTooltip="AI Форматування"
+          onClick={() => setShowMenu(!showMenu)}
+          isDisabled={isProcessing}
         >
-          <div className="py-1">
+          <div className="flex items-center gap-1">
+            <Sparkles
+              className={`h-4 w-4 ${isProcessing ? 'animate-spin' : ''}`}
+              style={{ color: 'rgb(147, 51, 234)' }}
+            />
+          </div>
+        </Components.Generic.Toolbar.Button>
+      </div>
+      {showMenu && (
+        <>
+          {/* Backdrop to close menu */}
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 999,
+            }}
+            onClick={() => setShowMenu(false)}
+          />
+          {/* Dropdown menu */}
+          <div
+            style={{
+              position: 'fixed',
+              top: `${menuPosition.top}px`,
+              left: `${menuPosition.left}px`,
+              zIndex: 1000,
+              backgroundColor: 'white',
+              border: '1px solid #e5e7eb',
+              borderRadius: '8px',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+              minWidth: '180px',
+              padding: '4px 0',
+            }}
+          >
             {formatOptions.map((opt) => (
               <button
                 key={opt.value}
@@ -197,15 +234,34 @@ export function AIFormatterSelect() {
                   handleFormat(opt.value as FormatType)
                   setShowMenu(false)
                 }}
-                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
                 disabled={isProcessing}
+                style={{
+                  width: '100%',
+                  padding: '8px 16px',
+                  textAlign: 'left',
+                  fontSize: '14px',
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: isProcessing ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isProcessing) {
+                    e.currentTarget.style.backgroundColor = '#f3f4f6'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
               >
                 <span>{opt.label}</span>
               </button>
             ))}
           </div>
-        </div>
+        </>
       )}
-    </div>
+    </>
   )
 }
