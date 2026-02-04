@@ -11,7 +11,6 @@ interface FormatOption {
   name: string
   value: FormatType
   command: string
-  icon: typeof Sparkles
 }
 
 export function AIFormatterSelect() {
@@ -22,10 +21,10 @@ export function AIFormatterSelect() {
   const { toast } = useToast()
 
   const formatOptions: FormatOption[] = [
-    { name: '📝 Список', value: 'list', command: 'formatlist', icon: Sparkles },
-    { name: '✅ Чек-лист', value: 'checklist', command: 'formatchecklist', icon: Sparkles },
-    { name: '📊 Таблиця', value: 'table', command: 'parsetable', icon: Sparkles },
-    { name: '✨ Довільний', value: 'custom', command: 'improve', icon: Sparkles },
+    { name: '📝 Список', value: 'list', command: 'formatlist' },
+    { name: '✅ Чек-лист', value: 'checklist', command: 'formatchecklist' },
+    { name: '📊 Таблиця', value: 'table', command: 'parsetable' },
+    { name: '✨ Довільний', value: 'custom', command: 'improve' },
   ]
 
   const handleFormat = async (formatType: FormatType) => {
