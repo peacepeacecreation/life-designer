@@ -188,7 +188,7 @@ function CanvasFlow() {
     }
   }, [])
 
-  // Update all nodes with isConnecting state and copy callback
+  // Update all nodes with isConnecting state, canvas ID, and copy callback
   useEffect(() => {
     setNodes((nds) =>
       nds.map((node) => ({
@@ -197,10 +197,11 @@ function CanvasFlow() {
           ...node.data,
           isConnecting,
           onCopyNode: () => handleCopyNode(node.id),
+          canvasId: currentCanvasId,
         },
       }))
     )
-  }, [isConnecting, handleCopyNode, setNodes])
+  }, [isConnecting, handleCopyNode, currentCanvasId, setNodes])
 
   // Canvas management handlers
   const handleCanvasChange = useCallback((canvasId: string) => {

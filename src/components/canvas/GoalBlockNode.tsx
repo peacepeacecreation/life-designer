@@ -4,10 +4,11 @@ import { memo, useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Handle, Position, NodeProps, useReactFlow, Edge } from 'reactflow'
 import { generatePromptId } from '@/lib/canvas/utils'
-import { Settings, Trash2, Copy } from 'lucide-react'
+import { Settings, Trash2, Copy, FileText } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { getIconById, isPredefinedIcon } from '@/lib/goalIcons'
 import { useConfirm } from '@/hooks/use-confirm'
+import PromptNoteEditor from '@/components/canvas/PromptNoteEditor'
 
 interface PromptItem {
   id: string
@@ -25,6 +26,7 @@ interface GoalBlockData {
   prompts?: PromptItem[]
   isConnecting?: boolean
   onCopyNode?: () => void
+  canvasId?: string
 }
 
 // Auto-resizing textarea component
@@ -70,6 +72,8 @@ function GoalBlockNode({ data, id }: NodeProps<GoalBlockData>) {
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const [promptContextMenu, setPromptContextMenu] = useState<{ x: number; y: number; promptId: string; promptContent: string } | null>(null)
+  const [noteEditorOpen, setNoteEditorOpen] = useState(false)
+  const [selectedPromptForNote, setSelectedPromptForNote] = useState<{ id: string; content: string } | null>(null)
   const { setNodes, setEdges, getNodes, getEdges } = useReactFlow()
   const confirm = useConfirm()
 
@@ -427,6 +431,20 @@ function GoalBlockNode({ data, id }: NodeProps<GoalBlockData>) {
             style={{ top: promptContextMenu.y, left: promptContextMenu.x }}
           >
             <button
+              onClick={() => {
+                setSelectedPromptForNote({
+                  id: promptContextMenu.promptId,
+                  content: promptContextMenu.promptContent
+                })
+                setNoteEditorOpen(true)
+                setPromptContextMenu(null)
+              }}
+              className="w-full px-3 py-1.5 text-left text-xs hover:bg-accent transition-colors flex items-center gap-2"
+            >
+              <FileText className="h-3 w-3" />
+              Створити нотатку
+            </button>
+            <button
               onClick={async () => {
                 await copyToClipboard(promptContextMenu.promptContent)
                 setPromptContextMenu(null)
@@ -449,6 +467,18 @@ function GoalBlockNode({ data, id }: NodeProps<GoalBlockData>) {
           </div>
         </>,
         document.body
+      )}
+
+      {/* Note Editor Dialog */}
+      {selectedPromptForNote && data.canvasId && (
+        <PromptNoteEditor
+          open={noteEditorOpen}
+          onOpenChange={setNoteEditorOpen}
+          canvasId={data.canvasId}
+          nodeId={id}
+          promptId={selectedPromptForNote.id}
+          promptText={selectedPromptForNote.content}
+        />
       )}
     </div>
   )

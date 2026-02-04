@@ -3,13 +3,14 @@
 import { memo, useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Handle, Position, NodeProps, useUpdateNodeInternals, useReactFlow, NodeResizer } from 'reactflow'
-import { Copy, Trash2, Plus, GripVertical, Settings, Clock, Target, Calendar as CalendarIcon } from 'lucide-react'
+import { Copy, Trash2, Plus, GripVertical, Settings, Clock, Target, Calendar as CalendarIcon, FileText } from 'lucide-react'
 import { generatePromptId } from '@/lib/canvas/utils'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { DatePicker } from '@/components/ui/date-picker'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { useConfirm } from '@/hooks/use-confirm'
+import PromptNoteEditor from '@/components/canvas/PromptNoteEditor'
 
 interface PromptItem {
   id: string
@@ -35,6 +36,7 @@ interface PromptBlockData {
   isConnecting?: boolean
   onCopyNode?: () => void
   lastEditedPromptText?: string
+  canvasId?: string
 }
 
 // Auto-resizing textarea component
@@ -93,6 +95,8 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const [promptContextMenu, setPromptContextMenu] = useState<{ x: number; y: number; promptId: string; promptContent: string } | null>(null)
+  const [noteEditorOpen, setNoteEditorOpen] = useState(false)
+  const [selectedPromptForNote, setSelectedPromptForNote] = useState<{ id: string; content: string } | null>(null)
   const updateNodeInternals = useUpdateNodeInternals()
   const { setNodes, setEdges } = useReactFlow()
   const confirm = useConfirm()
@@ -650,6 +654,20 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
           style={{ top: promptContextMenu.y, left: promptContextMenu.x }}
         >
           <button
+            onClick={() => {
+              setSelectedPromptForNote({
+                id: promptContextMenu.promptId,
+                content: promptContextMenu.promptContent
+              })
+              setNoteEditorOpen(true)
+              setPromptContextMenu(null)
+            }}
+            className="w-full px-3 py-1.5 text-left text-xs hover:bg-accent transition-colors flex items-center gap-2"
+          >
+            <FileText className="h-3 w-3" />
+            Створити нотатку
+          </button>
+          <button
             onClick={async () => {
               await copyToClipboard(promptContextMenu.promptContent)
               setPromptContextMenu(null)
@@ -672,6 +690,18 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
         </div>
       </>,
       document.body
+    )}
+
+    {/* Note Editor Dialog */}
+    {selectedPromptForNote && data.canvasId && (
+      <PromptNoteEditor
+        open={noteEditorOpen}
+        onOpenChange={setNoteEditorOpen}
+        canvasId={data.canvasId}
+        nodeId={id}
+        promptId={selectedPromptForNote.id}
+        promptText={selectedPromptForNote.content}
+      />
     )}
     </>
   )

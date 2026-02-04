@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PROJECT_REF="gxzzkcthcdtmkdwfdrhv"
-SQL_FILE="supabase/migrations/017_add_canvas_screenshot.sql"
+SQL_FILE="supabase/migrations/018_add_prompt_notes.sql"
 
 echo "🚀 Supabase Database Migration Script"
 echo "════════════════════════════════════════════════════════════"
@@ -59,9 +59,10 @@ echo ""
 if [ "$HTTP_CODE" = "201" ] || [ "$HTTP_CODE" = "200" ]; then
   echo "✅ Migration executed successfully!"
   echo ""
-  echo "Created canvas_workspaces table:"
-  echo "  • Table for canvas autosave data"
-  echo "  • JSONB columns for nodes and edges"
+  echo "Created prompt_notes table:"
+  echo "  • Table for storing BlockNote rich text notes"
+  echo "  • JSONB content column for editor state"
+  echo "  • Links to canvas_id, node_id, prompt_id"
   echo "  • RLS policies for user isolation"
   echo "  • Auto-update triggers for timestamps"
   echo ""
