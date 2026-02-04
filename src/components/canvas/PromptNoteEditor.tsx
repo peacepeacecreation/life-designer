@@ -208,14 +208,14 @@ export default function PromptNoteEditor({
             <div className="flex items-center justify-center h-full">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
-          ) : (
+          ) : editor ? (
             <div className="px-16 py-6 bg-white">
               <BlockNoteView
                 editor={editor}
                 theme="light"
               />
             </div>
-          )}
+          ) : null}
         </div>
 
         <div className="text-xs text-muted-foreground text-center pb-2">
