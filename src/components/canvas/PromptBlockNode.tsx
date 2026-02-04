@@ -3,7 +3,7 @@
 import { memo, useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Handle, Position, NodeProps, useUpdateNodeInternals, useReactFlow, NodeResizer } from 'reactflow'
-import { Copy, Trash2, Plus, GripVertical, Settings, Clock, Target, Calendar as CalendarIcon, FileText } from 'lucide-react'
+import { Copy, Trash2, Plus, GripVertical, Settings, Clock, Target, Calendar as CalendarIcon, FileText, Eye } from 'lucide-react'
 import { generatePromptId } from '@/lib/canvas/utils'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { DatePicker } from '@/components/ui/date-picker'
@@ -97,6 +97,7 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
   const [promptContextMenu, setPromptContextMenu] = useState<{ x: number; y: number; promptId: string; promptContent: string } | null>(null)
   const [noteEditorOpen, setNoteEditorOpen] = useState(false)
   const [selectedPromptForNote, setSelectedPromptForNote] = useState<{ id: string; content: string } | null>(null)
+  const [promptNotes, setPromptNotes] = useState<Set<string>>(new Set())
   const updateNodeInternals = useUpdateNodeInternals()
   const { setNodes, setEdges } = useReactFlow()
   const confirm = useConfirm()
@@ -122,6 +123,36 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
   useEffect(() => {
     updateNodeInternals(id)
   }, [id, updateNodeInternals, prompts])
+
+  // Check which prompts have notes
+  useEffect(() => {
+    if (!data.canvasId || prompts.length === 0) return
+
+    const checkNotes = async () => {
+      const notesSet = new Set<string>()
+
+      for (const prompt of prompts) {
+        try {
+          const params = new URLSearchParams({
+            canvas_id: data.canvasId!,
+            node_id: id,
+            prompt_id: prompt.id,
+          })
+          const response = await fetch(`/api/canvas/notes?${params}`)
+          const result = await response.json()
+          if (result.note) {
+            notesSet.add(prompt.id)
+          }
+        } catch (error) {
+          console.error('Error checking note:', error)
+        }
+      }
+
+      setPromptNotes(notesSet)
+    }
+
+    checkNotes()
+  }, [data.canvasId, id, prompts])
 
   // Синхронізуємо зміни prompts з node data в ReactFlow
   useEffect(() => {
@@ -534,15 +565,29 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
                 style={{ right: -16, top: '50%', transform: 'translateY(-50%)', transformOrigin: 'center', zIndex: targetZIndex }}
               />
 
-              <div
-                className={prompt.completed ? 'line-through opacity-60' : ''}
-                onContextMenu={(e) => handlePromptContextMenu(e, prompt.id, prompt.content)}
-              >
-                <AutoResizeTextarea
-                  value={prompt.content}
-                  onChange={(newContent) => updatePrompt(prompt.id, newContent)}
-                  placeholder="Напишіть промпт..."
-                />
+              <div className="flex items-start gap-2 flex-1">
+                <div
+                  className={`flex-1 ${prompt.completed ? 'line-through opacity-60' : ''}`}
+                  onContextMenu={(e) => handlePromptContextMenu(e, prompt.id, prompt.content)}
+                >
+                  <AutoResizeTextarea
+                    value={prompt.content}
+                    onChange={(newContent) => updatePrompt(prompt.id, newContent)}
+                    placeholder="Напишіть промпт..."
+                  />
+                </div>
+                {promptNotes.has(prompt.id) && (
+                  <button
+                    onClick={() => {
+                      setSelectedPromptForNote({ id: prompt.id, content: prompt.content })
+                      setNoteEditorOpen(true)
+                    }}
+                    className="nodrag mt-1 p-1 hover:bg-primary/10 rounded transition-colors"
+                    title="Відкрити нотатку"
+                  >
+                    <Eye className="h-4 w-4 text-primary" />
+                  </button>
+                )}
               </div>
             </div>
             {/* <div className="flex flex-col gap-1">
@@ -664,8 +709,17 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
             }}
             className="w-full px-3 py-1.5 text-left text-xs hover:bg-accent transition-colors flex items-center gap-2"
           >
-            <FileText className="h-3 w-3" />
-            Створити нотатку
+            {promptNotes.has(promptContextMenu.promptId) ? (
+              <>
+                <Eye className="h-3 w-3" />
+                Відкрити нотатку
+              </>
+            ) : (
+              <>
+                <FileText className="h-3 w-3" />
+                Створити нотатку
+              </>
+            )}
           </button>
           <button
             onClick={async () => {
