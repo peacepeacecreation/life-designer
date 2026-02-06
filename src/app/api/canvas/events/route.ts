@@ -91,11 +91,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user_id from session
-    const { data: user } = await supabase
+    const { data: user } = (await supabase
       .from('users')
       .select('id')
       .eq('email', session.user.email)
-      .single();
+      .single()) as { data: { id: string } | null };
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
