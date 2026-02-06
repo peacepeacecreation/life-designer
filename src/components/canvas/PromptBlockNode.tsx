@@ -3,25 +3,27 @@
 import { memo, useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Handle, Position, NodeProps, useUpdateNodeInternals, useReactFlow, NodeResizer } from 'reactflow'
-import { Copy, Trash2, Plus, GripVertical, Settings, Clock, Target, Calendar as CalendarIcon, FileText, Eye } from 'lucide-react'
+import { Copy, Trash2, Plus, GripVertical, Settings, Clock, Target, Calendar as CalendarIcon, FileText, Eye, Play, Loader2 } from 'lucide-react'
 import { generatePromptId } from '@/lib/canvas/utils'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { useConfirm } from '@/hooks/use-confirm'
+import { useToast } from '@/hooks/use-toast'
+import { getIconById, isPredefinedIcon } from '@/lib/goalIcons'
+import { getCategoryMeta } from '@/lib/categoryConfig'
 import PromptNoteEditor from '@/components/canvas/PromptNoteEditor'
+import { Goal } from '@/types'
+import { EventTracker } from '@/lib/canvas/event-tracker'
 
 interface PromptItem {
   id: string
   content: string
   completed?: boolean
-}
-
-interface Goal {
-  id: string
-  title: string
-  category: string
 }
 
 interface PromptBlockData {
@@ -98,9 +100,15 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
   const [noteEditorOpen, setNoteEditorOpen] = useState(false)
   const [selectedPromptForNote, setSelectedPromptForNote] = useState<{ id: string; content: string } | null>(null)
   const [promptNotes, setPromptNotes] = useState<Set<string>>(new Set())
+  const [isStartingTimer, setIsStartingTimer] = useState(false)
+  const [clockifyDialogOpen, setClockifyDialogOpen] = useState(false)
+  const [selectedGoalForClockify, setSelectedGoalForClockify] = useState('')
+  const [promptForClockify, setPromptForClockify] = useState('')
+  const previousTitleRef = useRef<string>(data.title || 'Новий блок')
   const updateNodeInternals = useUpdateNodeInternals()
-  const { setNodes, setEdges } = useReactFlow()
+  const { setNodes, setEdges, getEdges, getNodes } = useReactFlow()
   const confirm = useConfirm()
+  const { toast } = useToast()
 
   // Динамічний z-index: коли тягнемо лінію - target в пріоритеті, інакше - source
   const isConnecting = data.isConnecting || false
@@ -117,6 +125,106 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
     e.preventDefault()
     e.stopPropagation()
     setPromptContextMenu({ x: e.clientX, y: e.clientY, promptId, promptContent })
+  }
+
+  // Find parent goal by traversing edges backwards
+  const findParentGoalId = (): string | null => {
+    const edges = getEdges()
+    const nodes = getNodes()
+
+    console.log('[PromptBlockNode] Finding parent goal for node:', id)
+    console.log('[PromptBlockNode] Total edges:', edges.length)
+    console.log('[PromptBlockNode] Total nodes:', nodes.length)
+
+    const visited = new Set<string>()
+    const queue = [id]
+
+    while (queue.length > 0) {
+      const currentNodeId = queue.shift()!
+      if (visited.has(currentNodeId)) continue
+      visited.add(currentNodeId)
+
+      console.log('[PromptBlockNode] Checking node:', currentNodeId)
+
+      // Find incoming edges (edges pointing TO this node)
+      const incomingEdges = edges.filter(edge => edge.target === currentNodeId)
+      console.log('[PromptBlockNode] Incoming edges for', currentNodeId, ':', incomingEdges.length)
+
+      for (const edge of incomingEdges) {
+        const sourceNode = nodes.find(n => n.id === edge.source)
+        console.log('[PromptBlockNode] Source node:', sourceNode?.id, 'isGoalBlock:', sourceNode?.data?.isGoalBlock)
+
+        if (sourceNode?.data?.isGoalBlock && sourceNode.data.goal_id) {
+          // Found a goal block!
+          console.log('[PromptBlockNode] Found parent goal:', sourceNode.data.goal_id)
+          return sourceNode.data.goal_id
+        }
+
+        // Continue searching backwards
+        queue.push(edge.source)
+      }
+    }
+
+    console.log('[PromptBlockNode] No parent goal found')
+    return null
+  }
+
+  const handleOpenClockifyDialog = (promptText: string) => {
+    setPromptForClockify(promptText)
+
+    // Try to find parent goal
+    const parentGoalId = findParentGoalId()
+    setSelectedGoalForClockify(parentGoalId || selectedGoal || '')
+
+    setClockifyDialogOpen(true)
+    setPromptContextMenu(null)
+  }
+
+  const handleStartTimer = async () => {
+    if (!selectedGoalForClockify || !promptForClockify) return
+
+    setIsStartingTimer(true)
+
+    try {
+      const response = await fetch('/api/clockify/start-timer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          goalId: selectedGoalForClockify,
+          description: promptForClockify,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Помилка запуску таймера')
+      }
+
+      const selectedGoalData = goals.find(g => g.id === selectedGoalForClockify)
+
+      toast({
+        title: 'Таймер запущено',
+        description: `Відстеження часу для "${selectedGoalData?.name || 'цілі'}" розпочато`,
+      })
+
+      // Track Clockify start
+      if (data.canvasId) {
+        EventTracker.clockifyStarted(data.canvasId, id, blockTitle, selectedGoalData?.name)
+      }
+
+      // Notify widget to update immediately
+      window.dispatchEvent(new Event('clockify-timer-started'))
+
+      setClockifyDialogOpen(false)
+    } catch (error: any) {
+      toast({
+        title: 'Помилка',
+        description: error.message || 'Не вдалося запустити таймер',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsStartingTimer(false)
+    }
   }
 
   // Оновлюємо внутрішні дані про handles після монтування та при зміні промптів
@@ -179,9 +287,20 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
     )
   }, [blockTitle, priority, prompts, selectedGoal, goalTitle, scheduledDate, scheduledTime, blockColor, lastEditedPromptText, id, setNodes])
 
+  // Track title changes
   useEffect(() => {
-    if (popoverOpen && goals.length === 0) {
-      fetch('/api/canvas/goals')
+    if (previousTitleRef.current !== blockTitle && data.canvasId) {
+      // Only track if title actually changed (not initial load)
+      if (previousTitleRef.current !== (data.title || 'Новий блок')) {
+        EventTracker.blockRenamed(data.canvasId, id, previousTitleRef.current, blockTitle)
+      }
+      previousTitleRef.current = blockTitle
+    }
+  }, [blockTitle, data.canvasId, id, data.title])
+
+  useEffect(() => {
+    if ((popoverOpen || clockifyDialogOpen) && goals.length === 0) {
+      fetch('/api/goals')
         .then((res) => res.json())
         .then((data) => {
           if (data.goals) {
@@ -190,7 +309,7 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
         })
         .catch((err) => console.error('Error loading goals:', err))
     }
-  }, [popoverOpen, goals.length])
+  }, [popoverOpen, clockifyDialogOpen, goals.length])
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -211,10 +330,17 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
       setLastEditedPromptText(newPromptText.trim())
       setNewPromptText('')
       setIsEditing(false)
+
+      // Track prompt added
+      if (data.canvasId) {
+        EventTracker.promptAdded(data.canvasId, nodeId, title, newPrompt.id, newPrompt.content)
+      }
     }
   }
 
   const deletePrompt = async (id: string) => {
+    const prompt = prompts.find(p => p.id === id)
+
     const confirmed = await confirm({
       title: 'Видалити промпт',
       description: 'Ви впевнені, що хочете видалити цей промпт?',
@@ -224,6 +350,11 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
 
     if (confirmed) {
       setPrompts(prompts.filter((p) => p.id !== id))
+
+      // Track prompt deletion
+      if (data.canvasId && prompt) {
+        EventTracker.promptDeleted(data.canvasId, nodeId, title, id, prompt.content)
+      }
     }
   }
 
@@ -236,13 +367,27 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
   }
 
   const toggleComplete = (id: string) => {
-    setPrompts(prompts.map((p) => (p.id === id ? { ...p, completed: !p.completed } : p)))
+    const prompt = prompts.find(p => p.id === id)
+    if (!prompt) return
+
+    const newCompleted = !prompt.completed
+
+    setPrompts(prompts.map((p) => (p.id === id ? { ...p, completed: newCompleted } : p)))
+
+    // Track completion toggle
+    if (data.canvasId) {
+      if (newCompleted) {
+        EventTracker.promptCompleted(data.canvasId, nodeId, title, id, prompt.content)
+      } else {
+        EventTracker.promptUncompleted(data.canvasId, nodeId, title, id, prompt.content)
+      }
+    }
   }
 
   const handleGoalSelect = (goalId: string) => {
     const goal = goals.find((g) => g.id === goalId)
     setSelectedGoal(goalId)
-    setGoalTitle(goal?.title)
+    setGoalTitle(goal?.name)
   }
 
   const handleRemoveGoal = () => {
@@ -456,7 +601,7 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
                     <option value="">Виберіть ціль...</option>
                     {goals.map((goal) => (
                       <option key={goal.id} value={goal.id}>
-                        {goal.title} ({goal.category})
+                        {goal.name} ({goal.category})
                       </option>
                     ))}
                   </select>
@@ -732,6 +877,13 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
             Копіювати текст
           </button>
           <button
+            onClick={() => handleOpenClockifyDialog(promptContextMenu.promptContent)}
+            className="w-full px-3 py-1.5 text-left text-xs hover:bg-accent transition-colors flex items-center gap-2"
+          >
+            <Clock className="h-3 w-3" />
+            Start Clockify
+          </button>
+          <button
             onClick={() => {
               setPromptContextMenu(null)
               deletePrompt(promptContextMenu.promptId)
@@ -761,6 +913,85 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
         }}
       />
     )}
+
+    {/* Clockify Start Timer Dialog */}
+    <Dialog open={clockifyDialogOpen} onOpenChange={setClockifyDialogOpen}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Запустити Clockify таймер</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Завдання</label>
+            <p className="text-sm text-muted-foreground bg-muted px-3 py-2 rounded-md">
+              {promptForClockify}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Проект (ціль)</label>
+            <Select value={selectedGoalForClockify} onValueChange={setSelectedGoalForClockify}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Обери ціль..." />
+              </SelectTrigger>
+              <SelectContent>
+                {goals.map((goal) => {
+                  const meta = getCategoryMeta(goal.category)
+                  return (
+                    <SelectItem key={goal.id} value={goal.id}>
+                      <div className="flex items-center gap-2">
+                        {goal.iconUrl && isPredefinedIcon(goal.iconUrl) ? (
+                          (() => {
+                            const iconOption = getIconById(goal.iconUrl!)
+                            if (iconOption) {
+                              const IconComponent = iconOption.Icon
+                              return <IconComponent className="w-4 h-4 flex-shrink-0" style={{ color: goal.color || meta.color }} />
+                            }
+                            return null
+                          })()
+                        ) : goal.iconUrl ? (
+                          <img
+                            src={goal.iconUrl}
+                            alt={goal.name}
+                            className="w-4 h-4 object-contain flex-shrink-0"
+                          />
+                        ) : (
+                          <div
+                            className="w-4 h-4 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: goal.color || meta.color }}
+                          />
+                        )}
+                        <span className="truncate">{goal.name}</span>
+                      </div>
+                    </SelectItem>
+                  )
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setClockifyDialogOpen(false)}>
+            Скасувати
+          </Button>
+          <Button onClick={handleStartTimer} disabled={isStartingTimer || !selectedGoalForClockify}>
+            {isStartingTimer ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Запуск...
+              </>
+            ) : (
+              <>
+                <Play className="mr-2 h-4 w-4" />
+                Почати
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </>
   )
 }

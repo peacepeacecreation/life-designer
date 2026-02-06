@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { GlobalSettingsProvider } from "@/contexts/GlobalSettingsContext";
 import { GoalsProvider } from "@/contexts/GoalsContext";
+import { HabitsProvider } from "@/contexts/HabitsContext";
 import { ClockifyProvider } from "@/contexts/ClockifyContext";
 import { CalendarEventsProvider } from "@/contexts/CalendarEventsContext";
 import { RecurringEventsProvider } from "@/contexts/RecurringEventsContext";
@@ -13,6 +14,7 @@ import { ReflectionsProvider } from "@/contexts/ReflectionsContext";
 import SessionProvider from "@/components/SessionProvider";
 import Header from "@/components/Header";
 import { ConfirmProvider } from "@/hooks/use-confirm";
+import { ClockifyWidget } from "@/components/clockify/ClockifyWidget";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -56,12 +58,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="uk" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning>
         <SessionProvider>
           <GlobalSettingsProvider>
             <GoalsProvider>
-              <ClockifyProvider>
-                <CalendarEventsProvider>
+              <HabitsProvider>
+                <ClockifyProvider>
+                  <CalendarEventsProvider>
                   <NotesProvider>
                     <ReflectionsProvider>
                       <RecurringEventsProvider>
@@ -70,13 +73,15 @@ export default function RootLayout({
                             <Toaster />
                             <Header />
                             {children}
+                            <ClockifyWidget />
                           </ConfirmProvider>
                         </TimeCalculatorProvider>
                       </RecurringEventsProvider>
                     </ReflectionsProvider>
                   </NotesProvider>
                 </CalendarEventsProvider>
-              </ClockifyProvider>
+                </ClockifyProvider>
+              </HabitsProvider>
             </GoalsProvider>
           </GlobalSettingsProvider>
         </SessionProvider>
