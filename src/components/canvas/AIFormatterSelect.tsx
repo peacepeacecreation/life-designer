@@ -184,8 +184,15 @@ export function AIFormatterSelect() {
       const updatedBlocks = editor.document
 
       if (formatType === 'table') {
-        // Parse table JSON
-        const tableData = JSON.parse(data.completion)
+        // Parse table JSON (remove markdown code blocks if present)
+        let jsonString = data.completion.trim()
+
+        // Remove markdown code blocks
+        if (jsonString.startsWith('```')) {
+          jsonString = jsonString.replace(/^```(?:json)?\n/, '').replace(/\n```$/, '')
+        }
+
+        const tableData = JSON.parse(jsonString)
         const tableBlock = {
           type: 'table',
           content: {

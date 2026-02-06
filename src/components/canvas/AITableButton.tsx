@@ -47,7 +47,16 @@ export function AITableButton() {
       }
 
       const data = await response.json()
-      const tableData = JSON.parse(data.completion)
+
+      // Parse table JSON (remove markdown code blocks if present)
+      let jsonString = data.completion.trim()
+
+      // Remove markdown code blocks
+      if (jsonString.startsWith('```')) {
+        jsonString = jsonString.replace(/^```(?:json)?\n/, '').replace(/\n```$/, '')
+      }
+
+      const tableData = JSON.parse(jsonString)
 
       // Create BlockNote table structure
       const tableBlock = {
@@ -77,10 +86,8 @@ export function AITableButton() {
       } else if (updatedBlocks[0]) {
         // Insert at the beginning
         editor.insertBlocks([tableBlock as any], updatedBlocks[0], 'before')
-      } else {
-        // No blocks left, just insert
-        editor.insertBlocks([tableBlock as any])
       }
+      // If no blocks exist, BlockNote will handle it automatically
 
       toast({
         title: '✨ Таблицю створено',

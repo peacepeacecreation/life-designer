@@ -1,9 +1,11 @@
 /**
  * Canvas autosave module
  * Handles debounced saving to the backend with status tracking
+ * INCLUDES LOCAL BACKUP FOR DISASTER RECOVERY
  */
 
 import { Node, Edge } from 'reactflow';
+import { saveCanvasBackup } from './local-backup';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -53,6 +55,26 @@ export function createAutosave(options: AutosaveOptions = {}) {
   let pendingSave = false;
   let currentStatus: SaveStatus = 'idle';
   let pendingData: CanvasData | null = null;
+  let lastSavedData: CanvasData | null = null; // Track last saved state
+
+  /**
+   * Check if canvas data has actually changed
+   */
+  function hasDataChanged(newData: CanvasData): boolean {
+    if (!lastSavedData) return true; // First save always goes through
+
+    // Compare using JSON stringify (simple but effective)
+    const oldJson = JSON.stringify({
+      nodes: lastSavedData.nodes,
+      edges: lastSavedData.edges,
+    });
+    const newJson = JSON.stringify({
+      nodes: newData.nodes,
+      edges: newData.edges,
+    });
+
+    return oldJson !== newJson;
+  }
 
   /**
    * Updates the current status and notifies listeners
@@ -72,6 +94,18 @@ export function createAutosave(options: AutosaveOptions = {}) {
       return;
     }
 
+    // Check if data has actually changed
+    if (!hasDataChanged(data)) {
+      console.log('[Autosave] No changes detected, skipping save');
+      setStatus('saved'); // Show as saved even though we skipped
+      setTimeout(() => {
+        if (currentStatus === 'saved') {
+          setStatus('idle');
+        }
+      }, 1000);
+      return;
+    }
+
     saveInProgress = true;
     setStatus('saving');
 
@@ -80,6 +114,12 @@ export function createAutosave(options: AutosaveOptions = {}) {
         ...data,
         canvasId: currentCanvasId,
       };
+
+      // CRITICAL: Save local backup BEFORE server request
+      // This ensures we always have a recovery point
+      if (currentCanvasId) {
+        saveCanvasBackup(currentCanvasId, data.nodes, data.edges, data.title);
+      }
 
       const response = await fetch('/api/canvas/autosave', {
         method: 'POST',
@@ -91,6 +131,14 @@ export function createAutosave(options: AutosaveOptions = {}) {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('[Autosave] Server error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+          canvasId: currentCanvasId,
+          nodeCount: data.nodes?.length,
+          edgeCount: data.edges?.length,
+        });
         throw new Error(errorData.error || `HTTP ${response.status}`);
       }
 
@@ -99,6 +147,13 @@ export function createAutosave(options: AutosaveOptions = {}) {
       if (!result.success) {
         throw new Error('Save failed');
       }
+
+      // Update last saved state
+      lastSavedData = {
+        nodes: data.nodes,
+        edges: data.edges,
+        title: data.title,
+      };
 
       setStatus('saved');
 
@@ -183,6 +238,16 @@ export function createAutosave(options: AutosaveOptions = {}) {
       }
 
       const data: LoadCanvasResponse = await response.json();
+
+      // Update last saved state to prevent unnecessary saves
+      if (data.exists) {
+        lastSavedData = {
+          nodes: data.nodes,
+          edges: data.edges,
+          title: data.title,
+        };
+      }
+
       return data;
 
     } catch (error) {

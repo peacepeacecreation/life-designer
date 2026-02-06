@@ -112,19 +112,21 @@ export default function Home() {
             </Card>
           </Link>
 
-          <Card className="hover:shadow-lg transition-all h-full bg-white dark:bg-card opacity-60">
-            <CardHeader>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-pink-100 dark:bg-pink-950 rounded-lg">
-                  <Activity className="h-6 w-6 text-pink-600 dark:text-pink-400" />
+          <Link href="/habits">
+            <Card className="hover:shadow-lg transition-all cursor-pointer h-full bg-white dark:bg-card">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-pink-100 dark:bg-pink-950 rounded-lg">
+                    <Activity className="h-6 w-6 text-pink-600 dark:text-pink-400" />
+                  </div>
+                  <CardTitle className="text-2xl text-black dark:text-white">Звички</CardTitle>
                 </div>
-                <CardTitle className="text-2xl text-black dark:text-white">Звички</CardTitle>
-              </div>
-              <CardDescription className="text-base text-black/70 dark:text-white/70">
-                Формуйте позитивні щоденні звички (скоро)
-              </CardDescription>
-            </CardHeader>
-          </Card>
+                <CardDescription className="text-base text-black/70 dark:text-white/70">
+                  Формуйте позитивні щоденні звички
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
 
           <Link href="/settings">
             <Card className="hover:shadow-lg transition-all cursor-pointer h-full bg-white dark:bg-card">

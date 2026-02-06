@@ -167,7 +167,10 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Error in POST /api/canvas/autosave:', error);
+    console.error('Error in POST /api/canvas/autosave:', {
+      message: error.message,
+      stack: error.stack,
+    });
     return NextResponse.json(
       { error: 'Failed to save canvas', details: error.message },
       { status: 500 }

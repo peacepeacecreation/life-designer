@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PROJECT_REF="gxzzkcthcdtmkdwfdrhv"
-SQL_FILE="supabase/migrations/020_fix_prompt_notes_fk.sql"
+SQL_FILE="supabase/migrations/20250206_canvas_events.sql"
 
 echo "🚀 Supabase Database Migration Script"
 echo "════════════════════════════════════════════════════════════"
@@ -59,9 +59,11 @@ echo ""
 if [ "$HTTP_CODE" = "201" ] || [ "$HTTP_CODE" = "200" ]; then
   echo "✅ Migration executed successfully!"
   echo ""
-  echo "Fixed prompt_notes foreign key:"
-  echo "  • Changed reference from auth.users to users table"
-  echo "  • Consistent with other tables (canvas_workspaces, etc.)"
+  echo "Added Canvas Events System:"
+  echo "  • canvas_events table for activity tracking"
+  echo "  • 10 event types (block_created, prompt_completed, etc.)"
+  echo "  • Automatic cleanup (keeps last 500 events per canvas)"
+  echo "  • RLS policies for user isolation"
   echo ""
 else
   echo "❌ Migration failed"

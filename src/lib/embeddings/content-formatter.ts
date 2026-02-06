@@ -11,6 +11,7 @@
 import { Goal } from '@/types/goals';
 import { Note } from '@/types/notes';
 import { Reflection } from '@/types/reflections';
+import { Habit } from '@/types/habits';
 
 /**
  * Format a Goal for embedding generation
@@ -127,6 +128,58 @@ export function formatReflectionForEmbedding(reflection: Reflection | Partial<Re
 }
 
 /**
+ * Format a Habit for embedding generation
+ * Combines name, description, category, frequency, tracking type, and cue
+ *
+ * @param habit - Habit object to format
+ * @returns Formatted text string
+ */
+export function formatHabitForEmbedding(habit: Habit | Partial<Habit>): string {
+  const parts: string[] = [];
+
+  if (habit.name) {
+    parts.push(`Title: ${habit.name}`);
+  }
+
+  if (habit.description) {
+    parts.push(`Description: ${habit.description}`);
+  }
+
+  if (habit.category) {
+    parts.push(`Category: ${habit.category.replace('_', ' ')}`);
+  }
+
+  if (habit.frequencyType) {
+    let frequencyText = `Frequency: ${habit.frequencyType}`;
+    if (habit.frequencyCount) {
+      frequencyText += ` (${habit.frequencyCount} times)`;
+    }
+    if (habit.intervalDays) {
+      frequencyText += ` (every ${habit.intervalDays} days)`;
+    }
+    parts.push(frequencyText);
+  }
+
+  if (habit.trackingType) {
+    let trackingText = `Tracking: ${habit.trackingType}`;
+    if (habit.targetValue && habit.unit) {
+      trackingText += ` (target: ${habit.targetValue} ${habit.unit})`;
+    }
+    parts.push(trackingText);
+  }
+
+  if (habit.cue) {
+    parts.push(`Cue: ${habit.cue}`);
+  }
+
+  if (habit.reward) {
+    parts.push(`Reward: ${habit.reward}`);
+  }
+
+  return parts.join('\n');
+}
+
+/**
  * Truncate content to fit within token limits
  *
  * OpenAI text-embedding-3-small has a limit of 8191 tokens (~30,000 characters)
@@ -153,12 +206,15 @@ export function truncateForEmbedding(text: string, maxChars = 25000): string {
  * @returns Formatted and truncated text
  */
 export function prepareContentForEmbedding(
-  content: Goal | Note | Reflection | Partial<Goal> | Partial<Note> | Partial<Reflection>
+  content: Goal | Note | Reflection | Habit | Partial<Goal> | Partial<Note> | Partial<Reflection> | Partial<Habit>
 ): string {
   let formatted: string;
 
   // Determine content type and format accordingly
-  if ('name' in content && 'category' in content) {
+  if ('frequencyType' in content && 'trackingType' in content) {
+    // It's a Habit
+    formatted = formatHabitForEmbedding(content as Habit);
+  } else if ('name' in content && 'category' in content && 'priority' in content) {
     // It's a Goal
     formatted = formatGoalForEmbedding(content as Goal);
   } else if ('noteType' in content) {

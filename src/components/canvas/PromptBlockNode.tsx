@@ -333,13 +333,13 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
 
       // Track prompt added
       if (data.canvasId) {
-        EventTracker.promptAdded(data.canvasId, nodeId, title, newPrompt.id, newPrompt.content)
+        EventTracker.promptAdded(data.canvasId, id, blockTitle, newPrompt.id, newPrompt.content)
       }
     }
   }
 
-  const deletePrompt = async (id: string) => {
-    const prompt = prompts.find(p => p.id === id)
+  const deletePrompt = async (promptId: string) => {
+    const prompt = prompts.find(p => p.id === promptId)
 
     const confirmed = await confirm({
       title: 'Видалити промпт',
@@ -349,11 +349,11 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
     })
 
     if (confirmed) {
-      setPrompts(prompts.filter((p) => p.id !== id))
+      setPrompts(prompts.filter((p) => p.id !== promptId))
 
       // Track prompt deletion
       if (data.canvasId && prompt) {
-        EventTracker.promptDeleted(data.canvasId, nodeId, title, id, prompt.content)
+        EventTracker.promptDeleted(data.canvasId, id, blockTitle, promptId, prompt.content)
       }
     }
   }
@@ -366,20 +366,20 @@ function PromptBlockNode({ data, id }: NodeProps<PromptBlockData>) {
     }
   }
 
-  const toggleComplete = (id: string) => {
-    const prompt = prompts.find(p => p.id === id)
+  const toggleComplete = (promptId: string) => {
+    const prompt = prompts.find(p => p.id === promptId)
     if (!prompt) return
 
     const newCompleted = !prompt.completed
 
-    setPrompts(prompts.map((p) => (p.id === id ? { ...p, completed: newCompleted } : p)))
+    setPrompts(prompts.map((p) => (p.id === promptId ? { ...p, completed: newCompleted } : p)))
 
     // Track completion toggle
     if (data.canvasId) {
       if (newCompleted) {
-        EventTracker.promptCompleted(data.canvasId, nodeId, title, id, prompt.content)
+        EventTracker.promptCompleted(data.canvasId, id, blockTitle, promptId, prompt.content)
       } else {
-        EventTracker.promptUncompleted(data.canvasId, nodeId, title, id, prompt.content)
+        EventTracker.promptUncompleted(data.canvasId, id, blockTitle, promptId, prompt.content)
       }
     }
   }
