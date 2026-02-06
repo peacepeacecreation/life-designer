@@ -4,11 +4,18 @@ import { memo, useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Handle, Position, NodeProps, useReactFlow, Edge } from 'reactflow'
 import { generatePromptId } from '@/lib/canvas/utils'
-import { Settings, Trash2, Copy, FileText, Eye } from 'lucide-react'
+import { Settings, Trash2, Copy, FileText, Eye, Play, Loader2, Clock } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
 import { getIconById, isPredefinedIcon } from '@/lib/goalIcons'
+import { getCategoryMeta } from '@/lib/categoryConfig'
+import { useGoals } from '@/contexts/GoalsContext'
 import { useConfirm } from '@/hooks/use-confirm'
+import { useToast } from '@/hooks/use-toast'
 import PromptNoteEditor from '@/components/canvas/PromptNoteEditor'
+import { EventTracker } from '@/lib/canvas/event-tracker'
 
 interface PromptItem {
   id: string
@@ -75,8 +82,14 @@ function GoalBlockNode({ data, id }: NodeProps<GoalBlockData>) {
   const [noteEditorOpen, setNoteEditorOpen] = useState(false)
   const [selectedPromptForNote, setSelectedPromptForNote] = useState<{ id: string; content: string } | null>(null)
   const [promptNotes, setPromptNotes] = useState<Set<string>>(new Set())
+  const [isStartingTimer, setIsStartingTimer] = useState(false)
+  const [clockifyDialogOpen, setClockifyDialogOpen] = useState(false)
+  const [selectedGoalForClockify, setSelectedGoalForClockify] = useState(data.goal_id)
+  const [promptForClockify, setPromptForClockify] = useState('')
   const { setNodes, setEdges, getNodes, getEdges } = useReactFlow()
+  const { goals } = useGoals()
   const confirm = useConfirm()
+  const { toast } = useToast()
 
   // Динамічний z-index: коли тягнемо лінію - target в пріоритеті, інакше - source
   const isConnecting = data.isConnecting || false
@@ -158,6 +171,11 @@ function GoalBlockNode({ data, id }: NodeProps<GoalBlockData>) {
       }
       setPrompts([...prompts, newPrompt])
       setNewPromptText('')
+
+      // Track prompt added
+      if (data.canvasId) {
+        EventTracker.promptAdded(data.canvasId, id, data.title, newPrompt.id, newPrompt.content)
+      }
     }
   }
 
@@ -165,7 +183,9 @@ function GoalBlockNode({ data, id }: NodeProps<GoalBlockData>) {
     setPrompts(prompts.map((p) => (p.id === id ? { ...p, content: newContent } : p)))
   }
 
-  const deletePrompt = async (id: string) => {
+  const deletePrompt = async (promptId: string) => {
+    const prompt = prompts.find(p => p.id === promptId)
+
     const confirmed = await confirm({
       title: 'Видалити завдання',
       description: 'Ви впевнені, що хочете видалити це завдання?',
@@ -174,12 +194,82 @@ function GoalBlockNode({ data, id }: NodeProps<GoalBlockData>) {
     })
 
     if (confirmed) {
-      setPrompts(prompts.filter((p) => p.id !== id))
+      setPrompts(prompts.filter((p) => p.id !== promptId))
+
+      // Track prompt deletion
+      if (data.canvasId && prompt) {
+        EventTracker.promptDeleted(data.canvasId, id, data.title, promptId, prompt.content)
+      }
     }
   }
 
-  const toggleComplete = (id: string) => {
-    setPrompts(prompts.map((p) => (p.id === id ? { ...p, completed: !p.completed } : p)))
+  const toggleComplete = (promptId: string) => {
+    const prompt = prompts.find(p => p.id === promptId)
+    if (!prompt) return
+
+    const newCompleted = !prompt.completed
+
+    setPrompts(prompts.map((p) => (p.id === promptId ? { ...p, completed: newCompleted } : p)))
+
+    // Track completion toggle
+    if (data.canvasId) {
+      if (newCompleted) {
+        EventTracker.promptCompleted(data.canvasId, id, data.title, promptId, prompt.content)
+      } else {
+        EventTracker.promptUncompleted(data.canvasId, id, data.title, promptId, prompt.content)
+      }
+    }
+  }
+
+  const handleOpenClockifyDialog = (promptText: string) => {
+    setPromptForClockify(promptText)
+    setSelectedGoalForClockify(data.goal_id) // Default to current goal
+    setClockifyDialogOpen(true)
+    setPromptContextMenu(null)
+  }
+
+  const handleStartTimer = async () => {
+    if (!selectedGoalForClockify || !promptForClockify) return
+
+    setIsStartingTimer(true)
+
+    try {
+      const response = await fetch('/api/clockify/start-timer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          goalId: selectedGoalForClockify,
+          description: promptForClockify,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Помилка запуску таймера')
+      }
+
+      const selectedGoal = goals.find(g => g.id === selectedGoalForClockify)
+
+      toast({
+        title: 'Таймер запущено',
+        description: `Відстеження часу для "${selectedGoal?.name || 'цілі'}" розпочато`,
+      })
+
+      // Track Clockify start
+      if (data.canvasId) {
+        EventTracker.clockifyStarted(data.canvasId, id, data.title, selectedGoal?.name)
+      }
+
+      setClockifyDialogOpen(false)
+    } catch (error: any) {
+      toast({
+        title: 'Помилка',
+        description: error.message || 'Не вдалося запустити таймер',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsStartingTimer(false)
+    }
   }
 
   const handleDeleteBlock = async () => {
@@ -509,6 +599,13 @@ function GoalBlockNode({ data, id }: NodeProps<GoalBlockData>) {
               Копіювати текст
             </button>
             <button
+              onClick={() => handleOpenClockifyDialog(promptContextMenu.promptContent)}
+              className="w-full px-3 py-1.5 text-left text-xs hover:bg-accent transition-colors flex items-center gap-2"
+            >
+              <Clock className="h-3 w-3" />
+              Start Clockify
+            </button>
+            <button
               onClick={() => {
                 setPromptContextMenu(null)
                 deletePrompt(promptContextMenu.promptId)
@@ -538,6 +635,85 @@ function GoalBlockNode({ data, id }: NodeProps<GoalBlockData>) {
           }}
         />
       )}
+
+      {/* Clockify Start Timer Dialog */}
+      <Dialog open={clockifyDialogOpen} onOpenChange={setClockifyDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Запустити Clockify таймер</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Завдання</label>
+              <p className="text-sm text-muted-foreground bg-muted px-3 py-2 rounded-md">
+                {promptForClockify}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Проект (ціль)</label>
+              <Select value={selectedGoalForClockify} onValueChange={setSelectedGoalForClockify}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Обери ціль..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {goals.map((goal) => {
+                    const meta = getCategoryMeta(goal.category)
+                    return (
+                      <SelectItem key={goal.id} value={goal.id}>
+                        <div className="flex items-center gap-2">
+                          {goal.iconUrl && isPredefinedIcon(goal.iconUrl) ? (
+                            (() => {
+                              const iconOption = getIconById(goal.iconUrl!)
+                              if (iconOption) {
+                                const IconComponent = iconOption.Icon
+                                return <IconComponent className="w-4 h-4 flex-shrink-0" style={{ color: goal.color || meta.color }} />
+                              }
+                              return null
+                            })()
+                          ) : goal.iconUrl ? (
+                            <img
+                              src={goal.iconUrl}
+                              alt={goal.name}
+                              className="w-4 h-4 object-contain flex-shrink-0"
+                            />
+                          ) : (
+                            <div
+                              className="w-4 h-4 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: goal.color || meta.color }}
+                            />
+                          )}
+                          <span className="truncate">{goal.name}</span>
+                        </div>
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setClockifyDialogOpen(false)}>
+              Скасувати
+            </Button>
+            <Button onClick={handleStartTimer} disabled={isStartingTimer || !selectedGoalForClockify}>
+              {isStartingTimer ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Запуск...
+                </>
+              ) : (
+                <>
+                  <Play className="mr-2 h-4 w-4" />
+                  Почати
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
