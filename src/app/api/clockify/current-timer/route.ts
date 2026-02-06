@@ -93,7 +93,7 @@ export async function GET() {
     // 8. Get project-to-goal mapping
     let goalInfo = null;
     if (runningTimer.projectId) {
-      const { data: mapping } = await supabase
+      const { data: mapping } = (await supabase
         .from('clockify_project_goal_mappings')
         .select(`
           goal_id,
@@ -110,7 +110,7 @@ export async function GET() {
         .eq('user_id', userData.id)
         .eq('is_active', true)
         .eq('clockify_projects.clockify_project_id', runningTimer.projectId)
-        .single();
+        .single()) as { data: any };
 
       if (mapping) {
         goalInfo = {
